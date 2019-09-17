@@ -6,11 +6,11 @@ opts.parpool = settings.pool;
 opts.eqinterval = [-2 2];
 
 for c = 1:settings.nfreqs
-    %pt_diff_stats{c} = EasyClusterCorrect({permute(squeeze(allmeas1{c}.naddersp.diff(:,:,2,:)-allmeas1{c}.naddersp.diff(:,:,1,:)),[1 3 2]),...
-    %    permute(squeeze(allmeas2{c}.naddersp.diff(:,:,2,:)-allmeas2{c}.naddersp.diff(:,:,1,:)),[1 3 2])},...
-    %    settings.datasetinfo,'ft_statfun_ranksum',opts);
+    pt_diff_stats{c} = EasyClusterCorrect({permute(squeeze(allmeas1{c}.naddersp.diff(:,:,2,:)-allmeas1{c}.naddersp.diff(:,:,1,:)),[1 3 2]),...
+        permute(squeeze(allmeas2{c}.naddersp.diff(:,:,2,:)-allmeas2{c}.naddersp.diff(:,:,1,:)),[1 3 2])},...
+        settings.datasetinfo,'ft_statfun_fast_signrank',opts);
     ttv_diff_stats{c} = EasyClusterCorrect({permute(allmeas1{c}.ttversp.real,[1 3 2]),permute(allmeas2{c}.ttversp.real,[1 3 2])},...
-        settings.datasetinfo,'ft_statfun_ranksum',opts);
+        settings.datasetinfo,'ft_statfun_fast_signrank',opts);
 
     %pt_diff_stats{c} = EasyClusterCorrect({permute(squeeze(allmeas1{c}.naddersp.diff(:,:,2,:)-allmeas1{c}.naddersp.diff(:,:,1,:)),[1 3 2]),...
     %    permute(squeeze(allmeas2{c}.naddersp.diff(:,:,2,:)-allmeas2{c}.naddersp.diff(:,:,1,:)),[1 3 2])},...
@@ -20,10 +20,10 @@ for c = 1:settings.nfreqs
 
 
     ersp_diff_stats{c} = EasyClusterCorrect({permute(allmeas1{c}.ersp.real,[1 3 2]) permute(allmeas2{c}.ersp.real,[1 3 2])},...
-        settings.datasetinfo,'ft_statfun_ranksum',opts);
+        settings.datasetinfo,'ft_statfun_fast_signrank',opts);
 end
 
-%compstats.ptdiff = pt_diff_stats;
+compstats.ptdiff = pt_diff_stats;
 compstats.ttvdiff = ttv_diff_stats;
 compstats.erspdiff = ersp_diff_stats;
 

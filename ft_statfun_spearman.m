@@ -20,8 +20,13 @@ if iscell(design)
     end
 else
     tmp = unique(design);
+    if length(tmp) == 2 % hacked together solution for ft_statistics_montecarlo
     indices{1} = find(design == tmp(1));
     indices{2} = find(design == tmp(2));
+    else
+       indices{1} = design(1:(length(design)/2));
+       indices{2} = design((1+length(design)/2):end);
+    end
     
     p = ones(size(dat,1),1);
     for c = 1:size(dat,1)

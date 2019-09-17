@@ -181,7 +181,9 @@ for c = 1:settings.nfreqs
         legend({'Corrected prestim low','Corrected prestim high'})
     end
     xlabel('Time (s)')
+    if c == 1
     ylabelunits(settings)
+    end
     FixAxes(gca)
     set(gca,'FontSize',11,'TitleFontSizeMultiplier',1.1)
 end
@@ -205,7 +207,9 @@ for c = 1:settings.nfreqs
         legend({'Nonadditivity time course'})
     end
     xlabel('Time (s)')
+    if c == 1
     ylabelunits(settings)
+    end
     FixAxes(gca)
     set(gca,'FontSize',11,'TitleFontSizeMultiplier',1.1)
     
@@ -255,9 +259,10 @@ for c = 1:settings.nfreqs
 end
 Normalize_Ylim(ax1)
 Normalize_Ylim(ax2)
+Set_Ylim(ax2,[-50 25])
 
 for c = 1:settings.nfreqs
-p(2,c,1).select()
+    p(2,c,1).select()
     Plot_sigmask(p(2,c,1).axis,alloutputs.ersp.pt.stats{c}.prob < 0.05,'cmapline','LineWidth',5)
 end
 
@@ -303,7 +308,9 @@ for c = 1:settings.nfreqs
     
     title(fbands{c})
     xlabel('Time (s)')
+    if c == 1
     ylabel('% change of TTV of ERSP')
+    end
     %ylim = get(gca,'YLim');
     %line([0 0],ylim,'Color',[0.5 0.5 0.5],'LineWidth',2)
     %set(gca,'YLim',ylim)
@@ -339,11 +346,14 @@ clear ax
 for c = 1:settings.nfreqs
     ax1(c) = p(c,1).axis;
     cbars1(c).Position = [ax1(c).Position(1)+ax1(c).Position(3) ax1(c).Position(2) cbars1(c).Position(3) 0.15*ax1(c).Position(4)];
+end
+Normalize_Ylim(ax1)
+Set_Ylim(ax1,[-70 60])
 
+for c = 1:settings.nfreqs    
     p(c,1).select()
     Plot_sigmask(p(c,1).axis,alloutputs.ersp.ttv.stats{c}.prob < 0.05,'cmapline','LineWidth',5)
 end
-Normalize_Ylim(ax1)
 
 p.de.margin = [5 5 5 5];
 p.marginleft = 18;
@@ -351,6 +361,8 @@ p.marginbottom = 18;
 p.margintop = 8;
 p.marginright = 10;
 p.de.marginleft = 18;
+
+set(gcf,'Color','w')
 
 savefig('Fig3.fig')
 export_fig('Fig3.png','-m4')
@@ -407,7 +419,7 @@ p.marginleft = 24;
 p.marginbottom = 25;
 p.margintop = 8;
 p.marginright = 10;
-p.de.marginleft = 24;
+p.de.marginleft = 10;
 % fix margins here
 
 for c = 1:settings.nfreqs
@@ -507,6 +519,7 @@ hold on
 stdshade(t,squeeze(nanmean(allmeas{1}.ttv.real,1)),'k',0.15,1,'std')
 %Plot_sigmask(gca,alloutputs.erp.ttv.stats{1}.mask,'cmapline','LineWidth',5)
 xlabel('Time (s)')
+
 ylabelunits(settings)
 title('TTV-based nonadditivity')
 %ylabelunits(settings)
@@ -674,7 +687,8 @@ if isfield(settings,'rest')
     colormap(lkcmap2)
     Normalize_Clim(ax,1);
     
-    bandindex = find(strcmpi(fbands,'Alpha'));
+    bandindex = 4;
+    %bandindex = find(strcmpi(fbands,'Alpha'));
     opts = struct;
     opts.display_mod = 1;
     opts.display = 0;
@@ -717,7 +731,7 @@ end
 p = panel('no-manage-font');
 
 pos = get(gcf,'position');
-set(gcf,'position',[pos(1:2) pos(3)*4 pos(4)*3],'Color','w');
+set(gcf,'position',[pos(1:2) pos(3)*4 pos(4)],'Color','w');
 
 p = panel('no-manage-font');
 p.pack('h',repmat({1/(settings.nfreqs-1)},1,settings.nfreqs-1));
@@ -731,8 +745,12 @@ for c = 2:settings.nfreqs
     
     %p(1,ceil((c-1)/pwidth),plotindx(c-1),1).select();
     p(c-1,1).select()
-    nicecorrplot(nanmean(restmeas.ple.vals,2),nanmean(allmeas{c}.naerspindex,1),{'Resting-state PLE','ERSP Nonadditivity'})
+    nicecorrplot(nanmean(restmeas.ple.vals,2),nanmean(allmeas{c}.naerspindex,1),...
+        {'Resting-state Fractal PLE','ERSP Nonadditivity'},'Plot','r')
     FixAxes(gca,14)
+    if c ~= 2
+       ylabel('') 
+    end
     title(settings.tfparams.fbandnames{c})
     
     
@@ -745,7 +763,9 @@ for c = 2:settings.nfreqs
         cluster_topoplot(restmeas.ple.naindex.r(:,c),settings.layout,...
             restmeas.ple.naindex.p(:,c),(restmeas.rel_bp.ple.stats{c}.mask));
     end
+    if c == settings.nfreqs
     nfreqscbar = colorbar('WestOutside');
+    end
     %cbar.Label.FontSize = 12;
     %ax(c-1) = p(1,ceil((c-1)/pwidth),plotindx(c-1),2).axis;
     ax(c-1) = p(c-1,2).axis;
@@ -754,6 +774,7 @@ colormap(lkcmap2)
 Normalize_Clim(ax,1)
 
 p.marginleft = 24;
+p.de.marginleft = 15;
 p.margintop = 8;
 
 set(gcf,'Color','w')
@@ -762,10 +783,85 @@ savefig('Fig6.fig')
 export_fig('Fig6.png','-m4')
 save('Panel6.mat','p')
 
+%% Figure ?? v2: IRASA osci and frac power time course on same plot
+
+
+figure
+
+pris = prism;
+
+p = panel('no-manage-font');
+
+pos = get(gcf,'position');
+set(gcf,'position',[pos(1:2) pos(3)*3.5 pos(4)],'Color','w');
+
+p.pack('h',repmat({1/settings.nfreqs},settings.nfreqs,1)')
+for c = 1:settings.nfreqs
+    p(c).pack();
+    for cc = 1:4
+        p(c).pack({[0.25*(cc-1) 0 0.25 0.15]})
+    end
+    p(c,1).select();
+    plotband = c;
+    
+    t = linspace(0,length(settings.real.poststim)*(1/settings.srate),length(settings.real.poststim));
+    %t = linspace(-length(settings.real.prestim)*(1/settings.srate),length(settings.real.poststim)*(1/settings.srate),length(settings.real.poststim)+length(settings.real.prestim));
+    %prestimdata = 100*(allmeas{plotband}.raw.ttversp(:,prestim_real,:)-nanmean(allmeas{plotband}.raw.ttversp(:,prestim_real,:),2))./...
+    %    nanmean(allmeas{plotband}.raw.ttversp(:,prestim_real,:),2); %assuming percent change units
+    %prestimdata = nanmean(nanmean(prestimdata,3),1);
+    poststimdata = (allmeas_osci{plotband}.ersp.real);
+    poststimdata = nanmean(nanmean(poststimdata,3),1);
+    %plotdata = [prestimdata poststimdata];
+    plotdata = poststimdata;
+    %FillBetween(t((length(settings.real.prestim)+1):end),poststimdata,...
+    %    zeros(1,length(poststimdata)));
+    hold on
+    stdshade(t,squeeze(nanmedian(allmeas_osci{plotband}.ersp.real,1)),pris(2,:),0.15,1,'sem')
+    %plot(t,zeros(1,length(plotdata)),'k--','LineWidth',1.5)
+    hold on
+    stdshade(t,squeeze(nanmedian(allmeas_frac{plotband}.ersp.real,1)),pris(4,:),0.15,1,'sem')
+    
+    title(fbands{c})
+    xlabel('Time (s)')
+    if c ==1 
+    ylabel('% change of ERSP')
+    end
+    %ylim = get(gca,'YLim');
+    %line([0 0],ylim,'Color',[0.5 0.5 0.5],'LineWidth',2)
+    %set(gca,'YLim',ylim)
+    FixAxes(gca,14)
+    set(gca,'XLim',[0 max(t)])
+    %set(gca,'FontSize',16)
+    
+end
+clear ax
+
+for c = 1:settings.nfreqs
+   ax1(c) = p(c,1).axis; 
+end
+Normalize_Ylim(ax1)
+
+for c = 1:settings.nfreqs
+    p(c,1).select();
+    Plot_sigmask(p(c,1).axis,compstats.erspdiff{c}.prob < 0.05,'cmapline','LineWidth',5)
+end
+
+p(settings.nfreqs,1).select()
+legend({'Oscillatory power','Fractal power'})
+
+p.margintop = 8;
+p.marginleft = 18;
+p.de.marginleft = 12;
+
+savefig('Fig6_of_tc_sameaxis.fig')
+export_fig('Fig6_of_tc_sameaxis.png','-m4')
+
 %% Figure ??: IRASA osci and frac power time course
 % Need allmeas_osci and allmeas_frac, alloutputs_osci and alloutputs_frac
 
 figure
+
+pris = prism;
 
 p = panel('no-manage-font');
 
@@ -799,7 +895,9 @@ for c = 1:settings.nfreqs
     
     title(fbands{c})
     xlabel('Time (s)')
-    ylabel('% change of ERSP')
+    if c == 1
+    ylabel('% change of Oscillatory ERSP')
+    end
     %ylim = get(gca,'YLim');
     %line([0 0],ylim,'Color',[0.5 0.5 0.5],'LineWidth',2)
     %set(gca,'YLim',ylim)
@@ -835,11 +933,8 @@ clear ax
 for c = 1:settings.nfreqs
     ax1(c) = p(1,c,1).axis;
     cbars1(c).Position = [ax1(c).Position(1)+ax1(c).Position(3) ax1(c).Position(2) cbars1(c).Position(3) 0.15*ax1(c).Position(4)];
-
-    %p(1,c,1).select()
-    %Plot_sigmask(p(1,c,1).axis,alloutputs.ersp.ttv.stats{c}.prob < 0.05,'cmapline','LineWidth',5)
 end
-Normalize_Ylim(ax1)
+%Normalize_Ylim(ax1)
 
 p(2).pack('h',repmat({1/settings.nfreqs},settings.nfreqs,1)')
 
@@ -868,7 +963,9 @@ for c = 1:settings.nfreqs
     
     title(fbands{c})
     xlabel('Time (s)')
-    ylabel('% change of ERSP')
+    if c == 1
+    ylabel('% change of Fractal ERSP')
+    end
     %ylim = get(gca,'YLim');
     %line([0 0],ylim,'Color',[0.5 0.5 0.5],'LineWidth',2)
     %set(gca,'YLim',ylim)
@@ -902,20 +999,27 @@ end
 clear ax
 
 for c = 1:settings.nfreqs
-    ax1(c) = p(2,c,1).axis;
-    cbars2(c).Position = [ax1(c).Position(1)+ax1(c).Position(3) ax1(c).Position(2) cbars2(c).Position(3) 0.15*ax1(c).Position(4)];
+    ax2(c) = p(2,c,1).axis;
+    cbars2(c).Position = [ax2(c).Position(1)+ax2(c).Position(3) ax2(c).Position(2) cbars2(c).Position(3) 0.15*ax2(c).Position(4)];
 
     %p(1,c,1).select()
     %Plot_sigmask(p(1,c,1).axis,alloutputs.ersp.ttv.stats{c}.prob < 0.05,'cmapline','LineWidth',5)
 end
-Normalize_Ylim(ax1)
+Normalize_Ylim(cat(2,ax1,ax2))
+
+for c = 1:settings.nfreqs
+    p(1,c,1).select()
+    Plot_sigmask(p(1,c,1).axis,compstats.erspdiff{c}.mask,'cmapline','LineWidth',5)
+    p(2,c,1).select()
+    Plot_sigmask(p(2,c,1).axis,compstats.erspdiff{c}.mask,'cmapline','LineWidth',5)
+end
 
 p.de.margin = [5 5 5 5];
 p.marginleft = 24;
 p.marginbottom = 25;
 p.margintop = 8;
 p.marginright = 10;
-p.de.marginleft = 18;
+p.de.marginleft = 15;
 p(1).marginbottom = 24;
 
 AddFigureLabel(p(1,1,1).axis,'A')
@@ -953,8 +1057,10 @@ for c = 1:settings.nfreqs
         legend({'Corrected prestim low','Corrected prestim high'})
     end
     xlabel('Time (s)')
-    ylabelunits(settings)
-    FixAxes(gca)
+    if c == 1
+        ylabel('% change in Oscillatory ERSP')
+    end
+    FixAxes(gca,14)
     set(gca,'FontSize',11,'TitleFontSizeMultiplier',1.1)
         set(gca,'XLim',[0 max(t)])
 
@@ -1015,8 +1121,10 @@ for c = 1:settings.nfreqs
         legend({'Corrected prestim low','Corrected prestim high'})
     end
     xlabel('Time (s)')
-    ylabelunits(settings)
-    FixAxes(gca)
+    if c == 1
+        ylabel('% change in Fractal ERSP')
+    end
+    FixAxes(gca,14)
     set(gca,'FontSize',11,'TitleFontSizeMultiplier',1.1)
         set(gca,'XLim',[0 max(t)])
 
@@ -1049,10 +1157,10 @@ for c = 1:settings.nfreqs
 end
 
 for c = 1:settings.nfreqs
-    ax1(c) = p(2,c,1).axis;
-    cbars2(c).Position = [ax1(c).Position(1)+ax1(c).Position(3) ax1(c).Position(2) cbars2(c).Position(3) 0.15*ax1(c).Position(4)];
+    ax2(c) = p(2,c,1).axis;
+    cbars2(c).Position = [ax2(c).Position(1)+ax2(c).Position(3) ax2(c).Position(2) cbars2(c).Position(3) 0.15*ax2(c).Position(4)];
 end
-Normalize_Ylim(ax1)
+Normalize_Ylim(ax2)
 
 for c = 1:settings.nfreqs
     p(2,c,1).select()

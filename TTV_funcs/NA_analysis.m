@@ -36,6 +36,7 @@ function NA_analysis(settings)
 %        pf_adjust: adjust frequency bands for theta, alpha, and beta (if
 %        input) using the subjects individual alpha frequency (default =
 %        'yes')
+%        parameter: 'amplitude' or 'power' (default = 'power')
 %  rest: a structure with fields related to the resting state recordings
 %        restdir: directory where resting state recordings are found
 %        restfiles: the input to 'dir' to select what files to use (default
@@ -158,6 +159,7 @@ if isfield(settings,'rest')
     else
         settings.rest = setdefault(settings.rest,'restfiles','*.mat');
     end
+    settings.rest = setdefault(settings.rest,'powermode','normal');
 end
 
 settings.tfparams = setdefault(settings.tfparams,'pf_adjust','yes');
@@ -177,6 +179,8 @@ settings.tfparams = setdefault(settings.tfparams,'trials','all');
 settings.tfparams = setdefault(settings.tfparams,'method','hilbert');
 
 settings.tfparams = setdefault(settings.tfparams,'continue','no');
+
+settings.tfparams = setdefault(settings.tfparams,'parameter','power');
 
 settings = setdefault(settings,'fdr','yes');
 

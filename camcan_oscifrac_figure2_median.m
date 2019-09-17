@@ -121,11 +121,7 @@ stats_ple = EasyClusterCorrect({permute(pledata.post,[2 1 3]) repmat(mean(pledat
 stats_bb = EasyClusterCorrect({permute(squeeze(mean(meanpost.frac.fourierspctrm,3)),[2 1 3]) repmat(mean(squeeze(mean(meanbl.frac.fourierspctrm,3)),3)',1,1,38)},...
     datasetinfo,'ft_statfun_fast_signrank',opts);
 
-% for divisive baseline/gain model, set gc1 = 0, gc2 = 1
-% for subtractive baseline, set gc1 = 1; gc2 = 0
 
-gc1 = 1;
-gc2 = 0; 
 
 for c = find(extractfield(stats{1}.posclusters,'prob') < 0.05)
     statmask = squeeze(stats{1}.posclusterslabelmat==c);
@@ -143,21 +139,27 @@ for c = find(extractfield(stats{1}.posclusters,'prob') < 0.05)
     sum_statmask = sum(statmask,1);
     statmask_time = sum_statmask > median(sum_statmask(find(sum_statmask>0))); 
     
-    tmp = mean(permute(permute(squeeze((mean(meanpost.mixd.fourierspctrm,2)...
-        -mean(mean(meanbl.mixd.fourierspctrm,4),2))./(gc1+gc2.*mean(mean(meanbl.mixd.fourierspctrm,4),2))),[2 3 1]).*statmask,[3 1 2]),3);
-    meanmix(:,newindx) = mean(tmp,2); % baseline correct, sum over time and freq for significant cluster
+    tmp = permute(permute(squeeze((median(meanpost.mixd.fourierspctrm,2)...
+        -median(median(meanbl.mixd.fourierspctrm,4),2))./median(median(meanbl.mixd.fourierspctrm,4),2)),[2 3 1]).*statmask,[3 1 2]);
+    for cc = 1:49
+       tmp2(cc,:) = nzmedian(squeeze(tmp(cc,:,:)),2); 
+    end
+    meanmix(:,newindx) = nzmedian(tmp2,2); % baseline correct, sum over time and freq for significant cluster
     
-    tmp = mean(permute(permute(squeeze((mean(meanpost.osci.fourierspctrm,2)...
-        -mean(mean(meanbl.osci.fourierspctrm,4),2))./(gc1+gc2.*mean(mean(meanbl.osci.fourierspctrm,4),2))),[2 3 1]).*statmask,[3 1 2]),3);
-    meanosci(:,newindx) = mean(tmp,2);
+    tmp = permute(permute(squeeze((median(meanpost.osci.fourierspctrm,2)...
+        -median(median(meanbl.osci.fourierspctrm,4),2))./median(median(meanbl.osci.fourierspctrm,4),2)),[2 3 1]).*statmask,[3 1 2]);
+    for cc = 1:49
+       tmp2(cc,:) = nzmedian(squeeze(tmp(cc,:,:)),2); 
+    end
+    meanosci(:,newindx) = nzmedian(tmp2,2);
     
     meanfrac(:,newindx) = mean(squeeze((mean(mean(meanpost.frac.fourierspctrm,2),3)...
-        -mean(mean(mean(meanbl.frac.fourierspctrm,4),3),2))./(gc1+gc2*mean(mean(mean(meanbl.frac.fourierspctrm,4),3),2))).*statmask_time,2); %use only the time statmask here, not freq - broadband power
+        -mean(mean(mean(meanbl.frac.fourierspctrm,4),3),2))./mean(mean(mean(meanbl.frac.fourierspctrm,4),3),2)).*statmask_time,2); %use only the time statmask here, not freq - broadband power
     
     meanfrac2(:,newindx) = mean(mean(permute(permute(squeeze((mean(meanpost.frac.fourierspctrm,2)...
-        -mean(mean(meanbl.frac.fourierspctrm,4),2))./(gc1+gc2.*mean(mean(meanbl.frac.fourierspctrm,4),2))),[2 3 1]).*statmask,[3 1 2]),2),3);
+        -mean(mean(meanbl.frac.fourierspctrm,4),2))./mean(mean(meanbl.frac.fourierspctrm,4),2)),[2 3 1]).*statmask,[3 1 2]),2),3);
     
-    meanple(:,newindx) = mean(squeeze((mean(pledata.post,2)-mean(mean(pledata.bl,2),3))./(gc1+gc2.*mean(mean(pledata.bl,2),3))).*statmask_time,2);
+    meanple(:,newindx) = mean(squeeze((mean(pledata.post,2)-mean(mean(pledata.bl,2),3))./mean(mean(pledata.bl,2),3)).*statmask_time,2);
 end
 
 for c = find(extractfield(stats{1}.negclusters,'prob') < 0.05)
@@ -177,31 +179,35 @@ for c = find(extractfield(stats{1}.negclusters,'prob') < 0.05)
     statmask_time = sum_statmask > median(sum_statmask(find(sum_statmask>0))); 
     
 
-    tmp = mean(permute(permute(squeeze((mean(meanpost.mixd.fourierspctrm,2)...
-        -mean(mean(meanbl.mixd.fourierspctrm,4),2))./(gc1+gc2.*mean(mean(meanbl.mixd.fourierspctrm,4),2))),[2 3 1]).*statmask,[3 1 2]),3);
-    meanmix(:,newindx) = mean(tmp,2); % baseline correct, sum over time and freq for significant cluster
+    tmp = permute(permute(squeeze((median(meanpost.mixd.fourierspctrm,2)...
+        -median(median(meanbl.mixd.fourierspctrm,4),2))./median(median(meanbl.mixd.fourierspctrm,4),2)),[2 3 1]).*statmask,[3 1 2]);
+    for cc = 1:49
+       tmp2(cc,:) = nzmedian(squeeze(tmp(cc,:,:)),2); 
+    end
+    meanmix(:,newindx) = nzmedian(tmp2,2); % baseline correct, sum over time and freq for significant cluster
     
-    tmp = mean(permute(permute(squeeze((mean(meanpost.osci.fourierspctrm,2)...
-        -mean(mean(meanbl.osci.fourierspctrm,4),2))./(gc1+gc2.*mean(mean(meanbl.osci.fourierspctrm,4),2))),[2 3 1]).*statmask,[3 1 2]),3);
-    meanosci(:,newindx) = mean(tmp,2);
+    tmp = permute(permute(squeeze((median(meanpost.osci.fourierspctrm,2)...
+        -median(median(meanbl.osci.fourierspctrm,4),2))./median(median(meanbl.osci.fourierspctrm,4),2)),[2 3 1]).*statmask,[3 1 2]);
+    for cc = 1:49
+       tmp2(cc,:) = nzmedian(squeeze(tmp(cc,:,:)),2); 
+    end
+    meanosci(:,newindx) = nzmedian(tmp2,2);
     
     meanfrac(:,newindx) = mean(squeeze((mean(mean(meanpost.frac.fourierspctrm,2),3)...
-        -mean(mean(mean(meanbl.frac.fourierspctrm,4),3),2))./(gc1+gc2.*mean(mean(mean(meanbl.frac.fourierspctrm,4),3),2))).*statmask_time,2); %use only the time statmask here, not freq - broadband power
+        -mean(mean(mean(meanbl.frac.fourierspctrm,4),3),2))./mean(mean(mean(meanbl.frac.fourierspctrm,4),3),2)).*statmask_time,2); %use only the time statmask here, not freq - broadband power
     
     meanfrac2(:,newindx) = mean(mean(permute(permute(squeeze((mean(meanpost.frac.fourierspctrm,2)...
-        -mean(mean(meanbl.frac.fourierspctrm,4),2))./(gc1+gc2.*mean(mean(meanbl.frac.fourierspctrm,4),2))),[2 3 1]).*statmask,[3 1 2]),2),3);
+        -mean(mean(meanbl.frac.fourierspctrm,4),2))./mean(mean(meanbl.frac.fourierspctrm,4),2)),[2 3 1]).*statmask,[3 1 2]),2),3);
     
-    meanple(:,newindx) = mean(squeeze((mean(pledata.post,2)-mean(mean(pledata.bl,2),3))./(gc1+gc2.*mean(mean(pledata.bl,2),3))).*statmask_time,2);
+    meanple(:,newindx) = mean(squeeze((mean(pledata.post,2)-mean(mean(pledata.bl,2),3))./mean(mean(pledata.bl,2),3)).*statmask_time,2);
 end
 
 %% Regression models
 
 for i = 1:size(meanmix,2)
-   meanpower = mean(mean(mean(meandata.mixd.fourierspctrm,2),3),4);
-   tbl{i} = array2table([meanmix(:,i) meanosci(:,i) meanple(:,i) meanfrac(:,i) meanpower],'VariableNames',{'Mixed_power','Osci_power','PLE','Frac_BB','Mean_power'});
+   tbl{i} = array2table([meanmix(:,i) meanosci(:,i) meanple(:,i) meanfrac(:,i)],'VariableNames',{'Mixed_power','Osci_power','PLE','Frac_BB'});
    tbl{i}{:,:} = zscore(tbl{i}{:,:},[],1);
-   mdl{i} = fitlm(tbl{i},'Mixed_power~Mean_power+Osci_power+PLE+Frac_BB');
-   nullmdl{i} = fitlm(tbl{i},'Mixed_power~Osci_power');
+   mdl{i} = fitlm(tbl{i},'Mixed_power~Osci_power+PLE+Frac_BB');
    % partial correlation stuff
 end
 
