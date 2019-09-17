@@ -73,10 +73,10 @@ parfor i = 1:length(files)
                     data = ft_resampledata(cfg,data);
                 end
                 
-%                if isfield(settings.tfparams,'condition') && ~strcmpi(settings.tfparams.condition,'all')
-%                    cfg = []; cfg.trials = find(ismember(data.trialinfo(:,1),settings.tfparams.condition));
-%                    data = ft_selectdata(cfg,data);
-%                end
+                %                if isfield(settings.tfparams,'condition') && ~strcmpi(settings.tfparams.condition,'all')
+                %                    cfg = []; cfg.trials = find(ismember(data.trialinfo(:,1),settings.tfparams.condition));
+                %                    data = ft_selectdata(cfg,data);
+                %                end
                 
                 data_allrange = (settings.pseudo.prestim(1)-ceil(settings.srate/5)):(settings.real.poststim(end));
                 cfg = []; cfg.method = 'wavelet'; cfg.output = 'fourier'; cfg.foi = exp(linspace(log(freqs{2}(1)),log(freqs{end}(2)),50));
@@ -175,13 +175,19 @@ parfor i = 1:length(files)
                     newdata = ft_resampledata(cfg,data);
                     
                     data_allrange = round((settings.pseudo.prestim(1)-settings.srate/5)):(settings.real.poststim(end));
-                    
                 end
                 
-		foi{i} = freqdata.freq;
+                
+                
+                foi{i} = freqdata.freq;
                 cfg.foi = freqdata.freq;
                 
                 freqdata.fourierspctrm = permute(freqdata.fourierspctrm,[1 3 2 4]);
+                
+                %                 if strcmpi(settings.tfparams.naddple,'yes')
+                %                     Calc_naddPLE(settings,freqdata,files(i).name)
+                %                 end
+                
                 freqdata.fourierspctrm = freqdata.fourierspctrm + 0.001*min(min(min(min(freqdata.fourierspctrm))))*j; % add a tiny imaginary component for compatibility
                 
                 timefreq_data{1} = data;
@@ -369,13 +375,13 @@ for q = 1:numbands
         datacalc{q}.naddersp.pseudo(c,:,2) = (mean(pfunc(abs(datacat(c,poststim_pseudo,find(splitindex)))),3)...
             -mean(mean(pfunc(abs(datacat(c,prestim_pseudo,find(splitindex)))),3),2));
         
-%         tmp = abs(datacat(c,poststim_pseudo,find(~splitindex)))...
-%             -mean(abs(datacat(c,prestim_pseudo,find(~splitindex))),2);
-%         tmppseudo{1} = squeeze(trapz(tmp,2));
-%         
-%         tmp = abs(datacat(c,poststim_pseudo,find(splitindex)))...
-%             -mean(abs(datacat(c,prestim_pseudo,find(splitindex))),2);
-%         tmppseudo{2} = squeeze(trapz(tmp,2));
+        %         tmp = abs(datacat(c,poststim_pseudo,find(~splitindex)))...
+        %             -mean(abs(datacat(c,prestim_pseudo,find(~splitindex))),2);
+        %         tmppseudo{1} = squeeze(trapz(tmp,2));
+        %
+        %         tmp = abs(datacat(c,poststim_pseudo,find(splitindex)))...
+        %             -mean(abs(datacat(c,prestim_pseudo,find(splitindex))),2);
+        %         tmppseudo{2} = squeeze(trapz(tmp,2));
         
         switch settings.units
             case 'prcchange'
@@ -398,7 +404,7 @@ for q = 1:numbands
             -mean(mean(pfunc(abs(datacat(c,prestim_real,find(~splitindex)))),3),2));
         datacalc{q}.naddersp.real(c,:,2) = (mean(pfunc(abs(datacat(c,poststim_real,find(splitindex)))),3)...
             -mean(mean(pfunc(abs(datacat(c,prestim_real,find(splitindex)))),3),2));
-                
+        
         %         tmp = abs(datacat(c,poststim_pseudo,find(~splitindex)))...
         %             -mean(abs(datacat(c,prestim_pseudo,find(~splitindex))),2);
         %         tmpreal{1}(:) = squeeze(trapz(tmp,2));
@@ -640,4 +646,106 @@ end
 save(fullfile(settings.outputdir,[settings.datasetname '_' filename '_calc.mat']),'datacalc','-v7.3')
 
 end
+%
+function Calc_naddPLE(settings,freqdata,filename)
 
+settings.pseudo.prestim = prestim_pseudo;
+settings.real.prestim = prestim_real;
+settings.pseudo.poststim = poststim_pseudo;
+settings.real.poststim = poststim_real;
+
+pledata = cell(1,size(freqdata.frac.fourierspctrm));
+
+for i = 1:size(freqdata.frac.fourierspctrm,1)
+    for ii = 1:size(freqdata.frac.fourierspctrm,2)
+        for iii = 1:size(freqdata.frac.fourierspctrm,4)
+            tmp = log10(freqdata.frac.freq);
+            pow = log10(squeeze(freqdata.frac.fourierspctrm(i,ii,:,iii)));
+            lintmp = vert(linspace(tmp(1),tmp(end),length(tmp)));
+            pow = interp1(tmp,pow,lintmp);
+            p = polyfit(lintmp,pow,1);
+            pledata{i}(1,ii,iii) = -p(1);
+        end
+    end
+end
+
+pledata = cat(1,pledata{:});
+
+pledata = permute(pledata,[2 3 1]);
+
+
+split_real = squeeze(mean(pledata(:,:,prestim_real),2));
+split_pseudo = squeeze(mean(pledata(:,:,prestim_pseudo),2));
+
+for c = 1:settings.nbchan
+    splitindex = split_pseudo(c,:) > median(split_pseudo(c,:));
+    
+    naple.raw.pseudo(c,:,1) = mean(pledata(c,:,find(~splitindex)),3);
+    naple.raw.pseudo(c,:,2) = mean(pledata(c,:,find(splitindex)),3);
+    
+    naple.pseudo(c,:,1) = (mean(pledata(c,poststim_pseudo,find(~splitindex)),3)...
+        -mean(mean(pledata(c,prestim_pseudo,find(~splitindex)),3),2));
+    naple.pseudo(c,:,2) = (mean(pledata(c,poststim_pseudo,find(splitindex)),3)...
+        -mean(mean(pledata(c,prestim_pseudo,find(splitindex)),3),2));
+    
+    %         tmp = abs(datacat(c,poststim_pseudo,find(~splitindex)))...
+    %             -mean(abs(datacat(c,prestim_pseudo,find(~splitindex))),2);
+    %         tmppseudo{1} = squeeze(trapz(tmp,2));
+    %
+    %         tmp = abs(datacat(c,poststim_pseudo,find(splitindex)))...
+    %             -mean(abs(datacat(c,prestim_pseudo,find(splitindex))),2);
+    %         tmppseudo{2} = squeeze(trapz(tmp,2));
+    
+    switch settings.units
+        case 'prcchange'
+            naple.pseudo(c,:,1) = 100*naple.pseudo(c,:,1)./mean(mean(pledata(c,prestim_pseudo,:),3),2);
+            naple.pseudo(c,:,2) = 100*naple.pseudo(c,:,2)./mean(mean(pledata(c,prestim_pseudo,:),3),2);
+        case 'zscore'
+            naple.pseudo(c,:,1) = zscore(naple.pseudo(c,:,1),0,2);
+            naple.pseudo(c,:,2) = zscore(naple.pseudo(c,:,2),0,2);
+        case 'log'
+            naple.pseudo(c,:,1) = 10*log10(naple.pseudo(c,:,1));
+            naple.pseudo(c,:,2) = 10*log10(naple.pseudo(c,:,2));
+    end
+    
+    splitindex = split_real(c,:) > median(split_real(c,:));
+    
+    naple.raw.real(c,:,1) = mean(pledata(c,:,find(~splitindex)),3);
+    naple.raw.real(c,:,2) = mean(pledata(c,:,find(splitindex)),3);
+    
+    naple.real(c,:,1) = (mean(pledata(c,poststim_real,find(~splitindex)),3)...
+        -mean(mean(pledata(c,prestim_real,find(~splitindex)),3),2));
+    naple.real(c,:,2) = (mean(pledata(c,poststim_real,find(splitindex)),3)...
+        -mean(mean(pledata(c,prestim_real,find(splitindex)),3),2));
+    
+    %         tmp = abs(datacat(c,poststim_pseudo,find(~splitindex)))...
+    %             -mean(abs(datacat(c,prestim_pseudo,find(~splitindex))),2);
+    %         tmpreal{1}(:) = squeeze(trapz(tmp,2));
+    %
+    %         tmp = abs(datacat(c,poststim_pseudo,find(splitindex)))...
+    %             -mean(abs(datacat(c,prestim_pseudo,find(splitindex))),2);
+    %         tmpreal{2}(:) = squeeze(trapz(tmp,2));
+    
+    %        [~,~,~,stats] = ttest2(tmpreal{2}-tmppseudo{2},tmpreal{1}-tmppseudo{1});
+    %        naple{q}.t(c) = stats.t;
+    
+    switch settings.units
+        case 'prcchange'
+            naple.real(c,:,1) = 100*naple.real(c,:,1)./mean(mean(pledata(c,prestim_real,:),3),2);
+            naple.real(c,:,2) = 100*naple.real(c,:,2)./mean(mean(pledata(c,prestim_real,:),3),2);
+        case 'zscore'
+            naple.real(c,:,1) = zscore(naple.real(c,:,1),0,2);
+            naple.real(c,:,2) = zscore(naple.real(c,:,2),0,2);
+        case 'log'
+            naple.real(c,:,1) = 10*log10(naple.real(c,:,1));
+            naple.real(c,:,2) = 10*log10(naple.real(c,:,2));
+    end
+    
+    naple.diff = naple.real - naple.pseudo;
+end
+
+
+save(fullfile(settings.outputdir,[settings.datasetname '_' filename '_naddPLE.mat']),'datacalc','-v7.3')
+
+end
+%
