@@ -37,6 +37,7 @@ opts = setdefault(opts,'paired','no');
 opts = setdefault(opts,'fbandnames',{'Delta','Theta','Alpha','Beta','Gamma'});
 opts = setdefault(opts,'statfields',fields);
 opts = setdefault(opts,'frange_ple',[fbands(1,1) fbands(end,end)]);
+opts = setdefault(opts,'powermode','abs');
 
 frange = intersect(find(spec.(fields{1})(1).freq(:,1) > opts.frange_ple(1)),find(spec.(fields{1})(1).freq(:,1) < opts.frange_ple(1,2)));
 
@@ -76,7 +77,7 @@ if strcmpi(opts.powermode,'rel')
     osci = relosci;
 else
     mixd = absmixd;
-    osci = relosci;
+    osci = absosci;
 end
 
 % for c = 1:length(fields)
@@ -221,7 +222,7 @@ end
 p = panel('no-manage-font');
 
 pos = get(gcf,'position');
-set(gcf,'position',[pos(1:2) pos(3)*3 pos(4)*3],'color','w');
+set(gcf,'position',[pos(1:2) pos(3)*2 pos(4)*3],'color','w');
 
 p.de.margin = [5 5 5 5];
 
@@ -229,7 +230,7 @@ p.de.margin = [5 5 5 5];
 p.marginleft = 18;
 p.margintop = 8;
 
-p.pack('h',{1/3 2/3})
+p.pack('h',{50 50})
 
 p(1).pack('v',{1/2 1/2})
 %p(1).pack('v',{40 30 30})
@@ -243,9 +244,9 @@ p(1,1).select()
 hold on
 for c = 1:length(fields)
     if strcmpi(opts.powermode,'abs')
-        loglog(spec.(fields{c}).freq(frange,1),nanmean(spec.(fields{c}).mixd(frange,:),2),'LineWidth',1.5)
+        plot(spec.(fields{c}).freq(frange,1),nanmean(spec.(fields{c}).mixd(frange,:),2),'LineWidth',1.5)
     else
-        loglog(spec.(fields{c}).freq(frange,1),nanmean(spec.(fields{c}).mixd(frange,:),2)./...
+        plot(spec.(fields{c}).freq(frange,1),nanmean(spec.(fields{c}).mixd(frange,:),2)./...
             nanmean(nanmean(spec.(fields{c}).mixd(frange,:))),'LineWidth',1.5)
     end
 end
@@ -260,7 +261,7 @@ p(1,2,1).select()
 hold on
 for c = 1:length(fields)
     if strcmpi(opts.powermode,'abs')
-    loglog(spec.(fields{c}).freq(frange,1),nanmean(spec.(fields{c}).osci(frange,:),2),'LineWidth',1.5)
+         loglog(spec.(fields{c}).freq(frange,1),nanmean(spec.(fields{c}).osci(frange,:),2),'LineWidth',1.5)
     else
          loglog(spec.(fields{c}).freq(frange,1),nanmean(spec.(fields{c}).osci(frange,:),2)./...
             nanmean(nanmean(spec.(fields{c}).mixd(frange,:))),'LineWidth',1.5) 
@@ -268,8 +269,8 @@ for c = 1:length(fields)
 end
 FixAxes(gca,12)
 title('Oscillatory power spectrum')
-xlabel('Log Frequency (Hz)')
-ylabel('Log Power')
+xlabel('Frequency (Hz)')
+ylabel('Power')
 set(gca,'XLim',opts.frange_ple)
 
 p(1,2,2).select()
@@ -287,6 +288,7 @@ title('Fractal power spectrum')
 xlabel('Log Frequency (Hz)')
 ylabel('Log Power')
 set(gca,'XScale','log','YScale','log','XLim',opts.frange_ple)
+%Normalize_YLim(cat(1,p(1,2,1).axis,p(1,2,2).axis))
 
 
 %p(2,1).pack(2,6)
@@ -312,7 +314,6 @@ fbandnames = opts.fbandnames;
 %     numstat = length(fields);
 % end
 
-p(2).select()
 for c = 1:size(fbands,1)
     for cc = 1:length(fields)
         plotstack(c,cc,1) = nanmean(nanmean(absfrac.(fields{cc})(:,:,c),2),1);
@@ -340,29 +341,73 @@ for c = 1:size(fbands,1)
     col{c} = permute(col{c},[3 1 2]);
 end
 
-l = [];
+lgnd = [];
 for c = 1:length(fields)
-    l = [l {[fields{c} ' Fractal']} {[fields{c} ' Oscillatory']}];
+    lgnd = [lgnd {[fields{c} ' Fractal']} {[fields{c} ' Oscillatory']}];
 end
 
-[h,barpos] = plotBarStackGroups(plotstack,opts.fbandnames,col);
-hold on;
-for cc = 1:length(fields)
-    if size(mixd.(fields{cc}),1) > 1
-        er = errorbar(barpos(cc,:),mixsum(:,cc),squeeze(nanstd(nanmean(absmixd.(fields{cc}),2),[],1)./sqrt(size(absmixd.(fields{cc}),1))));
-        er.Color = [0 0 0];
-        er.LineStyle = 'none';
+p(2).pack(floor(size(fbands,1)/2),ceil(size(fbands,1)/2))
+linindx = cat(2,Make_designVect(repmat(ceil(size(fbands,1)/2)',1,floor(size(fbands,1)/2)))',...
+    repmat((1:ceil(size(fbands,1)/2))',floor(size(fbands,1)/2),1));
+
+for c = 1:size(fbands,1)
+    p(2,linindx(c,1),linindx(c,2)).select()
+    b = bar([1:length(fields)],squeeze(plotstack(c,:,:)),'stacked','HandleVisibility','off');
+    for cc = 1:2
+        b(cc).FaceColor = 'flat';
     end
-end
-legend(l)
-FixAxes(gca,14)
+    b(1).CData = l;
+    b(2).CData = palel;
+    hold on;
+    for cc = 1:length(fields)
+        if size(mixd.(fields{cc}),1) > 1
+            tmp = squeeze(nanstd(nanmean(absmixd.(fields{cc}),2),[],1)./sqrt(size(absmixd.(fields{cc}),1)));
+            er = errorbar(cc,mixsum(c,cc),tmp(c),'HandleVisibility','off');
+            er.Color = [0 0 0];
+            er.LineStyle = 'none';
+        end
+    end
+    if c == ceil(size(fbands,1)/2)
+        tmp = cat(1,l,palel);
+        indx = [];
+        for cc = 1:length(fields)
+            indx = cat(2,indx,[cc:length(fields):size(tmp,1)]);
+        end
+        tmp = tmp(indx,:);
+       manlegend(lgnd,tmp)
+    end
+    FixAxes(gca,14)
 ylabel('Power')
-set(gca,'YScale','log')
+set(gca,'XTickLabel',fields)
+title(fbandnames{c})
+end
 
+% 
+% p(2).select()
+% [h,barpos] = plotBarStackGroups(plotstack,opts.fbandnames,col);
+% hold on;
+% for cc = 1:length(fields)
+%     if size(mixd.(fields{cc}),1) > 1
+%         er = errorbar(barpos(cc,:),mixsum(:,cc),squeeze(nanstd(nanmean(absmixd.(fields{cc}),2),[],1)./sqrt(size(absmixd.(fields{cc}),1))));
+%         er.Color = [0 0 0];
+%         er.LineStyle = 'none';
+%     end
+% end
+% legend(l)
+% FixAxes(gca,14)
+% ylabel('Power')
+% set(gca,'YScale','log')
+if isfield(opts,'filename')
+    savefig([opts.filename '_a.fig'])
+    export_fig([opts.filename '_a.png'],'-m4')
+end
 
 figure
 
 p = panel('no-manage-font')
+pos = get(gcf,'position');
+set(gcf,'position',[pos(1:2) pos(3)*2 pos(4)*3],'color','w');
+
 
 p.pack('v',{75 25})
 p(1).pack('v',{50 50})
@@ -429,6 +474,7 @@ ax.XAxis.Visible = 'off';
 ylabel('Log mixed power')
 legend(fields)
 FixAxes(gca,14)
+ax(1) = gca;
 
 p(1,2).select()
 for c = 1:length(fields)
@@ -474,6 +520,9 @@ set(gca,'XTick',(1:s:s*size(fbands,1))+(0.4*(length(fields)-1)/2),'XTickLabel',o
 
 ylabel('Log oscillatory power')
 FixAxes(gca,14)
+ax(2) = gca;
+
+Normalize_Ylim(ax)
 
 p(2,1).select()
 if strcmpi(opts.paired,'yes')
@@ -552,6 +601,18 @@ title('Fractal PLE')
 set(gca,'XTickLabel',fields)
 ylabel('PLE')
 FixAxes(gca,14)
+
+set(gcf,'Color','w')
+
+p.marginleft = 20;
+p(1,1).marginbottom = 5;
+p(1).marginbottom = 18;
+p(2,1).marginright = 12;
+
+if isfield(opts,'filename')
+    savefig([opts.filename '_b.fig'])
+    export_fig([opts.filename '_b.png'],'-m4')
+end
 
 % pvals = struct;
 % pvals.pvals.p_irasa_dif = pvals.p_dif_irasa;

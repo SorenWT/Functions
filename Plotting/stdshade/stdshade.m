@@ -47,12 +47,24 @@ switch method
         astd=nanstd(amatrix)/sqrt(size(amatrix,1)-1); % to get sem shading
     case 'mad'
         astd = mad(amatrix);
+    case 'logstd' % std shading when log-scaling data
+        astd = nanstd(log10(amatrix));
 end
 
 if exist('alpha','var')==0 || isempty(alpha)
-    fill([F fliplr(F)],[amean+astd fliplr(amean-astd)],acolor,'linestyle','none','HandleVisibility','off');
-    acolor='k';
-else fill([F fliplr(F)],[amean+astd fliplr(amean-astd)],acolor, 'FaceAlpha', alpha,'linestyle','none','HandleVisibility','off');
+    if ~strcmpi(method,'logstd')
+        fill([F fliplr(F)],[amean+astd fliplr(amean-astd)],acolor,'linestyle','none','HandleVisibility','off');
+        acolor='k';
+    else
+                fill([F fliplr(F)],[amean.*astd fliplr(amean./astd)],acolor,'linestyle','none','HandleVisibility','off');
+        acolor='k';
+    end
+else
+    if ~strcmpi(method,'logstd')
+    fill([F fliplr(F)],[amean+astd fliplr(amean-astd)],acolor, 'FaceAlpha', alpha,'linestyle','none','HandleVisibility','off');
+    else
+            fill([F fliplr(F)],[amean.*astd fliplr(amean./astd)],acolor, 'FaceAlpha', alpha,'linestyle','none','HandleVisibility','off');
+    end
 end
 
 ylim = [min([amean+astd amean-astd]),max([amean+astd amean-astd])];

@@ -51,6 +51,7 @@ end
 
 meanspec = mergestructs(spec);
 meanspec = structfun(@(data)nanmean(data,3),meanspec,'UniformOutput',false);
+meanspec = structfun(@squeeze,meanspec,'UniformOutput',false);
 
 %% Regression stuff
 for i = 1:size(fbands,1)
@@ -80,42 +81,53 @@ figure
 p = panel('no-manage-font');
 
 p.pack('v',{50 50})
+p(1).pack('h',{20 60 20})
+p(2).pack('h',{50 50})
 
-p(1).pack('v',{50 50})
-p(1,2).pack('h',{50 50})
-
-p(1,1).select()
+p(1,2).select()
 hold on
-loglog(meanspec.freq(frange,1),nanmean(meanspec.mixd(frange,:),2),'LineWidth',2)
+%loglog(meanspec.freq(frange,1),nanmean(meanspec.mixd(frange,:),2),'LineWidth',2)
+stdshade(meanspec.freq(frange,1),meanspec.mixd(frange,:),'b',0.15,1,'logstd')
 
 FixAxes(gca,14)
 title('Mixed power spectrum')
 xlabel('Frequency (Hz)')
 ylabel('Power')
-set(gca,'XScale','log','YScale','log','XLim',opts.frange_ple)
+set(gca,'XScale','log','YScale','log')
+set(gca,'XLim',opts.frange_ple)
+%set(gca,'XLim',log(opts.frange_ple))
 
-p(1,2,1).select()
+p(2,1).select()
 hold on
-plot(meanspec.freq(frange,1),nanmean(meanspec.osci(frange,:),2),'LineWidth',2)
+%plot(meanspec.freq(frange,1),nanmean(meanspec.osci(frange,:),2),'LineWidth',2)
+stdshade(meanspec.freq(frange,1),meanspec.osci(frange,:),'b',0.15,1,'std')
 
 FixAxes(gca,14)
 title('Oscillatory power spectrum')
 xlabel('Frequency (Hz)')
 ylabel('Power')
+set(gca,'XScale','log','YScale','log')
 set(gca,'XLim',opts.frange_ple)
+%set(gca,'XLim',log(opts.frange_ple))
 
-p(1,2,2).select()
+
+p(2,2).select()
 hold on
-loglog(meanspec.freq(frange,1),nanmean(meanspec.frac(frange,:),2),'LineWidth',2)
+%loglog(meanspec.freq(frange,1),nanmean(meanspec.frac(frange,:),2),'LineWidth',2)
+stdshade(meanspec.freq(frange,1),meanspec.frac(frange,:),'b',0.15,1,'logstd')
 FixAxes(gca,14)
 title('Fractal power spectrum')
 xlabel('Frequency (Hz)')
 ylabel('Power')
-set(gca,'XScale','log','YScale','log','XLim',opts.frange_ple)
+set(gca,'XScale','log','YScale','log')
+set(gca,'XLim',opts.frange_ple)
+%set(gca,'XLim',log(opts.frange_ple))
+
+%Normalize_Ylim(cat(2,p(1,2).axis,p(2,1).axis,p(2,2).axis))
 
 
 p.marginleft = 22;
-p(1,1).marginbottom = 24;
+p(1).marginbottom = 24;
 p.margintop = 8;
 
 
@@ -172,7 +184,7 @@ end
 hold on;
 for cc = 1:1
     if size(absmixd,1) > 1
-        er = errorbar(barpos(cc,:),squeeze(nanmean(nanmean(absmixd,1),2)),squeeze(nanstd(nanmean(absmixd,2),[],1)));
+        er = errorbar(barpos(cc,:),squeeze(nanmean(nanmean(absmixd,1),2)),squeeze(nanstd(nanmean(absmixd,2),[],1))./sqrt(size(absmixd,1)));
         er.Color = [0 0 0];
         er.LineStyle = 'none';
     end
@@ -180,6 +192,11 @@ end
 legend({'Fractal Power','Oscillatory Power'})
 FixAxes(gca,14)
 ylabel('Power')
+
+p.marginleft = 18;
+p.de.marginleft = 15;
+p.marginright = 20;
+p.de.marginright = 5;
 % 
 % p(2).pack('h',repmat({1/size(fbands,1)},1,size(fbands,1)))
 % for i = 1:size(fbands,1)
