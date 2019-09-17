@@ -184,9 +184,9 @@ parfor i = 1:length(files)
                 
                 freqdata.fourierspctrm = permute(freqdata.fourierspctrm,[1 3 2 4]);
                 
-                %                 if strcmpi(settings.tfparams.naddple,'yes')
-                %                     Calc_naddPLE(settings,freqdata,files(i).name)
-                %                 end
+                if strcmpi(settings.tfparams.naddple,'yes')
+                    Calc_naddPLE(settings,freqdata,files(i).name)
+                end
                 
                 freqdata.fourierspctrm = freqdata.fourierspctrm + 0.001*min(min(min(min(freqdata.fourierspctrm))))*j; % add a tiny imaginary component for compatibility
                 
@@ -745,7 +745,7 @@ for c = 1:settings.nbchan
 end
 
 
-save(fullfile(settings.outputdir,[settings.datasetname '_' filename '_naddPLE.mat']),'datacalc','-v7.3')
+save(fullfile(settings.outputdir,[settings.datasetname '_' filename '_naddPLE.mat']),'naple','-v7.3')
 
 end
 %
