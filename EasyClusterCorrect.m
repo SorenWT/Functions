@@ -223,6 +223,10 @@ for c = 1:length(tlock)
     newdata{c} = tlock{c}.trial(:,:,1)';
 end
 
+if isfield(opts,'partial')
+   cfg.partial = opts.partial; 
+end
+
 if any(cell2mat(cellfun(@any,cellfun(@isnan,newdata,'UniformOutput',false),'UniformOutput',false)))
     cfg.nanrand = 'yes';
 end

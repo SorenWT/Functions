@@ -158,6 +158,12 @@ export_fig('Fig1.png','-m4')
 save('Panel1.mat','p')
 close
 
+%% Figure 1.5: ERSP heatmaps
+
+figure
+
+p = panel('no-manage-font')
+
 %% Figure 2: Nonadditivity of ERSP in different frequency bands
 
 figure

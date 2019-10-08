@@ -42,7 +42,7 @@ count = 1;
 for c = 1:length(stats)
     if isfield(stats{c}.cluster,'posclusters')
         for cc = 1:length(stats{c}.cluster.posclusters)
-            if stats{c}.cluster.posclusters(cc).prob < cfg.thresh
+            if stats{c}.cluster.posclusters(cc).prob < cfg.thresh/2
                 measure{count} = func2str(data{1}.meas{c});
                 pvalue(count) = stats{c}.cluster.posclusters(cc).prob;
                 tmp = stats{c}.cluster.label(find(stats{c}.cluster.posclusterslabelmat == cc));
@@ -68,7 +68,7 @@ for c = 1:length(stats)
     end
     if isfield(stats{c}.cluster,'negclusters')
         for cc = 1:length(stats{c}.cluster.negclusters)
-            if stats{c}.cluster.negclusters(cc).prob < cfg.thresh
+            if stats{c}.cluster.negclusters(cc).prob < cfg.thresh/2
                 measure{count} = func2str(data{1}.meas{c});
                 pvalue(count) = stats{c}.cluster.negclusters(cc).prob;
                 tmp = stats{c}.cluster.label(find(stats{c}.cluster.negclusterslabelmat == cc));
@@ -98,11 +98,11 @@ end
 
 tbl = table;
 tbl.measure = vert(measure);
-tbl.pvalue = vert(pvalue);
+tbl.pvalue = vert(pvalue*2); %report
 tbl.labels = vert(labels);
 tbl.([cfg.cond{1} '_mean']) = vert(allmean1);
 tbl.([cfg.cond{2} '_mean']) = vert(allmean2);
-tbl.([cfg.cond{1} '_clustermean']) = vert(allmean1);
-tbl.([cfg.cond{2} '_clustermean']) = vert(allmean2);
+tbl.([cfg.cond{1} '_clustermean']) = vert(clustmean1);
+tbl.([cfg.cond{2} '_clustermean']) = vert(clustmean2);
 tbl.cluster_diff = vert(diff);
 tbl.summary = vert(dirn);
