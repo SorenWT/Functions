@@ -5,7 +5,12 @@ if nargin < 3
 end
 
 for c = 1:length(items)
-   tmp = find(abs(list-items(c)) == min(abs(list-items(c))));
+    %if first==1
+        [~,tmp] = min(abs(list-items(c)));
+        %tmp = find(abs(list-items(c)) == min(abs(list-items(c))),1);
+    %else
+        %tmp = find(abs(list-items(c)) == min(abs(list-items(c))));
+    %end
     indicesout(c) = tmp(first);
 end
 
