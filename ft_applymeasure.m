@@ -79,6 +79,10 @@ function [outputs] = ft_applymeasure(cfg)
 %         (default = 'no')
 %      subsrange: calculate on only a given range of files - for use with
 %         clusters like ComputeCanada (default = 1:length(files))
+%      readonly: option in case the relevant files are in a read-only
+%         location - saves intermediate outputs like IRASA spectra or
+%         envelope data in the directory of the output file, not the input
+%         files (default = 'no')
 %
 %      Surrogating and subsampling:
 %
@@ -171,6 +175,8 @@ else
     cfg = setdefault(cfg,'concatenate','yes');
     
     cfg = setdefault(cfg,'single','no');
+    
+    cfg = setdefault(cfg,'readonly','no');
     
     if ~cfgcheck(cfg,'parallel')
         cfg.parallel.do_parallel = 'no';
@@ -649,7 +655,16 @@ if cfgcheck(cfg.envelope,'do_envelope','yes')
     end
     
     if cfgcheck(cfg.envelope,'save_envelope','yes')
-        save([fname '_envelope_' cfg.envelope.method '.mat'],'EEG','-v7.3')
+        if strcmpi(cfg.readonly,'yes')
+            tmp = tokenize(cfg.outfile,filesep);
+           fldr = fullfile(tmp{1:end-1});
+           if fldr(1) ~= filesep
+              fldr = [filesep fldr]; 
+           end
+        else
+            fldr = pwd;
+        end
+        save(fullfile(fldr,[fname '_envelope_' cfg.envelope.method '.mat']),'EEG','-v7.3')
     end
 end
 
@@ -664,7 +679,16 @@ if cfgcheck(cfg.irasa,'do_irasa','yes')
     end
     
     if cfgcheck(cfg.irasa,'save_specs','yes')
-        save([fname '_IRASA_specs.mat'],'EEG','-v7.3');
+        if strcmpi(cfg.readonly,'yes')
+           tmp = tokenize(cfg.outfile,filesep);
+           fldr = fullfile(tmp{1:end-1});
+           if fldr(1) ~= filesep
+              fldr = [filesep fldr]; 
+           end
+        else
+            fldr = pwd;
+        end
+        save(fullfile(fldr,[fname '_IRASA_specs.mat']),'EEG','-v7.3');
     end
 end
 end
