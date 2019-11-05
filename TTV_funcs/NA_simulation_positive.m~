@@ -18,9 +18,9 @@ for m = mvals
             subAmpl = rand+0.5;
             
             for cc = 1:75 % 5-min resting state
-                spont = createFN(1.75/2,2000)*subAmpl;
+                spont = createFN(1.75/2,2000);
                 spont = ft_preproc_lowpassfilter(spont,500,10,4);
-                spont = NormOntoRange(spont,[1 2]);
+                spont = NormOntoRange(spont,[1 2])*subAmpl;
                 cfg.osci.s1.ampl = horz(spont); % no task-evoked activity
                 %cfg.osci.s1.ampl{cc} = horz(spont)-[zeros(1,1000) rand*sin((1:500)*pi/500) zeros(1,500)];
             end
@@ -36,8 +36,12 @@ for m = mvals
             for cc = 1:128
                 spont = createFN(1.75/2,2000)*subAmpl;
                 spont = ft_preproc_lowpassfilter(spont,500,10,4);
-                spont = NormOntoRange(spont,[1 2]);
-                cfg.osci.s1.ampl{cc} = horz(spont)-[zeros(1,1000) rand*sin((1:500)*pi/500) zeros(1,500)];
+                spont = NormOntoRange(spont,[1 2])*S;
+                %prestim(cc) = mean(spont(951:1000))-1;
+                corrfact = 0.5*(mean(spont(951:1000))-0.5);
+                evoked = -[zeros(1,1000) corrfact*sin((1:500)*pi/500) zeros(1,500)];
+                cfg.osci.s1.ampl{cc} = horz(spont)+horz(evoked);
+                %poststim(cc) = mean(evoked(1301:1400));
             end
             task{c} = ft_freqsimulation_swt(cfg);
             
@@ -97,7 +101,7 @@ for c = 1:length(mvals)
 end
 
 
-save('simulation_negative_alloutputs.mat','allstats_pt','allstats_ttv','all_datacalc','all_restmeas','med','-v7.3')
+save('simulation_positive_alloutputs.mat','allstats_pt','allstats_ttv','all_datacalc','all_restmeas','med','-v7.3')
 
 p = panel('no-manage-font');
 
@@ -143,8 +147,8 @@ end
 
 set(gcf,'Color','w')
 
-savefig('Simulation_negative_fig_pseudotrial.fig')
-export_fig('Simulation_negative_fig_pseudotrial.png','-m4')
+savefig('Simulation_positive_fig_pseudotrial.fig')
+export_fig('Simulation_positive_fig_pseudotrial.png','-m4')
 
 
 
@@ -190,8 +194,8 @@ end
 
 set(gcf,'Color','w')
 
-savefig('Simulation_negative_fig_ttv.fig')
-export_fig('Simulation_negative_fig_ttv.png','-m4')
+savefig('Simulation_positive_fig_ttv.fig')
+export_fig('Simulation_positive_fig_ttv.png','-m4')
 
 function [restmeas] = Rest_calc(foi,bandpass,sim)
     sim.fsample = 500;
