@@ -13,24 +13,24 @@ function figs = ft_measurestatplot(cfg,data,stats)
 %         (default = 'all')
 %      meas: indices of the measures you want to plot (default = 'all' -
 %         makes a new figure for each measure
-%      measname: names of the measures, to plot as figure titles (default =
-%         from measure handles)
+%      measname: a cell array indicating the names of the measures
+%         (default =from measure handles)
 %      lay: a fieldtrip layout if using meg data
-%      plotmode: 'topo','violin', or 'combined'. Plots either the topography 
-%         of the measures or a violin plot of the means for each group. 
+%      plotmode: 'topo','violin', or 'combined'. Plots either the topography
+%         of the measures or a violin plot of the means for each group.
 %         'combined' plots the violin plots below and the topoplots above
 %         (default = 'combined')
-%      measname: a cell array indicating the names of the measures (default
-%         = none)
 %      colormap: the colormap to use when plotting topographies (default =
 %         parula)
 %      datasetinfo: used for source-space plotting. Should contain the
 %         fields:
-%         
+%
 %         atlas: the atlas used to parcellate the data
 %         sourcemodel: a head shape or source model that corresponds to the
 %         atlas
 %      savefig: save the figures as Matlab figures (default = 'no')
+%      reverse: if set to 1, reverses the comparison condition from cond_1 
+%         - cond_2 to cond_2 - cond_1 (default = 0) 
 %
 % data: a cell array of outputs structs from ft_applymeasure
 %
@@ -50,12 +50,14 @@ if ~cfgcheck(cfg,'cond')
 end
 
 if ~cfgcheck(cfg,'channel')
-    cfg.channel = 'all';
+    cfg.channel = 1:size(data{1}.data,2);
 end
 
 if ~cfgcheck(cfg,'meas')
     cfg.meas = 1:length(data{1}.meas);
 end
+
+cfg = setdefault(cfg,'reverse',0);
 
 cfg = setdefault(cfg,'measname',cellfun(@func2str,data{1}.meas(cfg.meas),'UniformOutput',false));
 
@@ -71,6 +73,12 @@ if nargin < 3
     stats = [];
 end
 
+if cfg.reverse
+    cord = [2 1];
+else
+    cord = [1 2];
+end
+
 %% Plotting topos
 
 if cfgcheck(cfg,'plotmode','topo')
@@ -78,93 +86,101 @@ if cfgcheck(cfg,'plotmode','topo')
         if cfgcheck(cfg,'datatype','eeg')
             for c = cfg.meas
                 figs(c) = figure;
+                clear ax
                 for cc = 1:length(data)
                     subplot(1,length(data)+1,cc)
-                    topoplot(mean(data{cc}.data(:,:,c),1),data{1}.chanlocs);
+                    topoplot(mean(data{cc}.data(:,:,c),1),data{1}.chanlocs,'maplimits','maxmin');
                     title(cfg.cond{cc})
-                    FixAxes(gca,16)
+                    FixAxes(gca,20)
                     colormap(cfg.colormap)
+                    ax(cc) = gca;
                 end
+                Normalize_Clim(ax)
+                cbar = colorbar('Location','eastoutside'); cbar.Label.String = cfg.measname{find(cfg.meas==c)}; cbar.Label.FontSize = 20;
+                
                 
                 subplot(1,length(data)+1,length(data)+1)
                 if isfield(stats{c},'cluster')
-                    cluster_topoplot(mean(data{1}.data(:,:,c),1)-mean(data{2}.data(:,:,c),1),...
-                        data{1}.chanlocs,stats{c}.p,stats{c}.cluster.prob < 0.05)
+                    cluster_topoplot(mean(data{cord(1)}.data(:,:,c),1)-mean(data{cord(2)}.data(:,:,c),1),...
+                        data{1}.chanlocs,stats{c}.p,stats{c}.cluster.mask)
                 elseif isfield(stats{c},'fdr')
-                    cluster_topoplot(mean(data{1}.data(:,:,c),1)-mean(data{2}.data(:,:,c),1),...
+                    cluster_topoplot(mean(data{cord(1)}.data(:,:,c),1)-mean(data{cord(2)}.data(:,:,c),1),...
                         data{1}.chanlocs,stats{c}.p,stats{c}.fdr < 0.05)
                 else
-                    cluster_topoplot(mean(data{1}.data(:,:,c),1)-mean(data{2}.data(:,:,c),1),...
+                    cluster_topoplot(mean(data{cord(1)}.data(:,:,c),1)-mean(data{cord(2)}.data(:,:,c),1),...
                         data{1}.chanlocs,stats{c}.p,stats{c}.p < 0.05)
                 end
-                title([cfg.cond{1} ' - ' cfg.cond{2}])
-                FixAxes(gca,16)
+                title([cfg.cond{cord(1)} ' - ' cfg.cond{cord(2)}])
+                FixAxes(gca,20)
                 colormap(cfg.colormap)
-                Normalize_Clim(gcf)
-                cbar = colorbar('Location','eastoutside'); cbar.Label.String = cfg.measname{c}; cbar.Label.FontSize = 14;
-                set(figs(c),'name',cfg.measname{c})
+                cbar = colorbar('Location','eastoutside'); cbar.Label.String = ['Difference in ' cfg.measname{find(cfg.meas==c)}]; cbar.Label.FontSize = 20;
+                set(figs(c),'name',cfg.measname{find(cfg.meas==c)},'color','w')
             end
         elseif cfgcheck(cfg,'datatype','meg')
             for c = cfg.meas
                 figs(c) = figure;
+                clear ax
                 for cc = 1:length(data)
                     subplot(1,length(data)+1,cc)
                     ft_topoplot_vec(cfg.lay,mean(data{cc}.data(:,:,c),1),data{1}.chan);
                     title(cfg.cond{cc})
-                    FixAxes(gca,16)
+                    FixAxes(gca,20)
                     colormap(cfg.colormap)
+                    ax(cc) = gca;
                 end
+                Normalize_Clim(ax)
                 
                 subplot(1,length(data)+1,length(data)+1)
                 if isfield(stats{c},'cluster')
-                    ft_cluster_topoplot(cfg.lay,mean(data{1}.data(:,:,c),1)-mean(data{2}.data(:,:,c),1),...
-                        data{1}.chan,stats{c}.p,stats{c}.cluster.prob < 0.05)
+                    ft_cluster_topoplot(cfg.lay,mean(data{cord(1)}.data(:,:,c),1)-mean(data{cord(2)}.data(:,:,c),1),...
+                        data{1}.chan,stats{c}.p,stats{c}.cluster.mask)
                 elseif isfield(stats{c},'fdr')
-                    ft_cluster_topoplot(cfg.lay,mean(data{1}.data(:,:,c),1)-mean(data{2}.data(:,:,c),1),...
+                    ft_cluster_topoplot(cfg.lay,mean(data{cord(1)}.data(:,:,c),1)-mean(data{cord(2)}.data(:,:,c),1),...
                         data{1}.chan,stats{c}.p,stats{c}.fdr < 0.05)
                 else
-                    ft_cluster_topoplot(cfg.lay,mean(data{1}.data(:,:,c),1)-mean(data{2}.data(:,:,c),1),...
+                    ft_cluster_topoplot(cfg.lay,mean(data{cord(1)}.data(:,:,c),1)-mean(data{cord(2)}.data(:,:,c),1),...
                         data{1}.chan,stats{c}.p,stats{c}.p < 0.05)
                 end
-                title([cfg.cond{1} ' - ' cfg.cond{2}])
-                Normalize_Clim(gcf)
-                cbar = colorbar('Location','eastoutside'); cbar.Label.String = cfg.measname{c}; cbar.Label.FontSize = 14;
-                FixAxes(gca,16)
+                title([cfg.cond{cord(1)} ' - ' cfg.cond{cord(2)}])
+                cbar = colorbar('Location','eastoutside'); cbar.Label.String = ['Difference in ' cfg.measname{find(cfg.meas==c)}]; cbar.Label.FontSize = 20;
+                FixAxes(gca,20)
                 colormap(cfg.colormap)
-                                set(figs(c),'name',cfg.measname{c})
-
+                set(figs(c),'name',cfg.measname{find(cfg.meas==c)},'color','w')
+                
             end
             
         elseif cfgcheck(cfg,'datatype','source')
             for c = cfg.meas
                 figs(c) = figure;
+                clear ax
                 for cc = 1:length(data)
                     subplot(1,length(data)+1,cc)
                     ft_cluster_sourceplot(mean(data{cc}.data(:,:,c),1),cfg.datasetinfo.sourcemodel,cfg.datasetinfo.atlas,...
                         ones(size(mean(data{cc}.data(:,:,c),1))));
                     title(cfg.cond{cc})
-                    FixAxes(gca,16)
+                    FixAxes(gca,20)
                     colormap(cfg.colormap)
+                    ax(cc) = gca;
                 end
+                Normalize_Clim(ax)
                 
                 subplot(1,length(data)+1,length(data)+1)
                 if isfield(stats{c},'cluster')
-                    ft_cluster_sourceplot(mean(data{1}.data(:,:,c),1)-mean(data{2}.data(:,:,c),1),...
-                        cfg.datasetinfo.sourcemodel,cfg.datasetinfo.atlas,stats{c}.cluster.prob < 0.05)
+                    ft_cluster_sourceplot(mean(data{cord(1)}.data(:,:,c),1)-mean(data{cord(2)}.data(:,:,c),1),...
+                        cfg.datasetinfo.sourcemodel,cfg.datasetinfo.atlas,stats{c}.cluster.mask)
                 elseif isfield(stats{c},'fdr')
-                    ft_cluster_topoplot(mean(data{1}.data(:,:,c),1)-mean(data{2}.data(:,:,c),1),...
+                    ft_cluster_topoplot(mean(data{cord(1)}.data(:,:,c),1)-mean(data{cord(2)}.data(:,:,c),1),...
                         cfg.datasetinfo.sourcemodel,cfg.datasetinfo.atlas,stats{c}.fdr < 0.05)
                 else
-                    ft_cluster_topoplot(cfg.lay,mean(data{1}.data(:,:,c),1)-mean(data{2}.data(:,:,c),1),...
+                    ft_cluster_topoplot(cfg.lay,mean(data{cord(1)}.data(:,:,c),1)-mean(data{cord(2)}.data(:,:,c),1),...
                         cfg.datasetinfo.sourcemodel,cfg.datasetinfo.atlas,stats{c}.p < 0.05)
                 end
-                title([cfg.cond{1} ' - ' cfg.cond{2}])
-                Normalize_Clim(gcf,1)
-                cbar = colorbar('Location','eastoutside'); cbar.Label.String = cfg.measname{c}; cbar.Label.FontSize = 14;
-                %FixAxes(gca,16)
+                title([cfg.cond{cord(1)} ' - ' cfg.cond{cord(2)}])
+                cbar = colorbar('Location','eastoutside'); cbar.Label.String = ['Difference in ' cfg.measname{find(cfg.meas==c)}]; cbar.Label.FontSize = 20;
+                %FixAxes(gca,20)
                 colormap(cfg.colormap)
-                                set(figs(c),'name',cfg.measname{c})
-
+                set(figs(c),'name',cfg.measname{find(cfg.meas==c)},'color','w')
+                
             end
             
         end
@@ -174,15 +190,15 @@ if cfgcheck(cfg,'plotmode','topo')
                 figs(c) = figure;
                 for cc = 1:length(data)
                     subplot(1,length(data),cc)
-                    topoplot(mean(data{cc}.data(:,:,c),1),data{1}.chanlocs);
+                    topoplot(mean(data{cc}.data(:,:,c),1),data{1}.chanlocs,'maplimits','maxmin');
                     title(cfg.cond{cc})
-                    FixAxes(gca,16)
+                    FixAxes(gca,20)
                     colormap(cfg.colormap)
                 end
                 Normalize_Clim(gcf)
-                cbar = colorbar('Location','eastoutside'); cbar.Label.String = cfg.measname{c}; cbar.Label.FontSize = 14;
-                            set(figs(c),'name',cfg.measname{c})
-
+                cbar = colorbar('Location','eastoutside'); cbar.Label.String = cfg.measname{find(cfg.meas==c)}; cbar.Label.FontSize = 20;
+                set(figs(c),'name',cfg.measname{find(cfg.meas==c)},'color','w')
+                
             end
             
         elseif cfgcheck(cfg,'datatype','meg')
@@ -192,13 +208,13 @@ if cfgcheck(cfg,'plotmode','topo')
                     subplot(1,length(data),cc)
                     ft_topoplot_vec(cfg.lay,mean(data{cc}.data(:,:,c),1),data{1}.chan);
                     title(cfg.cond{cc})
-                    FixAxes(gca,16)
+                    FixAxes(gca,20)
                     colormap(cfg.colormap)
                 end
                 Normalize_Clim(gcf)
-                cbar = colorbar('Location','eastoutside'); cbar.Label.String = cfg.measname{c}; cbar.Label.FontSize = 14;
-                            set(figs(c),'name',cfg.measname{c})
-
+                cbar = colorbar('Location','eastoutside'); cbar.Label.String = cfg.measname{find(cfg.meas==c)}; cbar.Label.FontSize = 20;
+                set(figs(c),'name',cfg.measname{find(cfg.meas==c)},'color','w')
+                
             end
         elseif cfgcheck(cfg,'datatype','source')
             for c = cfg.meas
@@ -208,12 +224,13 @@ if cfgcheck(cfg,'plotmode','topo')
                     ft_cluster_sourceplot(mean(data{cc}.data(:,:,c),1),cfg.datasetinfo.sourcemodel,cfg.datasetinfo.atlas,...
                         ones(size(mean(data{cc}.data(:,:,c),1))));
                     title(cfg.cond{cc})
-                    FixAxes(gca,16)
+                    FixAxes(gca,20)
                     colormap(cfg.colormap)
                     Normalize_Clim(gcf,1)
                 end
-                            set(figs(c),'name',cfg.measname{c})
-    
+                cbar = colorbar('Location','eastoutside'); cbar.Label.String = cfg.measname{find(cfg.meas==c)}; cbar.Label.FontSize = 20;
+                set(figs(c),'name',cfg.measname{find(cfg.meas==c)},'color','w')
+                
             end
         end
     end
@@ -222,12 +239,12 @@ elseif cfgcheck(cfg,'plotmode','violin')
     for i = cfg.meas
         figs(i) = figure;
         for c = 1:length(data)
-            datastruct.(cfg.cond{c}) = mean(data{c}.data(:,:,i),2);
+            datastruct.(cfg.cond{c}) = mean(data{c}.data(:,cfg.channel,i),2);
         end
-        ylabel(cfg.measname{i})
+        ylabel(cfg.measname{find(cfg.meas==i)})
         violinplot(datastruct)
-        FixAxes(gca,16)
-        set(figs(i),'name',cfg.measname{c});
+        FixAxes(gca,20)
+        set(figs(i),'name',cfg.measname{find(cfg.meas==i)},'color','w');
     end
 elseif cfgcheck(cfg,'plotmode','combined')
     for i = cfg.meas
@@ -257,13 +274,13 @@ elseif cfgcheck(cfg,'plotmode','combined')
         p(2).select(figaxes)
         
         p.margintop = 10;
-        p.marginleft = 20;
+        p.marginleft = 25;
         p(1).marginbottom = 5;
         
         %AddFigureLabel(p(1,1).axis,'A','yes')
         %AddFigureLabel(p(2).axis,'B')
         
-        set(figs(i),'name',cfg.measname{c})
+        set(figs(i),'name',cfg.measname{find(cfg.meas==i)},'color','w')
         
         close(topofig)
         close(violinfig)
@@ -272,6 +289,6 @@ end
 
 if cfgcheck(cfg,'savefig','yes')
     for c = 1:length(figs)
-       savefig(figs(c),['Fig ' num2str(c) '-' cfg.measname{c} '.fig']); 
+        savefig(figs(c),['Fig ' num2str(c) '-' cfg.measname{c} '.fig']);
     end
 end

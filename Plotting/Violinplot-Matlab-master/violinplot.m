@@ -48,56 +48,70 @@ function violins = violinplot(data, cats, varargin)
 % Copyright (c) 2016, Bastian Bechtold
 % This code is released under the terms of the BSD 3-clause license
 
-    hascategories = exist('cats','var') && not(isempty(cats));
+if CheckInput(varargin,'offset')
+    offset = EasyParse(varargin,'offset');
+    varargin([find(strcmpi(varargin,'offset')):find(strcmpi(varargin,'offset'))+1]) = [];
+else
+    offset = 0;
+end
 
-    % tabular data
-    if isa(data, 'dataset') || isstruct(data) || istable(data)
-        if isa(data, 'dataset')
-            colnames = data.Properties.VarNames;
-        elseif istable(data)
-            colnames = data.Properties.VariableNames;
-        elseif isstruct(data)
-            colnames = fieldnames(data);
-        end
-        catnames = {};
-        for n=1:length(colnames)
-            if isnumeric(data.(colnames{n}))
-                catnames = [catnames colnames{n}];
-            end
-        end
-        for n=1:length(catnames)
-            thisData = data.(catnames{n});
-            violins(n) = Violin(thisData, n, varargin{:});
-        end
-        set(gca, 'xtick', 1:length(catnames), 'xticklabels', catnames);
+hascategories = exist('cats','var') && not(isempty(cats));
 
-    % 1D data, one category for each data point
-    elseif hascategories && numel(data) == numel(cats)
-        cats = categorical(cats);
-        catnames = categories(cats);
-        for n=1:length(catnames)
-            thisCat = catnames{n};
-            thisData = data(cats == thisCat);
-            violins(n) = Violin(thisData, n, varargin{:});
-        end
-        set(gca, 'xtick', 1:length(catnames), 'xticklabels', catnames);
-
-    % 1D data, no categories
-    elseif not(hascategories) && isvector(data)
-        violins = Violin(data, 1, varargin{:});
-        set(gca, 'xtick', 1);
-
-    % 2D data with or without categories
-    elseif ismatrix(data)
-        for n=1:size(data, 2)
-            thisData = data(:, n);
-            violins(n) = Violin(thisData, n, varargin{:});
-        end
-        set(gca, 'xtick', 1:size(data, 2));
-        if hascategories && length(cats) == size(data, 2)
-            set(gca, 'xticklabels', cats);
-        end
-
+% tabular data
+if isa(data, 'dataset') || isstruct(data) || istable(data)
+    if isa(data, 'dataset')
+        colnames = data.Properties.VarNames;
+    elseif istable(data)
+        colnames = data.Properties.VariableNames;
+    elseif isstruct(data)
+        colnames = fieldnames(data);
     end
+    catnames = {};
+    for n=1:length(colnames)
+        if isnumeric(data.(colnames{n}))
+            catnames = [catnames colnames{n}];
+        end
+    end
+    for n=1:length(catnames)
+        thisData = data.(catnames{n});
+        if CheckInput(varargin,'VColor')
+            vcolor = EasyParse(varargin,'VColor');
+            newargin = {'ViolinColor',vcolor(n,:)};
+            violins(n) = Violin(thisData, n+offset, newargin{:});
+        else
+            violins(n) = Violin(thisData, n+offset, varargin{:});
+            
+        end
+    end
+    set(gca, 'xtick', 1:length(catnames), 'xticklabels', catnames);
+    
+    % 1D data, one category for each data point
+elseif hascategories && numel(data) == numel(cats)
+    cats = categorical(cats);
+    catnames = categories(cats);
+    for n=1:length(catnames)
+        thisCat = catnames{n};
+        thisData = data(cats == thisCat);
+        violins(n) = Violin(thisData, n, varargin{:});
+    end
+    set(gca, 'xtick', [1:length(catnames)]+offset, 'xticklabels', catnames);
+    
+    % 1D data, no categories
+elseif not(hascategories) && isvector(data)
+    violins = Violin(data, 1, varargin{:});
+    set(gca, 'xtick', 1);
+    
+    % 2D data with or without categories
+elseif ismatrix(data)
+    for n=1:size(data, 2)
+        thisData = data(:, n);
+        violins(n) = Violin(thisData, n, varargin{:});
+    end
+    set(gca, 'xtick', 1:size(data, 2));
+    if hascategories && length(cats) == size(data, 2)
+        set(gca, 'xticklabels', cats);
+    end
+    
+end
 
 end
