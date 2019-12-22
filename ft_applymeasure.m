@@ -319,7 +319,7 @@ else
                 end
             end
             
-            EEG.filename = fullfile(files(i).folder,files(i).name);
+            EEG.filename = files(i).name;
             
             
             %% Subsample, surrogate, and apply the measures
@@ -489,7 +489,7 @@ else
                 EEG = pop_loadset( 'filename', filename, 'filepath', files(cfg.subsrange(i)).folder);
             end
             
-            EEG.filename = fullfile(files(cfg.subsrange(i)).folder,files(cfg.subsrange(i)).name);
+            EEG.filename = files(cfg.subsrange(i)).name;
             
             %% Subsample, surrogate, and apply the measures
             if cfgcheck(cfg.surrogate,'do_surr','no') && cfgcheck(cfg.subsample,'do_subsample','no')
