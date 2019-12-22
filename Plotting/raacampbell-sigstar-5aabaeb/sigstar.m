@@ -1,4 +1,4 @@
-function varargout=sigstar(groups,stats,nosort,fsize)
+function H=sigstar(groups,stats,nosort,fsize)
     % sigstar - Add significance stars to bar charts, boxplots, line charts, etc,
     %
     % H = sigstar(groups,stats,nsort)
@@ -178,7 +178,7 @@ function varargout=sigstar(groups,stats,nosort,fsize)
     holdstate=ishold;
     hold on
 
-    H=ones(length(groups),2); %The handles will be stored here
+    %H=ones(length(groups),2); %The handles will be stored here
 
     y=ylim;
     yd=myRange(y)*0.05; %separate sig bars vertically by 5% 
@@ -218,9 +218,9 @@ function varargout=sigstar(groups,stats,nosort,fsize)
 
     %Optionally return the handles to the plotted significance bars (first column of H)
     %and asterisks (second column of H).
-    if nargout>0
-        varargout{1}=H;
-    end
+    %if nargout>0
+    %    varargout{1}=H;
+    %end
 
 
 end %close sigstar

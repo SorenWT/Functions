@@ -494,7 +494,7 @@ elseif strcmpi(settings.tfparams.parameter,'amplitude')
     end
 end
 
-if strcmpi(settings.tfparams.method,'hilbert') && ~strcmpi(settings.tfparams.method,'irasa')
+if strcmpi(settings.tfparams.method,'hilbert')
     prestim_pseudo = settings.pseudo.prestim;
     prestim_real = settings.real.prestim;
     poststim_pseudo = settings.pseudo.poststim;

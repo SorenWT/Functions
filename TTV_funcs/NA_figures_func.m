@@ -210,7 +210,7 @@ for c = 1:settings.nfreqs
         squeeze(nanmean(allmeas{c}.naddersp.diff(:,:,1,:))),'k',0.15,1,'sem');
     
     if cc == settings.nfreqs
-        legend({'Nonadditivity time course'})
+        legend({'Nonadditive effect'})
     end
     xlabel('Time (s)')
     if c == 1
@@ -226,7 +226,7 @@ for c = 1:settings.nfreqs
     for cc = 1:4
         p(2,c,cc+1).select()
         %axes(p(2,c,cc+1).axis)
-        plotdata = nanmedian(squeeze(allmeas{c}.naddersp.diff(:,plotindx(cc),2,:))...
+        plotdata = nanmean(squeeze(allmeas{c}.naddersp.diff(:,plotindx(cc),2,:))...
             - squeeze(allmeas{c}.naddersp.diff(:,plotindx(cc),1,:)),2);
         if strcmpi(settings.datatype,'MEG')
             ft_cluster_topoplot(settings.layout,plotdata,settings.datasetinfo.label,...
@@ -269,7 +269,9 @@ Set_Ylim(ax2,[-50 25])
 
 for c = 1:settings.nfreqs
     p(2,c,1).select()
-    Plot_sigmask(p(2,c,1).axis,alloutputs.ersp.pt.stats{c}.prob < 0.05,'cmapline','LineWidth',5)
+    %Plot_sigmask(p(2,c,1).axis,alloutputs.ersp.pt.stats{c}.prob < 0.05,'cmapline','LineWidth',5)
+    H = sigstar({get(p(2,c,1).axis,'XLim')},2*min(min(alloutputs.ersp.pt.stats{c}.prob)),0,18)
+    delete(H(1)); pos = get(H(2),'position'); yl = get(gca,'YLim'); set(H(2),'position',[pos(1) yl(2)-0.05*diff(yl) pos(3)])
 end
 
 
@@ -309,7 +311,7 @@ for c = 1:settings.nfreqs
     %FillBetween(t((length(settings.real.prestim)+1):end),poststimdata,...
     %    zeros(1,length(poststimdata)));
     hold on
-    stdshade(t,squeeze(nanmedian(allmeas{plotband}.ttversp.real,1)),'b',0.15,1,'sem')
+    stdshade(t,squeeze(nanmean(allmeas{plotband}.ttversp.real,1)),'b',0.15,1,'sem')
     %plot(t,zeros(1,length(plotdata)),'k--','LineWidth',1.5)
     
     title(fbands{c})
@@ -354,11 +356,13 @@ for c = 1:settings.nfreqs
     cbars1(c).Position = [ax1(c).Position(1)+ax1(c).Position(3) ax1(c).Position(2) cbars1(c).Position(3) 0.15*ax1(c).Position(4)];
 end
 Normalize_Ylim(ax1)
-Set_Ylim(ax1,[-70 60])
+%Set_Ylim(ax1,[-80 60])
 
 for c = 1:settings.nfreqs    
     p(c,1).select()
-    Plot_sigmask(p(c,1).axis,alloutputs.ersp.ttv.stats{c}.prob < 0.05,'cmapline','LineWidth',5)
+    %Plot_sigmask(p(c,1).axis,alloutputs.ersp.ttv.stats{c}.prob < 0.05,'cmapline','LineWidth',5)
+    H = sigstar({get(p(c,1).axis,'XLim')},2*min(min(alloutputs.ersp.ttv.stats{c}.prob)),0,18)
+    delete(H(1)); pos = get(H(2),'position'); yl = get(gca,'YLim'); set(H(2),'position',[pos(1) yl(2)-0.05*diff(yl) pos(3)])
 end
 
 p.de.margin = [5 5 5 5];
@@ -421,11 +425,11 @@ Normalize_Clim(ax,1);
 
 
 p.de.margin = [5 5 5 5];
-p.marginleft = 24;
+p.marginleft = 18;
 p.marginbottom = 25;
 p.margintop = 8;
 p.marginright = 10;
-p.de.marginleft = 10;
+p.de.marginleft = 14;
 % fix margins here
 
 for c = 1:settings.nfreqs
@@ -652,7 +656,8 @@ if isfield(settings,'rest')
     plotfreqs = [find(strcmpi(fbands,'Delta')) find(strcmpi(fbands,'Alpha'))];
     
     p(1).pack('h',repmat({1/(length(plotfreqs))},length(plotfreqs),1)');
-    
+    p(2).pack('h',repmat({1/(length(plotfreqs))},length(plotfreqs),1)');
+
     
     
     for c = plotfreqs
@@ -692,25 +697,35 @@ if isfield(settings,'rest')
     %cbar.Label.FontSize = 14;
     colormap(lkcmap2)
     Normalize_Clim(ax,1);
+    for c = plotfreqs
+        bandindex = c;
+        %bandindex = find(strcmpi(fbands,'Alpha'));
+        opts = struct;
+        opts.display_mod = 1;
+        opts.display = 0;
+        opts.indvar = ['Rest' newline 'alpha' newline 'power'];
+        opts.depvar = ['Poststim' newline 'alpha' newline 'power'];
+        opts.mediator = ['Prestim' newline 'alpha' newline 'power'];
+        
+        postreal = vert(squeeze(nanmean(nanmean(allmeas{c}.raw.ersp(:,poststim_real,:),2),1)));
+        prereal = vert(squeeze(nanmean(nanmean(allmeas{c}.raw.ersp(:,prestim_real,:),2),1)));
+        postpseudo = vert(squeeze(nanmean(nanmean(allmeas{c}.raw.ersp(:,poststim_pseudo,:),2),1)));
+        rest = vert(squeeze(mean(restmeas.bp.vals(c,:,:),2)));
+        med(c) = mediation_covariates(double(postreal),double(rest),double(prereal),double(postpseudo),opts);
+        
+        
+        %opts.sobelp = 0; %restmeas.rel_bp.mediation{bandindex}.sobel.p;
+        %     mediationAnalysis0(double(nanmean(allmeas{bandindex}.erspindex(find(restmeas.rel_bp.prestim.stats{bandindex}.mask),:),1))',...
+        %         double(squeeze(nanmean(restmeas.rel_bp.vals(bandindex,find(restmeas.rel_bp.prestim.stats{bandindex}.mask),:),2))),...
+        %         double(nanmean(restmeas.prestimamp.rel{bandindex}(find(restmeas.rel_bp.prestim.stats{bandindex}.mask),:),1))',opts);
+        mediationfig = gcf;
+        figaxes = findobj('Parent',gcf,'Type','axes');
+        
+        p(2,find(plotfreqs == c)).select(figaxes)
+        
+        close(mediationfig);
+    end
     
-    bandindex = 4;
-    %bandindex = find(strcmpi(fbands,'Alpha'));
-    opts = struct;
-    opts.display_mod = 1;
-    opts.display = 0;
-    opts.indvar = ['Rest' newline 'alpha' newline 'power'];
-    opts.depvar = ['Poststim' newline 'alpha' newline 'power'];
-    opts.mediator = ['Prestim' newline 'alpha' newline 'power'];
-    opts.sobelp = 0; %restmeas.rel_bp.mediation{bandindex}.sobel.p;
-    mediationAnalysis0(double(nanmean(allmeas{bandindex}.erspindex(find(restmeas.rel_bp.prestim.stats{bandindex}.mask),:),1))',...
-        double(squeeze(nanmean(restmeas.rel_bp.vals(bandindex,find(restmeas.rel_bp.prestim.stats{bandindex}.mask),:),2))),...
-        double(nanmean(restmeas.prestimamp.rel{bandindex}(find(restmeas.rel_bp.prestim.stats{bandindex}.mask),:),1))',opts);
-    mediationfig = gcf;
-    figaxes = findobj('Parent',gcf,'Type','axes');
-    
-    p(2).select(figaxes)
-    
-    close(mediationfig);
     %fix margins here
     p.de.margin = [5 5 5 5];
     p.marginleft = 22;
@@ -724,13 +739,13 @@ if isfield(settings,'rest')
     %AddFigureLabel('B',p(2,1,1,1).axis);
     AddFigureLabel(p(1,1,1).axis,'A');
     %AddFigureLabel(p(1,1,1).axis,'Rest-Nonadditivity correlation') % move this manually
-    AddFigureLabel(p(2).axis,'B');
+    AddFigureLabel(p(2,1).axis,'B');
     
     set(gcf,'Color','w')
     
     savefig('Fig5.fig')
     export_fig('Fig5.png','-m4')
-    save('Panel5.mat','p')
+    save('Panel5.mat','p','med')
 end
 
 %% Figure ?: PLE correlation (for supplement?)
@@ -801,8 +816,8 @@ p = panel('no-manage-font');
 pos = get(gcf,'position');
 set(gcf,'position',[pos(1:2) pos(3)*3.5 pos(4)],'Color','w');
 
-p.pack('h',repmat({1/settings.nfreqs},settings.nfreqs,1)')
-for c = 1:settings.nfreqs
+p.pack('h',repmat({1/settings_osci.nfreqs},settings_osci.nfreqs,1)')
+for c = 1:settings_osci.nfreqs
     p(c).pack();
     for cc = 1:4
         p(c).pack({[0.25*(cc-1) 0 0.25 0.15]})
@@ -810,7 +825,7 @@ for c = 1:settings.nfreqs
     p(c,1).select();
     plotband = c;
     
-    t = linspace(0,length(settings.real.poststim)*(1/settings.srate),length(settings.real.poststim));
+    t = linspace(0,length(settings_osci.real.poststim)*(1/settings_osci.srate),length(settings_osci.real.poststim));
     %t = linspace(-length(settings.real.prestim)*(1/settings.srate),length(settings.real.poststim)*(1/settings.srate),length(settings.real.poststim)+length(settings.real.prestim));
     %prestimdata = 100*(allmeas{plotband}.raw.ttversp(:,prestim_real,:)-nanmean(allmeas{plotband}.raw.ttversp(:,prestim_real,:),2))./...
     %    nanmean(allmeas{plotband}.raw.ttversp(:,prestim_real,:),2); %assuming percent change units
@@ -822,10 +837,10 @@ for c = 1:settings.nfreqs
     %FillBetween(t((length(settings.real.prestim)+1):end),poststimdata,...
     %    zeros(1,length(poststimdata)));
     hold on
-    stdshade(t,squeeze(nanmedian(allmeas_osci{plotband}.ersp.real,1)),pris(2,:),0.15,1,'sem')
+    stdshade(t,squeeze(nanmean(allmeas_osci{plotband}.ersp.real,1)),pris(2,:),0.15,1,'sem')
     %plot(t,zeros(1,length(plotdata)),'k--','LineWidth',1.5)
     hold on
-    stdshade(t,squeeze(nanmedian(allmeas_frac{plotband}.ersp.real,1)),pris(4,:),0.15,1,'sem')
+    stdshade(t,squeeze(nanmean(allmeas_frac{plotband}.ersp.real,1)),pris(4,:),0.15,1,'sem')
     
     title(fbands{c})
     xlabel('Time (s)')
@@ -842,201 +857,208 @@ for c = 1:settings.nfreqs
 end
 clear ax
 
-for c = 1:settings.nfreqs
+for c = 1:settings_osci.nfreqs
    ax1(c) = p(c,1).axis; 
 end
 Normalize_Ylim(ax1)
 
-for c = 1:settings.nfreqs
+for c = 1:settings_osci.nfreqs
     p(c,1).select();
-    Plot_sigmask(p(c,1).axis,compstats.erspdiff{c}.prob < 0.05,'cmapline','LineWidth',5)
+    %Plot_sigmask(p(c,1).axis,compstats.erspdiff{c}.prob < 0.05,'cmapline','LineWidth',5)
+    H = sigstar({get(p(c,1).axis,'XLim')},2*min(min(compstats.erspdiff{c}.prob)),0,18)
+    delete(H(1)); pos = get(H(2),'position'); yl = get(gca,'YLim'); set(H(2),'position',[pos(1) yl(2)-0.05*diff(yl) pos(3)]);
 end
 
-p(settings.nfreqs,1).select()
+p(settings_osci.nfreqs,1).select()
 legend({'Oscillatory power','Fractal power'})
 
 p.margintop = 8;
 p.marginleft = 18;
 p.de.marginleft = 12;
 
-savefig('Fig6_of_tc_sameaxis.fig')
-export_fig('Fig6_of_tc_sameaxis.png','-m4')
+savefig('Fig7.fig')
+export_fig('Fig7.png','-m4')
+save('Panel7.mat','p')
 
-%% Figure ??: IRASA osci and frac power time course
-% Need allmeas_osci and allmeas_frac, alloutputs_osci and alloutputs_frac
-
-figure
-
-pris = prism;
-
-p = panel('no-manage-font');
-
-pos = get(gcf,'position');
-set(gcf,'position',[pos(1:2) pos(3)*3.5 pos(4)*3.5],'Color','w');
-
-p.pack('v',{50 50})
-p(1).pack('h',repmat({1/settings.nfreqs},settings.nfreqs,1)')
-for c = 1:settings.nfreqs
-    p(1,c).pack();
-    for cc = 1:4
-        p(1,c).pack({[0.25*(cc-1) 0 0.25 0.15]})
-    end
-    p(1,c,1).select();
-    plotband = c;
-    
-    t = linspace(0,length(settings.real.poststim)*(1/settings.srate),length(settings.real.poststim));
-    %t = linspace(-length(settings.real.prestim)*(1/settings.srate),length(settings.real.poststim)*(1/settings.srate),length(settings.real.poststim)+length(settings.real.prestim));
-    %prestimdata = 100*(allmeas{plotband}.raw.ttversp(:,prestim_real,:)-nanmean(allmeas{plotband}.raw.ttversp(:,prestim_real,:),2))./...
-    %    nanmean(allmeas{plotband}.raw.ttversp(:,prestim_real,:),2); %assuming percent change units
-    %prestimdata = nanmean(nanmean(prestimdata,3),1);
-    poststimdata = (allmeas_osci{plotband}.ersp.real);
-    poststimdata = nanmean(nanmean(poststimdata,3),1);
-    %plotdata = [prestimdata poststimdata];
-    plotdata = poststimdata;
-    %FillBetween(t((length(settings.real.prestim)+1):end),poststimdata,...
-    %    zeros(1,length(poststimdata)));
-    hold on
-    stdshade(t,squeeze(nanmedian(allmeas_osci{plotband}.ersp.real,1)),'k',0.15,1,'sem')
-    %plot(t,zeros(1,length(plotdata)),'k--','LineWidth',1.5)
-    
-    title(fbands{c})
-    xlabel('Time (s)')
-    if c == 1
-    ylabel('% change of Oscillatory ERSP')
-    end
-    %ylim = get(gca,'YLim');
-    %line([0 0],ylim,'Color',[0.5 0.5 0.5],'LineWidth',2)
-    %set(gca,'YLim',ylim)
-    FixAxes(gca,14)
-    set(gca,'XLim',[0 max(t)])
-    %set(gca,'FontSize',16)
-    
-    plotindx = linspace(0,max(settings.aucindex),5);
-    plotindx = round(plotindx);
-    plotindx(1) = [];
-    for cc = 1:4
-        p(1,c,cc+1).select()
-        plotdata = mean(allmeas_osci{c}.ersp.real(:,plotindx(cc),:),3);
-        if strcmpi(settings.datatype,'MEG')
-            ft_cluster_topoplot(settings.layout,plotdata,settings.datasetinfo.label,...
-                0.*alloutputs_osci.ersp.ttv.stats{c}.mask(:,plotindx(cc)),0.*alloutputs_osci.ersp.ttv.stats{c}.mask(:,plotindx(cc)));
-        else
-            cluster_topoplot(plotdata,settings.layout,...
-                1-(0.*alloutputs_osci.ersp.ttv.stats{c}.mask(:,plotindx(cc))),0.*alloutputs_osci.ersp.ttv.stats{c}.mask(:,plotindx(cc)));
-        end
-        colormap(lkcmap2)
-        if cc == 4
-            cbars1(c) = colorbar;
-        end
-        ax(cc) = p(1,c,cc+1).axis;
-        title([num2str(plotindx(cc)*(1000/settings.srate)) ' ms'],'FontSize',10)
-        Set_Clim(ax(cc),[prctile(plotdata,20) prctile(plotdata,80)]);
-    end
-    Normalize_Clim(ax,1);
-end
-clear ax
-
-for c = 1:settings.nfreqs
-    ax1(c) = p(1,c,1).axis;
-    cbars1(c).Position = [ax1(c).Position(1)+ax1(c).Position(3) ax1(c).Position(2) cbars1(c).Position(3) 0.15*ax1(c).Position(4)];
-end
-%Normalize_Ylim(ax1)
-
-p(2).pack('h',repmat({1/settings.nfreqs},settings.nfreqs,1)')
-
-for c = 1:settings.nfreqs
-    p(2,c).pack();
-    for cc = 1:4
-        p(2,c).pack({[0.25*(cc-1) 0 0.25 0.15]})
-    end
-    p(2,c,1).select();
-    plotband = c;
-    
-    t = linspace(0,length(settings.real.poststim)*(1/settings.srate),length(settings.real.poststim));
-    %t = linspace(-length(settings.real.prestim)*(1/settings.srate),length(settings.real.poststim)*(1/settings.srate),length(settings.real.poststim)+length(settings.real.prestim));
-    %prestimdata = 100*(allmeas{plotband}.raw.ttversp(:,prestim_real,:)-nanmean(allmeas{plotband}.raw.ttversp(:,prestim_real,:),2))./...
-    %    nanmean(allmeas{plotband}.raw.ttversp(:,prestim_real,:),2); %assuming percent change units
-    %prestimdata = nanmean(nanmean(prestimdata,3),1);
-    poststimdata = (allmeas_frac{plotband}.ersp.real);
-    poststimdata = nanmean(nanmean(poststimdata,3),1);
-    %plotdata = [prestimdata poststimdata];
-    plotdata = poststimdata;
-    %FillBetween(t((length(settings.real.prestim)+1):end),poststimdata,...
-    %    zeros(1,length(poststimdata)));
-    hold on
-    stdshade(t,squeeze(nanmedian(allmeas_frac{plotband}.ersp.real,1)),'k',0.15,1,'sem')
-    %plot(t,zeros(1,length(plotdata)),'k--','LineWidth',1.5)
-    
-    title(fbands{c})
-    xlabel('Time (s)')
-    if c == 1
-    ylabel('% change of Fractal ERSP')
-    end
-    %ylim = get(gca,'YLim');
-    %line([0 0],ylim,'Color',[0.5 0.5 0.5],'LineWidth',2)
-    %set(gca,'YLim',ylim)
-    FixAxes(gca,14)
-    set(gca,'XLim',[0 max(t)])
-    %set(gca,'FontSize',16)
-    
-    plotindx = linspace(0,max(settings.aucindex),5);
-    plotindx = round(plotindx);
-    plotindx(1) = [];
-    for cc = 1:4
-        p(2,c,cc+1).select()
-        plotdata = mean(allmeas_frac{c}.ersp.real(:,plotindx(cc),:),3);
-        if strcmpi(settings.datatype,'MEG')
-            ft_cluster_topoplot(settings.layout,plotdata,settings.datasetinfo.label,...
-                0.*alloutputs_frac.ersp.ttv.stats{c}.mask(:,plotindx(cc)),0.*alloutputs_frac.ersp.ttv.stats{c}.mask(:,plotindx(cc)));
-        else
-            cluster_topoplot(plotdata,settings.layout,...
-                1-(0.*alloutputs_frac.ersp.ttv.stats{c}.mask(:,plotindx(cc))),0.*alloutputs_frac.ersp.ttv.stats{c}.mask(:,plotindx(cc)));
-        end
-        colormap(lkcmap2)
-        if cc == 4
-            cbars2(c) = colorbar;
-        end
-        ax(cc) = p(2,c,cc+1).axis;
-        title([num2str(plotindx(cc)*(1000/settings.srate)) ' ms'],'FontSize',10)
-        Set_Clim(ax(cc),[prctile(plotdata,20) prctile(plotdata,80)]);
-    end
-    Normalize_Clim(ax,1);
-end
-clear ax
-
-for c = 1:settings.nfreqs
-    ax2(c) = p(2,c,1).axis;
-    cbars2(c).Position = [ax2(c).Position(1)+ax2(c).Position(3) ax2(c).Position(2) cbars2(c).Position(3) 0.15*ax2(c).Position(4)];
-
-    %p(1,c,1).select()
-    %Plot_sigmask(p(1,c,1).axis,alloutputs.ersp.ttv.stats{c}.prob < 0.05,'cmapline','LineWidth',5)
-end
-Normalize_Ylim(cat(2,ax1,ax2))
-
-for c = 1:settings.nfreqs
-    p(1,c,1).select()
-    Plot_sigmask(p(1,c,1).axis,compstats.erspdiff{c}.mask,'cmapline','LineWidth',5)
-    p(2,c,1).select()
-    Plot_sigmask(p(2,c,1).axis,compstats.erspdiff{c}.mask,'cmapline','LineWidth',5)
-end
-
-p.de.margin = [5 5 5 5];
-p.marginleft = 24;
-p.marginbottom = 25;
-p.margintop = 8;
-p.marginright = 10;
-p.de.marginleft = 15;
-p(1).marginbottom = 24;
-
-AddFigureLabel(p(1,1,1).axis,'A')
-AddFigureLabel(p(2,1,1).axis,'B')
-
-savefig('Fig6_of_tc.fig')
-export_fig('Fig6_of_tc.png','-m4')
-save('Panel6_of_tc.mat','p')
+% %% Figure ??: IRASA osci and frac power time course
+% % Need allmeas_osci and allmeas_frac, alloutputs_osci and alloutputs_frac
+% 
+% figure
+% 
+% pris = prism;
+% 
+% p = panel('no-manage-font');
+% 
+% pos = get(gcf,'position');
+% set(gcf,'position',[pos(1:2) pos(3)*3.5 pos(4)*3.5],'Color','w');
+% 
+% p.pack('v',{50 50})
+% p(1).pack('h',repmat({1/settings.nfreqs},settings.nfreqs,1)')
+% for c = 1:settings.nfreqs
+%     p(1,c).pack();
+%     for cc = 1:4
+%         p(1,c).pack({[0.25*(cc-1) 0 0.25 0.15]})
+%     end
+%     p(1,c,1).select();
+%     plotband = c;
+%     
+%     t = linspace(0,length(settings.real.poststim)*(1/settings.srate),length(settings.real.poststim));
+%     %t = linspace(-length(settings.real.prestim)*(1/settings.srate),length(settings.real.poststim)*(1/settings.srate),length(settings.real.poststim)+length(settings.real.prestim));
+%     %prestimdata = 100*(allmeas{plotband}.raw.ttversp(:,prestim_real,:)-nanmean(allmeas{plotband}.raw.ttversp(:,prestim_real,:),2))./...
+%     %    nanmean(allmeas{plotband}.raw.ttversp(:,prestim_real,:),2); %assuming percent change units
+%     %prestimdata = nanmean(nanmean(prestimdata,3),1);
+%     poststimdata = (allmeas_osci{plotband}.ersp.real);
+%     poststimdata = nanmean(nanmean(poststimdata,3),1);
+%     %plotdata = [prestimdata poststimdata];
+%     plotdata = poststimdata;
+%     %FillBetween(t((length(settings.real.prestim)+1):end),poststimdata,...
+%     %    zeros(1,length(poststimdata)));
+%     hold on
+%     stdshade(t,squeeze(nanmean(allmeas_osci{plotband}.ersp.real,1)),'k',0.15,1,'sem')
+%     %plot(t,zeros(1,length(plotdata)),'k--','LineWidth',1.5)
+%     
+%     title(fbands{c})
+%     xlabel('Time (s)')
+%     if c == 1
+%     ylabel('% change of Oscillatory ERSP')
+%     end
+%     %ylim = get(gca,'YLim');
+%     %line([0 0],ylim,'Color',[0.5 0.5 0.5],'LineWidth',2)
+%     %set(gca,'YLim',ylim)
+%     FixAxes(gca,14)
+%     set(gca,'XLim',[0 max(t)])
+%     %set(gca,'FontSize',16)
+%     
+%     plotindx = linspace(0,max(settings.aucindex),5);
+%     plotindx = round(plotindx);
+%     plotindx(1) = [];
+%     for cc = 1:4
+%         p(1,c,cc+1).select()
+%         plotdata = mean(allmeas_osci{c}.ersp.real(:,plotindx(cc),:),3);
+%         if strcmpi(settings.datatype,'MEG')
+%             ft_cluster_topoplot(settings.layout,plotdata,settings.datasetinfo.label,...
+%                 0.*alloutputs_osci.ersp.ttv.stats{c}.mask(:,plotindx(cc)),0.*alloutputs_osci.ersp.ttv.stats{c}.mask(:,plotindx(cc)));
+%         else
+%             cluster_topoplot(plotdata,settings.layout,...
+%                 1-(0.*alloutputs_osci.ersp.ttv.stats{c}.mask(:,plotindx(cc))),0.*alloutputs_osci.ersp.ttv.stats{c}.mask(:,plotindx(cc)));
+%         end
+%         colormap(lkcmap2)
+%         if cc == 4
+%             cbars1(c) = colorbar;
+%         end
+%         ax(cc) = p(1,c,cc+1).axis;
+%         title([num2str(plotindx(cc)*(1000/settings.srate)) ' ms'],'FontSize',10)
+%         Set_Clim(ax(cc),[prctile(plotdata,20) prctile(plotdata,80)]);
+%     end
+%     Normalize_Clim(ax,1);
+% end
+% clear ax
+% 
+% for c = 1:settings.nfreqs
+%     ax1(c) = p(1,c,1).axis;
+%     cbars1(c).Position = [ax1(c).Position(1)+ax1(c).Position(3) ax1(c).Position(2) cbars1(c).Position(3) 0.15*ax1(c).Position(4)];
+% end
+% %Normalize_Ylim(ax1)
+% 
+% p(2).pack('h',repmat({1/settings.nfreqs},settings.nfreqs,1)')
+% 
+% for c = 1:settings.nfreqs
+%     p(2,c).pack();
+%     for cc = 1:4
+%         p(2,c).pack({[0.25*(cc-1) 0 0.25 0.15]})
+%     end
+%     p(2,c,1).select();
+%     plotband = c;
+%     
+%     t = linspace(0,length(settings.real.poststim)*(1/settings.srate),length(settings.real.poststim));
+%     %t = linspace(-length(settings.real.prestim)*(1/settings.srate),length(settings.real.poststim)*(1/settings.srate),length(settings.real.poststim)+length(settings.real.prestim));
+%     %prestimdata = 100*(allmeas{plotband}.raw.ttversp(:,prestim_real,:)-nanmean(allmeas{plotband}.raw.ttversp(:,prestim_real,:),2))./...
+%     %    nanmean(allmeas{plotband}.raw.ttversp(:,prestim_real,:),2); %assuming percent change units
+%     %prestimdata = nanmean(nanmean(prestimdata,3),1);
+%     poststimdata = (allmeas_frac{plotband}.ersp.real);
+%     poststimdata = nanmean(nanmean(poststimdata,3),1);
+%     %plotdata = [prestimdata poststimdata];
+%     plotdata = poststimdata;
+%     %FillBetween(t((length(settings.real.prestim)+1):end),poststimdata,...
+%     %    zeros(1,length(poststimdata)));
+%     hold on
+%     stdshade(t,squeeze(nanmean(allmeas_frac{plotband}.ersp.real,1)),'k',0.15,1,'sem')
+%     %plot(t,zeros(1,length(plotdata)),'k--','LineWidth',1.5)
+%     
+%     title(fbands{c})
+%     xlabel('Time (s)')
+%     if c == 1
+%     ylabel('% change of Fractal ERSP')
+%     end
+%     %ylim = get(gca,'YLim');
+%     %line([0 0],ylim,'Color',[0.5 0.5 0.5],'LineWidth',2)
+%     %set(gca,'YLim',ylim)
+%     FixAxes(gca,14)
+%     set(gca,'XLim',[0 max(t)])
+%     %set(gca,'FontSize',16)
+%     
+%     plotindx = linspace(0,max(settings.aucindex),5);
+%     plotindx = round(plotindx);
+%     plotindx(1) = [];
+%     for cc = 1:4
+%         p(2,c,cc+1).select()
+%         plotdata = mean(allmeas_frac{c}.ersp.real(:,plotindx(cc),:),3);
+%         if strcmpi(settings.datatype,'MEG')
+%             ft_cluster_topoplot(settings.layout,plotdata,settings.datasetinfo.label,...
+%                 0.*alloutputs_frac.ersp.ttv.stats{c}.mask(:,plotindx(cc)),0.*alloutputs_frac.ersp.ttv.stats{c}.mask(:,plotindx(cc)));
+%         else
+%             cluster_topoplot(plotdata,settings.layout,...
+%                 1-(0.*alloutputs_frac.ersp.ttv.stats{c}.mask(:,plotindx(cc))),0.*alloutputs_frac.ersp.ttv.stats{c}.mask(:,plotindx(cc)));
+%         end
+%         colormap(lkcmap2)
+%         if cc == 4
+%             cbars2(c) = colorbar;
+%         end
+%         ax(cc) = p(2,c,cc+1).axis;
+%         title([num2str(plotindx(cc)*(1000/settings.srate)) ' ms'],'FontSize',10)
+%         Set_Clim(ax(cc),[prctile(plotdata,20) prctile(plotdata,80)]);
+%     end
+%     Normalize_Clim(ax,1);
+% end
+% clear ax
+% 
+% for c = 1:settings.nfreqs
+%     ax2(c) = p(2,c,1).axis;
+%     cbars2(c).Position = [ax2(c).Position(1)+ax2(c).Position(3) ax2(c).Position(2) cbars2(c).Position(3) 0.15*ax2(c).Position(4)];
+% 
+%     %p(1,c,1).select()
+%     %Plot_sigmask(p(1,c,1).axis,alloutputs.ersp.ttv.stats{c}.prob < 0.05,'cmapline','LineWidth',5)
+% end
+% Normalize_Ylim(cat(2,ax1,ax2))
+% 
+% for c = 1:settings.nfreqs
+%     p(1,c,1).select()
+%     %Plot_sigmask(p(1,c,1).axis,compstats.erspdiff{c}.mask,'cmapline','LineWidth',5)
+%     H = sigstar({get(p(1,c,1).axis,'XLim')},2*min(compstats.erspdiff{c}.prob),0,18)
+%     delete(H(1)); pos = get(H(2),'position'); yl = get(gca,'YLim'); set(H(2),'position',[pos(1) yl(2)-0.05*diff(yl) pos(3)])
+%     
+%     p(2,c,1).select()
+%     %Plot_sigmask(p(2,c,1).axis,compstats.erspdiff{c}.mask,'cmapline','LineWidth',5)
+%     H = sigstar({get(p(2,c,1).axis,'XLim')},2*min(compstats.erspdiff{c}.prob),0,18)
+%     delete(H(1)); pos = get(H(2),'position'); yl = get(gca,'YLim'); set(H(2),'position',[pos(1) yl(2)-0.05*diff(yl) pos(3)])
+% end
+% 
+% p.de.margin = [5 5 5 5];
+% p.marginleft = 24;
+% p.marginbottom = 25;
+% p.margintop = 8;
+% p.marginright = 10;
+% p.de.marginleft = 15;
+% p(1).marginbottom = 24;
+% 
+% AddFigureLabel(p(1,1,1).axis,'A')
+% AddFigureLabel(p(2,1,1).axis,'B')
+% 
+% savefig('Fig6_of_tc.fig')
+% export_fig('Fig6_of_tc.png','-m4')
+% save('Panel6_of_tc.mat','p')
 
 %% Figure ???: Nonadditivity for IRASA oscillatory vs fractal
-
 
 figure
 
@@ -1053,7 +1075,7 @@ for c = 1:settings.nfreqs
         p(1,c).pack({[0.25*(cc-1) 0 0.25 0.15]})
     end
     p(1,c,1).select();
-    t = linspace(0,length(settings.real.poststim)*(1/settings.srate),length(settings.real.poststim));
+    t = linspace(0,length(settings_osci.real.poststim)*(1/settings_osci.srate),length(settings_osci.real.poststim));
     hold on
     stdshade(t,squeeze(nanmean(allmeas_osci{c}.naddersp.diff(:,:,1,:),1)),'b',0.15,1,'sem');
     
@@ -1071,14 +1093,14 @@ for c = 1:settings.nfreqs
         set(gca,'XLim',[0 max(t)])
 
     
-        plotindx = linspace(0,max(settings.aucindex),5);
+        plotindx = linspace(0,max(settings_osci.aucindex),5);
     plotindx = round(plotindx);
     plotindx(1) = [];
     %tindx =
     for cc = 1:4
         p(1,c,cc+1).select()
         %axes(p(2,c,cc+1).axis)
-        plotdata = nanmedian(squeeze(allmeas_osci{c}.naddersp.diff(:,plotindx(cc),2,:))...
+        plotdata = nanmean(squeeze(allmeas_osci{c}.naddersp.diff(:,plotindx(cc),2,:))...
             - squeeze(allmeas_osci{c}.naddersp.diff(:,plotindx(cc),1,:)),2);
         if strcmpi(settings.datatype,'MEG')
             ft_cluster_topoplot(settings.layout,plotdata,settings.datasetinfo.label,...
@@ -1092,7 +1114,7 @@ for c = 1:settings.nfreqs
             cbars1(c) = colorbar;
         end
         ax(cc) = p(1,c,cc+1).axis;
-        title([num2str(plotindx(cc)*(1000/settings.srate)) ' ms'],'FontSize',10)
+        title([num2str(plotindx(cc)*(1000/settings_osci.srate)) ' ms'],'FontSize',10)
         Set_Clim(ax(cc),[prctile(plotdata,20) prctile(plotdata,80)]);
     end
     Normalize_Clim(ax,1);
@@ -1103,11 +1125,14 @@ for c = 1:settings.nfreqs
     cbars1(c).Position = [ax1(c).Position(1)+ax1(c).Position(3) ax1(c).Position(2) cbars1(c).Position(3) 0.15*ax1(c).Position(4)];
 end
 Normalize_Ylim(ax1)
+Set_Ylim(ax1,[-60 70])
 
 
 for c = 1:settings.nfreqs
     p(1,c,1).select()
-    Plot_sigmask(p(1,c,1).axis,alloutputs_osci.ersp.pt.stats{c}.mask,'cmapline','LineWidth',5)
+    %Plot_sigmask(p(1,c,1).axis,alloutputs_osci.ersp.pt.stats{c}.mask,'cmapline','LineWidth',5)
+    H = sigstar({get(p(1,c,1).axis,'XLim')},2*min(min(alloutputs_osci.ersp.pt.stats{c}.prob)),0,18)
+    delete(H(1)); pos = get(H(2),'position'); yl = get(gca,'YLim'); set(H(2),'position',[pos(1) yl(2)-0.05*diff(yl) pos(3)])
 end
 
 p(2).pack('h',repmat({1/settings.nfreqs},settings.nfreqs,1)')
@@ -1117,7 +1142,7 @@ for c = 1:settings.nfreqs
         p(2,c).pack({[0.25*(cc-1) 0 0.25 0.15]})
     end
     p(2,c,1).select();
-    t = linspace(0,length(settings.real.poststim)*(1/settings.srate),length(settings.real.poststim));
+    t = linspace(0,length(settings_osci.real.poststim)*(1/settings_osci.srate),length(settings_osci.real.poststim));
     hold on
     stdshade(t,squeeze(nanmean(allmeas_frac{c}.naddersp.diff(:,:,1,:),1)),'b',0.15,1,'sem');
     
@@ -1135,14 +1160,14 @@ for c = 1:settings.nfreqs
         set(gca,'XLim',[0 max(t)])
 
     
-        plotindx = linspace(0,max(settings.aucindex),5);
+        plotindx = linspace(0,max(settings_osci.aucindex),5);
     plotindx = round(plotindx);
     plotindx(1) = [];
     %tindx =
     for cc = 1:4
         p(2,c,cc+1).select()
         %axes(p(2,c,cc+1).axis)
-        plotdata = nanmedian(squeeze(allmeas_frac{c}.naddersp.diff(:,plotindx(cc),2,:))...
+        plotdata = nanmean(squeeze(allmeas_frac{c}.naddersp.diff(:,plotindx(cc),2,:))...
             - squeeze(allmeas_frac{c}.naddersp.diff(:,plotindx(cc),1,:)),2);
         if strcmpi(settings.datatype,'MEG')
             ft_cluster_topoplot(settings.layout,plotdata,settings.datasetinfo.label,...
@@ -1156,7 +1181,7 @@ for c = 1:settings.nfreqs
             cbars2(c) = colorbar;
         end
         ax(cc) = p(2,c,cc+1).axis;
-        title([num2str(plotindx(cc)*(1000/settings.srate)) ' ms'],'FontSize',10)
+        title([num2str(plotindx(cc)*(1000/settings_osci.srate)) ' ms'],'FontSize',10)
         Set_Clim(ax(cc),[prctile(plotdata,20) prctile(plotdata,80)]);
     end
     Normalize_Clim(ax,1);
@@ -1167,10 +1192,13 @@ for c = 1:settings.nfreqs
     cbars2(c).Position = [ax2(c).Position(1)+ax2(c).Position(3) ax2(c).Position(2) cbars2(c).Position(3) 0.15*ax2(c).Position(4)];
 end
 Normalize_Ylim(ax2)
+Set_Ylim(ax2,[-25 40])
 
 for c = 1:settings.nfreqs
     p(2,c,1).select()
-    Plot_sigmask(p(2,c,1).axis,alloutputs_frac.ersp.pt.stats{c}.mask,'cmapline','LineWidth',5)
+    %Plot_sigmask(p(2,c,1).axis,alloutputs_frac.ersp.pt.stats{c}.mask,'cmapline','LineWidth',5)
+    H = sigstar({get(p(2,c,1).axis,'XLim')},2*min(min(alloutputs_frac.ersp.pt.stats{c}.prob)),0,18);
+    delete(H(1)); pos = get(H(2),'position'); yl = get(gca,'YLim'); set(H(2),'position',[pos(1) yl(2)-0.05*diff(yl) pos(3)]);
 end
 
 p.de.margin = [5 5 5 5];
@@ -1184,12 +1212,237 @@ p(1).de.marginleft = 15;
 p(2).de.marginleft = 15;
 
 
-AddFigureLabel(p(1,1,1).axis,'A')
-AddFigureLabel(p(2,1,1).axis,'B')
+AddFigureLabel(p(1,1,1).axis,'A');
+AddFigureLabel(p(2,1,1).axis,'B');
 
-savefig('Fig7_of_na.fig')
-export_fig('Fig7_of_na.png','-m4')
-save('Panel7_of_na.mat','p')
+savefig('Fig8.fig')
+export_fig('Fig8.png','-m4')
+save('Panel8.mat','p')
+
+%% Figure 9: Oscillatory-fractal nonadditivity time course
+
+figure
+
+pris = prism;
+
+p = panel('no-manage-font');
+
+pos = get(gcf,'position');
+set(gcf,'position',[pos(1:2) pos(3)*3.5 pos(4)],'Color','w');
+
+p.pack('h',repmat({1/settings_osci.nfreqs},settings_osci.nfreqs,1)')
+for c = 1:settings_osci.nfreqs
+    p(c).pack();
+    for cc = 1:4
+        p(c).pack({[0.25*(cc-1) 0 0.25 0.15]})
+    end
+    p(c,1).select();
+    plotband = c;
+    
+    t = linspace(0,length(settings_osci.real.poststim)*(1/settings_osci.srate),length(settings_osci.real.poststim));
+    %t = linspace(-length(settings.real.prestim)*(1/settings.srate),length(settings.real.poststim)*(1/settings.srate),length(settings.real.poststim)+length(settings.real.prestim));
+    %prestimdata = 100*(allmeas{plotband}.raw.ttversp(:,prestim_real,:)-nanmean(allmeas{plotband}.raw.ttversp(:,prestim_real,:),2))./...
+    %    nanmean(allmeas{plotband}.raw.ttversp(:,prestim_real,:),2); %assuming percent change units
+    %prestimdata = nanmean(nanmean(prestimdata,3),1);
+    poststimdata = squeeze(diff(allmeas_osci{plotband}.naddersp.diff,1,3));
+    poststimdata = nanmean(nanmean(poststimdata,3),1);
+    %plotdata = [prestimdata poststimdata];
+    plotdata = poststimdata;
+    %FillBetween(t((length(settings.real.prestim)+1):end),poststimdata,...
+    %    zeros(1,length(poststimdata)));
+    hold on
+    stdshade(t,squeeze(nanmean(diff(allmeas_osci{plotband}.naddersp.diff,1,3),1)),pris(2,:),0.15,1,'sem')
+    %plot(t,zeros(1,length(plotdata)),'k--','LineWidth',1.5)
+    hold on
+    stdshade(t,squeeze(nanmean(diff(allmeas_frac{plotband}.naddersp.diff,1,3),1)),pris(4,:),0.15,1,'sem')
+    
+    title(fbands{c})
+    xlabel('Time (s)')
+    if c ==1 
+    ylabel('Nonadditive effect (%)')
+    end
+    %ylim = get(gca,'YLim');
+    %line([0 0],ylim,'Color',[0.5 0.5 0.5],'LineWidth',2)
+    %set(gca,'YLim',ylim)
+    FixAxes(gca,14)
+    set(gca,'XLim',[0 max(t)])
+    %set(gca,'FontSize',16)
+    
+end
+clear ax
+
+for c = 1:settings_osci.nfreqs
+   ax1(c) = p(c,1).axis; 
+end
+Normalize_Ylim(ax1)
+
+for c = 1:settings_osci.nfreqs
+    p(c,1).select();
+    %Plot_sigmask(p(c,1).axis,compstats.erspdiff{c}.prob < 0.05,'cmapline','LineWidth',5)
+    H = sigstar({get(p(c,1).axis,'XLim')},2*min(min(compstats.ptdiff{c}.prob)),0,18)
+    delete(H(1)); pos = get(H(2),'position'); yl = get(gca,'YLim'); set(H(2),'position',[pos(1) yl(2)-0.05*diff(yl) pos(3)]);
+end
+
+p(settings_osci.nfreqs,1).select()
+legend({'Oscillatory nonadditive effect','Fractal nonadditive effect'},'FontSize',10)
+
+p.margintop = 8;
+p.marginleft = 18;
+p.de.marginleft = 12;
+
+savefig('Fig9.fig')
+export_fig('Fig9.png','-m4')
+save('Panel9.mat','p')
+
+%% Figure 5: Rest-nonadditivity correlations (no mediation)
+
+if isfield(settings,'rest')
+    mainfig = figure;
+    
+    pos = get(gcf,'position');
+    set(gcf,'position',[pos(1:2) pos(3)*4 pos(4)*3],'Color','w');
+    
+    p = panel('no-manage-font');
+    p.pack('v',{1/3 1/3 1/3});
+    
+    pwidth = ceil((settings.nfreqs-1)/2);
+    %p(1).pack(2,pwidth);
+%     p(1).pack('h',repmat({1/(settings.nfreqs-1)},settings.nfreqs-1,1)');
+%     
+%     %plotindx = [1:pwidth 1:pwidth];
+%     for c = 2:settings.nfreqs
+%         %p(1,ceil((c-1)/pwidth),plotindx(c-1)).pack()
+%         p(1,c-1).pack()
+%         %p(1,ceil((c-1)/pwidth),plotindx(c-1)).pack({[0 0 0.4 0.4]})
+%         p(1,c-1).pack({[0.7 0.7 0.3 0.3]})
+%         
+%         
+%         %p(1,ceil((c-1)/pwidth),plotindx(c-1),1).select();
+%         p(1,c-1,1).select()
+%         nicecorrplot(nanmean(squeeze(restmeas.rel_bp.vals(c,:,:)),1),nanmean(allmeas{c}.erspindex,1),{'Resting-state relative power','ERSP AUC'})
+%         FixAxes(gca,14)
+%         title(settings.tfparams.fbandnames{c})
+%         
+%         
+%         %p(1,ceil((c-1)/pwidth),plotindx(c-1),2).select();
+%         p(1,c-1,2).select()
+%         if strcmpi(settings.datatype,'MEG')
+%             ft_cluster_topoplot(settings.layout,restmeas.rel_bp.index.r.subject(:,c),settings.datasetinfo.label,...
+%                 restmeas.rel_bp.index.p.subject(:,c),restmeas.rel_bp.index.stats{c}.mask);
+%         else
+%             cluster_topoplot(restmeas.rel_bp.index.r.subject(:,c),settings.layout,...
+%                 restmeas.rel_bp.index.p.subject(:,c),(restmeas.rel_bp.index.stats{c}.mask));
+%         end
+%         cbar = colorbar('WestOutside');
+%         %cbar.Label.FontSize = 12;
+%         %ax(c-1) = p(1,ceil((c-1)/pwidth),plotindx(c-1),2).axis;
+%         ax(c-1) = p(1,c-1,2).axis;
+%     end
+%     %cbar.Label.String = 'Spearman''s rho';
+%     %cbar.Label.FontSize = 14;
+%     colormap(lkcmap2)
+%     Normalize_Clim(ax,1);
+    
+    %p(2).pack(2,pwidth);
+    %plotfreqs = 2:settings.nfreqs;
+    
+    rests = {'restmeas','restmeas_osci','restmeas_frac'};
+    tasks = {'allmeas','allmeas_osci','allmeas_frac'};
+    
+    for q = 1:3
+        plotfreqs = [find(strcmpi(fbands,'Delta')) find(strcmpi(fbands,'Alpha'))];
+        
+        p(q).pack('h',repmat({1/(length(plotfreqs))},length(plotfreqs),1)');
+        
+        rmeas = eval(rests{q});
+        ameas = eval(tasks{q});
+        
+        for c = plotfreqs
+            panelindx = find(plotfreqs == c);
+            %p(2,ceil((c-1)/pwidth),plotindx(c-1)).pack()
+            %p(2,ceil((c-1)/pwidth),plotindx(c-1)).pack({[0 0 0.4 0.4]})
+            if ~isempty(find(rmeas.rel_bp.naindex.r.subject(:,c))) && ~isempty(find(~isnan(rmeas.rel_bp.naindex.r.subject(:,c))))
+                p(1,panelindx).pack();
+                p(1,panelindx).pack({[0.7 0.7 0.3 0.3]})
+                
+                %p(2,ceil((c-1)/pwidth),plotindx(c-1),1).select();
+                p(1,panelindx,1).select()
+                nicecorrplot(nanmean(squeeze(rmeas.rel_bp.vals(c,:,:)),1),nanmean(ameas{c}.naerspindex,1),...
+                    {'Resting-state relative power','ERSP nonadditivity'},'Plot','r')
+                FixAxes(gca,14)
+                
+                %p(2,ceil((c-1)/pwidth),plotindx(c-1),2).select();
+                p(q,panelindx,2).select()
+                rmeas.rel_bp.naindex.r.subject = real(rmeas.rel_bp.naindex.r.subject);
+                if strcmpi(settings.datatype,'MEG')
+                    ft_cluster_topoplot(settings.layout,real(rmeas.rel_bp.naindex.r.subject(:,c)),settings.datasetinfo.label,...
+                        rmeas.rel_bp.naindex.p.subject(:,c),rmeas.rel_bp.naindex.stats{c}.mask);
+                else
+                    cluster_topoplot(real(rmeas.rel_bp.index.r.subject(:,c)),settings.layout,...
+                        rmeas.rel_bp.naindex.p.subject(:,c),(rmeas.rel_bp.naindex.stats{c}.mask));
+                end
+                %title(settings.tfparams.fbandnames{c})
+                if c == plotfreqs(end)
+                    cbar = colorbar('EastOutside');
+                end
+                %set(cbar,'peer',gca,'FontSize',12);
+                %ax(c-1) = p(2,ceil((c-1)/pwidth),plotindx(c-1),2).axis;
+                ax(c) = p(1,panelindx,2).select();
+            end
+        end
+        %cbar.Label.String = 'Spearman''s rho';
+        %cbar.Label.FontSize = 14;
+        colormap(lkcmap2)
+        Normalize_Clim(ax,1);
+    end
+    
+    set(gcf,'Color','w')
+    
+    savefig('Fig5.fig')
+    export_fig('Fig5.png','-m4')
+    save('Panel5.mat','p')
+end
+
+%% Figure 6: Mediation only figure
+
+p = panel('no-manage-font')
+p.pack(2,3)
+rests = {'restmeas','restmeas_osci','restmeas_frac'};
+tasks = {'allmeas','allmeas_osci','allmeas_frac'};
+sets = {'settings','settings_osci','settings_frac'};
+opts = struct;
+opts.display_mod = 1;
+opts.display = 0;
+for i = 1:3
+    rmeas = eval(rests{i});
+    ameas = eval(tasks{i});
+    medfreqs = [find(strcmpi(fbands,'Delta')) find(strcmpi(fbands,'Alpha'))];
+    s = eval(sets{i});
+    prestim_pseudo = s.pseudo.prestim - s.pseudo.prestim(1)+1+s.srate/5;
+    prestim_real = s.real.prestim - s.pseudo.prestim(1)+1+s.srate/5;
+    poststim_pseudo = s.pseudo.poststim - s.pseudo.prestim(1)+1+s.srate/5;
+    poststim_real = s.real.poststim - s.pseudo.prestim(1)+1+s.srate/5;
+    for q = 1:length(medfreqs)
+        opts.indvar = ['Rest' newline fbands{medfreqs(q)} newline 'power'];
+        opts.depvar = ['Poststim' newline fbands{medfreqs(q)} newline 'power'];
+        opts.mediator = ['Prestim' newline fbands{medfreqs(q)} newline 'power'];
+        postreal = vert(squeeze(nanmean(nanmean(ameas{medfreqs(q)}.raw.ersp(:,poststim_real,:),2),1)));
+        prereal = vert(squeeze(nanmean(nanmean(ameas{medfreqs(q)}.raw.ersp(:,prestim_real,:),2),1)));
+        postpseudo = vert(squeeze(nanmean(nanmean(ameas{medfreqs(q)}.raw.ersp(:,poststim_pseudo,:),2),1)));
+        rest = vert(squeeze(mean(rmeas.bp.vals(medfreqs(q),:,:),2)));
+        med(i,q) = mediation_covariates(1e25*double(postreal),1e25*double(rest),1e25*double(prereal),1e25*double(postpseudo),opts);
+        figaxes = findobj('Parent',gcf,'Type','axes');
+        medfig = gcf;
+        p(q,i).select(figaxes)
+        close(medfig)
+    end
+end
+
+savefig('Fig6.fig')
+export_fig('Fig6.png','-m4')
+save('Panel6.mat','p','med')
+
+
 
 %% Figure 2.5 (or supplement) - pseudotrial-based and ttv-based time course differences?
 
@@ -1210,7 +1463,9 @@ for q = 1:settings.nfreqs-1
                 squeeze(nanmean(allmeas{q}.naddersp.diff(:,:,1,:))),'b',0.15,1,'std');
             stdshade(t,squeeze(nanmean(allmeas{qq}.naddersp.diff(:,:,2,:),1))-...
                 squeeze(nanmean(allmeas{qq}.naddersp.diff(:,:,1,:))),'r',0.15,1,'std');
-            Plot_sigmask(p(q,qq).axis,alloutputs.ersp.pt.tcoursestats{q,qq}.prob < 0.05,'cmapline','LineWidth',5)
+            %Plot_sigmask(p(q,qq).axis,alloutputs.ersp.pt.tcoursestats{q,qq}.prob < 0.05,'cmapline','LineWidth',5)
+            H = sigstar({get(p(q,qq).axis,'XLim')},2*min(alloutputs.ersp.pt.tcoursestats{c}.prob),0,18)
+            delete(H(1)); pos = get(H(2),'position'); yl = get(gca,'YLim'); set(H(2),'position',[pos(1) yl(2)-0.05*diff(yl) pos(3)])
             
             if q == 1
                 title(fbands{qq})
@@ -1229,7 +1484,7 @@ for q = 1:settings.nfreqs-1
             stdshade(t,squeeze(nanmean(allmeas{q}.ttversp.real,1)),'b',0.15,1,'std');
             stdshade(t,squeeze(nanmean(allmeas{qq}.ttversp.real,1)),'r',0.15,1,'std');
             
-            Plot_sigmask(p(q,qq).axis,alloutputs.ersp.pt.tcoursestats{qq,q}.prob < 0.05,'cmapline','LineWidth',5)
+            Plot_sigmask(p(q,qq).axis,2*min(alloutputs.ersp.pt.tcoursestats{qq,q}.prob),'cmapline','LineWidth',5)
             
             if q == 1
                 title(fbands{qq})

@@ -65,9 +65,9 @@ try;display=options.display;catch;display=1;end
 % regress M on X
 [p2,stat2,df2,a2] = GLM_contrast([ones(n,1),X],M,[0;1],'F',0);
 
-% regress Y on both X and M
-[p3,stat3,df3,a3] = GLM_contrast([ones(n,1),X,M],Y,[0;1;0],'F',0);
-[p4,stat4,df4,a4] = GLM_contrast([ones(n,1),X,M],Y,[0;0;1],'F',0);
+% regress Y on both X and M (and C)
+[p3,stat3,df3,a3] = GLM_contrast([ones(n,1),X,M,C],Y,[0;1;0;0],'F',0); % Regress X on Y in presence of M
+[p4,stat4,df4,a4] = GLM_contrast([ones(n,1),X,M,C],Y,[0;0;1;0],'F',0); % Regress M on Y in presence of X
 
 % path analysis
 de = a3.R2_a;
@@ -75,19 +75,19 @@ ie = a2.R2_a.*a4.R2_a;
 te = a4.R2-a4.R2_a+ie;
 
 % Redo everything with covariates
-mdl2 = fitlm(X,M)
-mdl3 = fitlm([X,M,C],Y)
+% mdl2 = fitlm(X,M);
+% mdl3 = fitlm([X,M,C],Y);
 
 
 % Sobel test
-% sobel.a = a2.b(2); %coefficient of X regressed on M
-sobel.a = mdl2.Coefficients.Estimate(2);
-% sobel.va = a2.vhat.*a2.iC(2,2); % coefficient covariance in position 2,2 
-sobel.va = mdl2.CoefficientCovariance(2,2);
-% sobel.b = a3.b(3); %coefficient of M in multiple regression of [X,M] on Y
-sobel.b = mdl3.Coefficients.Estimate(3);
-% sobel.vb = a3.vhat.*a3.iC(3,3); %coefficient covariance in position 3,3
-sobel.vb = mdl3.CoefficientCovariance(3,3);
+ sobel.a = a2.b(2); %coefficient of X regressed on M
+%sobel.a = mdl2.Coefficients.Estimate(2);
+sobel.va = a2.vhat.*a2.iC(2,2); % coefficient covariance in position 2,2 
+%sobel.va = mdl2.CoefficientCovariance(2,2);
+sobel.b = a3.b(3); %coefficient of M in multiple regression of [X,M] on Y
+%sobel.b = mdl3.Coefficients.Estimate(3);
+sobel.vb = a3.vhat.*a3.iC(3,3); %coefficient covariance in position 3,3
+%sobel.vb = mdl3.CoefficientCovariance(3,3);
 sobel.ab = sobel.a.*sobel.b;
 sobel.sab = sqrt(sobel.a.^2*sobel.vb + sobel.b^2*sobel.va);
 sobel.p = 2*VBA_spm_Ncdf(-abs(sobel.ab./sobel.sab),0,1);
@@ -143,6 +143,7 @@ out.sobel = sobel;
 out.montecarlo = montecarlo;
 out.conj = conj;
 out.summary = os;
+
 
 
 if verbose
@@ -276,7 +277,7 @@ if isfield(options,'display_mod') && options.display_mod
     ht(5) = text(3,-0.5,['R^2=',num2str(round(1e3*a4.R2_a)/10),'% (p=',num2str(out.p(2,2)),')'],'parent',ha,'HorizontalAlignment','Center');
     ht(5).FontSize = 12;
     % indirect effect (Sobel test)
-    ht(5) = text(1.5,-2.3,['Indirect effect [' indvar_name '->' med_name '->' depvar_name ']: R^2=',num2str(round(1e3*ie)/10),'% (Sobel test: p=',num2str(options.sobelp),')'],'parent',ha,'HorizontalAlignment','Center');
+    ht(5) = text(1.5,-2.3,['Indirect effect [' indvar_name '->' med_name '->' depvar_name ']: R^2=',num2str(round(1e3*ie)/10),'% (Sobel test: p=',num2str(out.sobel.p),')'],'parent',ha,'HorizontalAlignment','Center');
     ht(5).FontSize = 14;
     axis(ha,'equal')
     axis(ha,'off')
