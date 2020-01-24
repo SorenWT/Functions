@@ -73,12 +73,19 @@ set(xl,'FontSize',20)
 set(yl,'FontSize',20)
 
 if CheckInput(varargin,'Plot') && EasyParse(varargin,'Plot','r')
-    tb = annotation('textbox','String',{['rho = ' num2str(round(corrrho,3))]},'FitBoxToText','on','LineStyle','none','FontSize',14);
+    tb = annotation('textbox','String',{['\rho = ' num2str(round(corrrho,3))]},'FitBoxToText','on','LineStyle','none','FontSize',14);
     tbsize = get(tb,'Position');
     delete(tb)
     edges = [pos(1) pos(2) pos(1)+pos(3) pos(2)+pos(4)]; %left bottom right top
     tb = annotation('textbox','Position',[edges(3)-tbsize(3)-pos(3)*0.05 edges(4)-tbsize(4)-pos(4)*0.05 tbsize(3) tbsize(4)],...
         'String',{['\rho = ' num2str(round(corrrho,3))]},'FitBoxToText','on','LineStyle','none','FontSize',14);
+elseif CheckInput(varargin,'Plot') && EasyParse(varargin,'Plot','Beta')
+    tb = annotation('textbox','String',{['\beta = ' num2str(round(B(2),3))]},'FitBoxToText','on','LineStyle','none','FontSize',14);
+    tbsize = get(tb,'Position');
+    delete(tb)
+    edges = [pos(1) pos(2) pos(1)+pos(3) pos(2)+pos(4)]; %left bottom right top
+    tb = annotation('textbox','Position',[edges(3)-tbsize(3)-pos(3)*0.05 edges(4)-tbsize(4)-pos(4)*0.05 tbsize(3) tbsize(4)],...
+        'String',{['\beta = ' num2str(round(B(2),3))]},'FitBoxToText','on','LineStyle','none','FontSize',14);
 else
     tb = annotation('textbox','String',{['rho = ' num2str(round(corrrho,3))];['p = ' num2str(round(corrp,3,'significant'))]},...
         'FitBoxToText','on','LineStyle','none','FontSize',14);
