@@ -1,6 +1,18 @@
 function WaitForCpu(targUsage,command,varargin)
-
-% if cpu usage is consistently below the target, run the command
+%
+% 
+% Inputs: 
+%     targUsage (float): the target usage for the function (in percent). If usage is below this value  
+%         for a certain length of time, the command will be run
+%     command (string): the command to be run
+%     
+% Optional inputs: 
+%     WaitForCpu checks a the CPU usage at regular intervals, and only runs the command if the past n 
+%         checks are successful
+%     historylength: the number of past successful checks needed (default = 6)
+%     checkinterval: the interval (in seconds) between successive CPU checks (default = 300 seconds, 
+%         ie. 5 minutes)
+%     
 
 varargin = setdefault(varargin,'historylength',6);
 varargin = setdefault(varargin,'checkinterval',300);
