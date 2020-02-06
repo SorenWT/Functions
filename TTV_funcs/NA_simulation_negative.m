@@ -337,7 +337,7 @@ for q = 1:numbands
             -mean(mean(real(datacat(c,prestim_real,find(splitindex))),3),2));
         
         datacalc{q}.nadderp.diff = datacalc{q}.nadderp.real-datacalc{q}.nadderp.pseudo;
-        
+    end
         
     SD_all = zeros(length(timefreq_data{q}.label),size(timefreq_data{q}.matrix,2));
     for c = 1:length(timefreq_data{q}.label)
