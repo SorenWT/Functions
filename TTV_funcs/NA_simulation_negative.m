@@ -80,16 +80,19 @@ for c = 1:length(mvals)
     opts.minnbchan = 0; opts.nrand = 1000; opts.distmethod = 'distance';
     stats = cell(1,length(nvals));
     parfor cc = 1:length(nvals)
-        stats_pt{cc} = EasyClusterCorrect({permute(squeeze(all_datacalc{c,cc}.naddersp.diff(1,:,1,:)),[3 2 1]),...
+        stats_ersp_pt{cc} = EasyClusterCorrect({permute(squeeze(all_datacalc{c,cc}.naddersp.diff(1,:,1,:)),[3 2 1]),...
             permute(squeeze(all_datacalc{c,cc}.naddersp.diff(1,:,2,:)),[3 2 1])},datasetinfo,'ft_statfun_fast_signrank',opts);
-        stats_ttv{cc} = EasyClusterCorrect({permute(all_datacalc{c,cc}.ttversp.real(1,:,:),[1 3 2]) 0.*permute(all_datacalc{c,cc}.ttversp.real(1,:,:),[1 3 2])},...
+        stats_ersp_ttv{cc} = EasyClusterCorrect({permute(all_datacalc{c,cc}.ttversp.real(1,:,:),[1 3 2]) 0.*permute(all_datacalc{c,cc}.ttversp.real(1,:,:),[1 3 2])},...
             datasetinfo,'ft_statfun_fast_signrank',opts)
         
-        
+        stats_erp_pt{cc} = EasyClusterCorrect({permute(squeeze(all_datacalc{c,cc}.nadderp.diff(1,:,1,:)),[3 2 1]),...
+            permute(squeeze(all_datacalc{c,cc}.nadderp.diff(1,:,2,:)),[3 2 1])},datasetinfo,'ft_statfun_fast_signrank',opts);
+        stats_erp_ttv{cc} = EasyClusterCorrect({permute(all_datacalc{c,cc}.ttv.real(1,:,:),[1 3 2]) 0.*permute(all_datacalc{c,cc}.ttversp.real(1,:,:),[1 3 2])},...
+            datasetinfo,'ft_statfun_fast_signrank',opts)
         % Testing the mediation model
-        med{c,cc} = mediation_covariates(vert(squeeze(mean(all_datacalc{c,cc}.raw.ersp(1,poststim_real,:),2))),...
-            all_restmeas{c,cc}.bp(:,1),vert(squeeze(mean(all_datacalc{c,cc}.raw.ersp(1,prestim_real,:),2))),...
-            vert(squeeze(mean(all_datacalc{c,cc}.raw.ersp(1,poststim_pseudo,:),2))),opts2);
+%         med{c,cc} = mediation_covariates(vert(squeeze(mean(all_datacalc{c,cc}.raw.ersp(1,poststim_real,:),2))),...
+%             all_restmeas{c,cc}.bp(:,1),vert(squeeze(mean(all_datacalc{c,cc}.raw.ersp(1,prestim_real,:),2))),...
+%             vert(squeeze(mean(all_datacalc{c,cc}.raw.ersp(1,poststim_pseudo,:),2))),opts2);
 
     end
     allstats_pt(c,:) = stats_pt;
@@ -304,6 +307,61 @@ for q = 1:numbands
             datacalc{q}.ttversp.pseudo(:,:) = 10*log10(datacalc{q}.ttversp.pseudo(:,:));
     end
     
+    %% ERP nonadditivity
+    datacalc{q}.erp(:,:) = mean(real(timefreq_data{q}.matrix),3);
     
+    split_real = squeeze(mean(real(timefreq_data{q}.matrix(:,prestim_real,:)),2));
+    split_pseudo = squeeze(mean(real(timefreq_data{q}.matrix(:,prestim_pseudo,:)),2));
+        
+    for c = 1:nbchan
+        splitindex = split_pseudo(c,:) > median(split_pseudo(c,:));
+        
+        datacalc{q}.nadderp.raw.pseudo(c,:,1) = mean(real(datacat(c,:,find(~splitindex))),3);
+        datacalc{q}.nadderp.raw.pseudo(c,:,2) = mean(real(datacat(c,:,find(splitindex))),3);
+        
+        
+        datacalc{q}.nadderp.pseudo(c,:,1) = (mean(real(datacat(c,poststim_pseudo,find(~splitindex))),3)...
+            -mean(mean(real(datacat(c,prestim_pseudo,find(~splitindex))),3),2));
+        datacalc{q}.nadderp.pseudo(c,:,2) = (mean(real(datacat(c,poststim_pseudo,find(splitindex))),3)...
+            -mean(mean(real(datacat(c,prestim_pseudo,find(splitindex))),3),2));
+        
+        splitindex = split_real(c,:) > median(split_real(c,:));
+        
+        datacalc{q}.nadderp.raw.real(c,:,1) = mean(real(datacat(c,:,find(~splitindex))),3);
+        datacalc{q}.nadderp.raw.real(c,:,2) = mean(real(datacat(c,:,find(splitindex))),3);
+        
+        
+        datacalc{q}.nadderp.real(c,:,1) = (mean(real(datacat(c,poststim_real,find(~splitindex))),3)...
+            -mean(mean(real(datacat(c,prestim_real,find(~splitindex))),3),2));
+        datacalc{q}.nadderp.real(c,:,2) = (mean(real(datacat(c,poststim_real,find(splitindex))),3)...
+            -mean(mean(real(datacat(c,prestim_real,find(splitindex))),3),2));
+        
+        datacalc{q}.nadderp.diff = datacalc{q}.nadderp.real-datacalc{q}.nadderp.pseudo;
+        
+        
+    SD_all = zeros(length(timefreq_data{q}.label),size(timefreq_data{q}.matrix,2));
+    for c = 1:length(timefreq_data{q}.label)
+        SD_all(c,:) = std(real(timefreq_data{q}.matrix(c,:,:)),[],3);
+    end
+    datacalc{q}.raw.sd(:,:) = SD_all;
+    
+    % normalize by 50ms prestim ifor both real and pseudotrial
+    datacalc{q}.ttv.pseudo(:,:) = (SD_all(:,poststim_pseudo)-...
+        mean(SD_all(:,prestim_pseudo),2));
+    datacalc{q}.ttv.real(:,:) = (SD_all(:,poststim_real)-...
+        mean(SD_all(:,prestim_real),2));
+    switch settings.units
+        case 'prcchange'
+            datacalc{q}.ttv.pseudo(:,:) = 100*datacalc{q}.ttv.pseudo(:,:)./...
+                mean(SD_all(:,prestim_pseudo),2);
+            datacalc{q}.ttv.real(:,:) = 100*datacalc{q}.ttv.real(:,:)./...
+                mean(SD_all(:,prestim_real),2);
+        case 'zscore'
+            datacalc{q}.ttv.pseudo(:,:) = zscore(datacalc{q}.ttv.pseudo(:,:),0,2);
+            datacalc{q}.ttv.real(:,:) = zscore(datacalc{q}.ttv.real(:,:),0,2);
+        case 'log'
+            datacalc{q}.ttv.pseudo(:,:) = 10*log10(datacalc{q}.ttv.pseudo(:,:));
+            datacalc{q}.ttv.real(:,:) = 10*log10(datacalc{q}.ttv.real(:,:));
+    end
 end
 end
