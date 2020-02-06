@@ -193,7 +193,7 @@ end
 if strcmp(cfg.method, 'superimposed')
     if ~isfield(cfg, 's1'),           cfg.s1 = [];                          end
     if ~isfield(cfg.s1, 'freq'),      cfg.s1.freq  = 10;                    end
-    if ~isfield(cfg.s1, 'phase'),     cfg.s1.phase = 0;                     end
+    if ~isfield(cfg.s1, 'phase'),     cfg.s1.phase = 'random';                     end
     if ~isfield(cfg.s1, 'ampl'),      cfg.s1.ampl  = 1;                     end
     if ~isfield(cfg, 's2'),           cfg.s2 = [];                          end
     if ~isfield(cfg.s2, 'freq'),      cfg.s2.freq  = 20;                    end
