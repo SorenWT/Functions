@@ -95,8 +95,10 @@ for c = 1:length(mvals)
 %             vert(squeeze(mean(all_datacalc{c,cc}.raw.ersp(1,poststim_pseudo,:),2))),opts2);
 
     end
-    allstats_pt(c,:) = stats_pt;
-    allstats_ttv(c,:) = stats_ttv;
+    allstats_ersp_pt(c,:) = stats_ersp_pt;
+    allstats_ersp_ttv(c,:) = stats_ersp_ttv;
+    allstats_erp_pt(c,:) = stats_erp_pt;
+    allstats_erp_ttv(c,:) = stats_erp_ttv;
 end
 
 
