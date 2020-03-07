@@ -1,4 +1,4 @@
-function tevals = stim_TE(braints,musicts,fs,labels)
+function tevals = stim_TE(braints,musicts,fs,labels,filename)
 
 if size(braints,1) > size(braints,2)
    braints = braints'; 
@@ -34,7 +34,7 @@ cfg.flagNei = 'Mass'; cfg.sizeNei = 4;
 dataprep = TEprepare(cfg,trl);
 
 cfg = []; cfg.optdimusage = 'maxdim';
-cfg.predicttime_u = 20;
+cfg.fileidout = filename;
 cfg.surrogatetype = 'trialshuffling';
 cfg.shifttest = 'no';
 %cfg.numpermutation = 10000;
