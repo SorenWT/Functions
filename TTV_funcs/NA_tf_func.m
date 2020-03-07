@@ -182,7 +182,9 @@ if settings.pool > 1
                     
                     
                     
-                    foi{i} = freqdata.freq;
+                    %foi{i} = freqdata.freq;
+                    foi{i} = exp(linspace(log(freqs{2}(1)),log(freqs{end}(2)),50));
+                    disc_foi = discretize(freqdata.freq,foi{i});
                     cfg.foi = freqdata.freq;
                     
                     freqdata.fourierspctrm = permute(freqdata.fourierspctrm,[1 3 2 4]);

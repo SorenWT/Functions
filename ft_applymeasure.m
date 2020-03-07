@@ -320,6 +320,7 @@ else
             end
             
             EEG.filename = files(i).name;
+            EEG.filepath = files(i).folder;
             
             
             %% Subsample, surrogate, and apply the measures
@@ -490,6 +491,7 @@ else
             end
             
             EEG.filename = files(cfg.subsrange(i)).name;
+            EEG.filepath = files(cfg.subsrange(i)).folder;
             
             %% Subsample, surrogate, and apply the measures
             if cfgcheck(cfg.surrogate,'do_surr','no') && cfgcheck(cfg.subsample,'do_subsample','no')
@@ -627,8 +629,18 @@ if cfgcheck(cfg.envelope,'do_envelope','yes')
     disp('Getting amplitude envelope...')
     fname = EEG.filename;
     
-    if exist([fname '_envelope_' cfg.envelope.method '.mat'],'file')
-        EEG = parload([fname '_envelope_' cfg.envelope.method '.mat'],'EEG');
+    if strcmpi(cfg.readonly,'yes')
+        tmp = tokenize(cfg.outfile,filesep);
+        fldr = fullfile(tmp{1:end-1});
+        if fldr(1) ~= filesep
+            fldr = [filesep fldr];
+        end
+    else
+        fldr = EEG.filepath;
+    end
+    
+    if exist(fullfile(fldr,[fname '_envelope_' cfg.envelope.method '.mat']),'file')
+        EEG = parload(fullfile(fldr,[fname '_envelope_' cfg.envelope.method '.mat']),'EEG');
     else
         switch cfg.envelope.method
             case 'fieldtrip'
@@ -655,16 +667,7 @@ if cfgcheck(cfg.envelope,'do_envelope','yes')
     end
     
     if cfgcheck(cfg.envelope,'save_envelope','yes')
-        if strcmpi(cfg.readonly,'yes')
-            tmp = tokenize(cfg.outfile,filesep);
-           fldr = fullfile(tmp{1:end-1});
-           if fldr(1) ~= filesep
-              fldr = [filesep fldr]; 
-           end
-        else
-            fldr = pwd;
-        end
-        save(fullfile(fldr,[fname '_envelope_' cfg.envelope.method '.mat']),'EEG','-v7.3')
+        save(fullfile(fldr,[EEG.filename '_envelope_' cfg.envelope.method '.mat']),'EEG','-v7.3')
     end
 end
 
@@ -672,22 +675,24 @@ if cfgcheck(cfg.irasa,'do_irasa','yes')
     disp(' ')
     disp('Performing IRASA...')
     fname = EEG.filename;
-    if exist([EEG.filename '_IRASA_specs.mat'],'file')
-        EEG = parload([EEG.filename '_IRASA_specs.mat'],'EEG');
+    
+    if strcmpi(cfg.readonly,'yes')
+        tmp = tokenize(cfg.outfile,filesep);
+        fldr = fullfile(tmp{1:end-1});
+        if fldr(1) ~= filesep
+            fldr = [filesep fldr];
+        end
+    else
+        fldr = EEG.filepath;
+    end
+    
+    if exist(fullfile(fldr,[fname '_IRASA_specs.mat']),'file')
+        EEG = parload(fullfile(fldr,[fname '_IRASA_specs.mat']),'EEG');
     else
         EEG = IRASA_window(EEG.data,EEG.srate,'winsize',cfg.irasa.winsize,'overlap',cfg.irasa.overlap,'hset',cfg.irasa.hset);
     end
     
     if cfgcheck(cfg.irasa,'save_specs','yes')
-        if strcmpi(cfg.readonly,'yes')
-           tmp = tokenize(cfg.outfile,filesep);
-           fldr = fullfile(tmp{1:end-1});
-           if fldr(1) ~= filesep
-              fldr = [filesep fldr]; 
-           end
-        else
-            fldr = pwd;
-        end
         save(fullfile(fldr,[fname '_IRASA_specs.mat']),'EEG','-v7.3');
     end
 end

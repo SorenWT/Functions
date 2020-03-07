@@ -456,14 +456,28 @@ set(gcf,'position',[pos(1:2) pos(3)*3 pos(4)*3],'Color','w');
 
 p = panel('no-manage-font');
 p.pack('v',{50 50});
-p(1).pack('h',{50 50})
-p(2).pack('h',{25 50 25});
+p(1).pack('v',{50 50})
+p(2).pack('v',{25 50 25});
+p(1,1).select();
+t = linspace(0,length(settings.real.poststim)*(1/settings.srate),length(settings.real.poststim));
+hold on
+%stdshade(t,squeeze(allmeas{1}.erp(plotsensor,poststim_real,:)),'k',0.15,1,'std');
+stdshade(t,squeeze(nanmean(allmeas{1}.nadderp.real(:,:,1,:),1)),'b',0,1,'sem')
+stdshade(t,squeeze(nanmean(allmeas{1}.nadderp.pseudo(:,:,1,:),1)),'b--',0,1,'sem')
+stdshade(t,squeeze(nanmean(allmeas{1}.nadderp.real(:,:,2,:),1)),'r',0,1,'sem');
+stdshade(t,squeeze(nanmean(allmeas{1}.nadderp.pseudo(:,:,2,:),1)),'r--',0,1,'sem')
+xlabel('Time (ms)')
+ylabel('Voltage (uV)')
+title('ERP real trials and pseudotrials')
+legend({'Real prestim low','Pseudo prestim low','Real prestim high','Pseudo prestim high'},'EdgeColor','none','location','east')
+FixAxes(gca,16)
 
-p(1,1).pack()
+
+p(2,1).pack();
 for cc = 1:4
-    p(1,1).pack({[0.25*(cc-1) 0 0.25 0.15]})
+    p(2,1).pack({[0.25*(cc-1) 0 0.25 0.15]})
 end
-p(1,1,1).select();
+p(2,1,1).select();
 t = linspace(0,length(settings.real.poststim)*(1/settings.srate),length(settings.real.poststim));
 hold on
 stdshade(t,squeeze(nanmean(allmeas{1}.nadderp.real(:,:,1,:),1))-...
@@ -471,7 +485,7 @@ stdshade(t,squeeze(nanmean(allmeas{1}.nadderp.real(:,:,1,:),1))-...
 stdshade(t,squeeze(nanmean(allmeas{1}.nadderp.real(:,:,2,:),1))-...
     squeeze(nanmean(allmeas{1}.nadderp.pseudo(:,:,2,:),1)),'r',0.15,1,'sem')
 %Plot_sigmask(gca,alloutputs.erp.pt.stats{1}.mask,'cmapline','LineWidth',5)
-H = sigstar({get(p(1,1,1).axis,'XLim')},2*min(min(alloutputs.erp.pt.stats{1}.prob)),0,18)
+H = sigstar({get(p(2,1,1).axis,'XLim')},2*min(min(alloutputs.erp.pt.stats{1}.prob)),0,18)
 delete(H(1)); pos = get(H(2),'position'); yl = get(gca,'YLim'); set(H(2),'position',[pos(1) yl(2)-0.05*diff(yl) pos(3)])
 
 %FillBetween(t,nanmean(nanmean(allmeas{1}.nadderp.real(:,:,1,:),4),1)-...
@@ -488,7 +502,7 @@ plotindx = linspace(0,max(settings.aucindex),5);
 plotindx(1) = [];
 plotindx = plotindx - settings.srate/10;
 for cc = 1:4
-    p(1,1,cc+1).select()
+    p(2,1,cc+1).select()
     plotdata = nanmean(squeeze(allmeas{1}.nadderp.diff(:,plotindx(cc),2,:)-allmeas{1}.nadderp.diff(:,plotindx(cc),1,:)),2);
     if strcmpi(settings.datatype,'MEG')
         ft_cluster_topoplot(settings.layout,plotdata,settings.datasetinfo.label,...
@@ -501,7 +515,7 @@ for cc = 1:4
     if cc == 4
         colorbar
     end
-    ax(cc) = p(1,1,cc+1).axis;
+    ax(cc) = p(2,1,cc+1).axis;
     title([num2str(plotindx(cc)*(1000/settings.srate)) ' ms'],'FontSize',10)
     Set_Clim(ax(cc),[prctile(plotdata,20) prctile(plotdata,80)]);
 end
@@ -575,11 +589,13 @@ colorbar('WestOutside')
 p.margin = [20 20 5 8];
 p.de.margin = [5 5 5 5];
 p(1).marginright = 25;
-p(1,2).marginleft = 28;
-p(1).marginbottom = 32;
-
+p(1,1).marginbottom = 28;
+p(2,1).marginbottom = 28;
+AddFigureLabel(p(1,1).axis,'A')
+AddFigureLabel(p(2,1,1).axis,'B');
+AddFigureLabel(p(1,2,1).axis,'C');
+AddFigureLabel(p(2,2,1).axis,'D');
 colormap(lkcmap2)
-%Plot_sigmask(gca,alloutputs.erp.ttv.stats{1}.mask,'cmapline','LineWidth',5)
 
 set(gcf,'Color','w')
 
