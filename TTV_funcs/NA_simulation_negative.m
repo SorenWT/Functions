@@ -3,11 +3,17 @@
 mvals = 2.^[-6:2:6]; % m is mean noise level
 nvals = 2.^[-6:2:6]; % n is the variability of noise across trials
 
+settings = struct;
+settings.prestim_pseudo = 351:400; 
+settings.poststim_pseudo = 401:800; 
+settings.prestim_real = 951:1000; 
+settings.poststim_real = 1001:1400;
+
 for m = mvals
     for n = nvals
         datacalc = cell(1,48);
         
-        parfor c = 1:48
+        parfor i = 1:48
             % Simulate resting-state
             cfg = []; cfg.method = 'mix_oscifrac'; cfg.fsample = 500; cfg.trllen = 4;
             cfg.osci = struct; cfg.frac.ple = rand+0.5; cfg.frac.ampl = 1; cfg.frac.bpfreq = [0.5 50];
@@ -17,14 +23,14 @@ for m = mvals
             
             subAmpl = rand+0.5;
             
-            for cc = 1:75 % 5-min resting state
-                spont = createFN(1.75/2,2000)*subAmpl;
-                spont = ft_preproc_lowpassfilter(spont,500,10,4);
-                spont = NormOntoRange(spont,[1 2]);
-                cfg.osci.s1.ampl = horz(spont); % no task-evoked activity
-                %cfg.osci.s1.ampl{cc} = horz(spont)-[zeros(1,1000) rand*sin((1:500)*pi/500) zeros(1,500)];
-            end
-            rest{c} = ft_freqsimulation_swt(cfg);
+%             for cc = 1:75 % 5-min resting state
+%                 spont = createFN(1.75/2,2000)*subAmpl;
+%                 spont = ft_preproc_lowpassfilter(spont,500,10,4);
+%                 spont = NormOntoRange(spont,[1 2]);
+%                 cfg.osci.s1.ampl = horz(spont); % no task-evoked activity
+%                 %cfg.osci.s1.ampl{cc} = horz(spont)-[zeros(1,1000) rand*sin((1:500)*pi/500) zeros(1,500)];
+%             end
+%             rest{c} = ft_freqsimulation_swt(cfg);
             
             
             % Simulate trial data
@@ -39,18 +45,51 @@ for m = mvals
                 spont = NormOntoRange(spont,[1 2]);
                 cfg.osci.s1.ampl{cc} = horz(spont)-[zeros(1,1000) rand*sin((1:500)*pi/500) zeros(1,500)];
             end
-            task{c} = ft_freqsimulation_swt(cfg);
+            task{i} = ft_freqsimulation_swt(cfg);
+            
+            data_allrange = (settings.pseudo.prestim(1)-ceil(settings.srate/5)):(settings.real.poststim(end));
+            cfg = []; cfg.method = 'wavelet'; cfg.output = 'fourier'; cfg.foi = exp(linspace(log(8),log(13),6));
+            cfg.keeptrials = 'yes'; cfg.toi = data.time{1}(data_allrange); cfg.width = 3;
+            freqdata = ft_freqanalysis(cfg,data);
+            
+            timefreq_data = cell(1,length(freqdata.freq)+1);
+            timefreq_data{1} = data;
+            for c = 1:length(timefreq_data{1}.trial)
+                timefreq_data{1}.trial{c} = timefreq_data{1}.trial{c}(:,data_allrange);
+            end
+            
+            for c = 1:length(freqdata.freq)
+                for cc = 1:length(data.trial)
+                    timefreq_data{c+1}.trial{cc} = squeeze(freqdata.fourierspctrm(cc,:,1,:));
+                end
+                timefreq_data{c+1}.time = freqdata.time;
+                timefreq_data{c+1}.label = data.label;
+                for cc = 1:length(freqs)
+                    if ~isempty(freqs{cc}) && freqdata.freq(c) >= freqs{cc}(1) && freqdata.freq(c) <= freqs{cc}(2)
+                        timefreq_data{c+1}.parent = cc;
+                    end
+                end
+                if ~isfield(timefreq_data{c+1},'parent')
+                    if freqs{2}(1) > freqdata.freq(c)
+                        timefreq_data{c+1}.parent = 2;
+                    elseif freqs{end}(2) < freqdata.freq(c)
+                        timefreq_data{c+1}.parent = length(freqs);
+                    end
+                end
+                freqdata.fourierspctrm(:,:,1,:) = []; %remove bits of the matrix each time to save memory
+            end
+            freqdata = [];
             
             tmpcfg = []; tmpcfg.bpfilter = 'yes'; tmpcfg.bpfreq = [8 13]; tmpcfg.hilbert = 'complex';
-            task_bp{c} = ft_preprocessing(tmpcfg,task{c});
+            task_bp{i} = ft_preprocessing(tmpcfg,task{i});
             
             settings = struct;
             settings.units = 'prcchange';
-            datacalc_tmp = Calc_sub(settings,task_bp{c});
-            datacalc{c} = datacalc_tmp{1};
+            datacalc_tmp = Calc_sub(settings,task_bp{i});
+            datacalc{i} = datacalc_tmp{1};
             
-            restmeas_tmp = Rest_calc([8 13],[0.5 50],rest{c});
-            restmeas{c} = restmeas_tmp;
+            %restmeas_tmp = Rest_calc([8 13],[0.5 50],rest{c});
+            %restmeas{c} = restmeas_tmp;
         end
         all_datacalc{find(mvals == m,1),find(nvals == n,1),:} = datacalc;
         all_restmeas{find(mvals == m,1),find(nvals == n,1),:} = restmeas;
@@ -366,4 +405,52 @@ for q = 1:numbands
             datacalc{q}.ttv.real(:,:) = 10*log10(datacalc{q}.ttv.real(:,:));
     end
 end
+
+
+if ~strcmpi(settings.tfparams.method,'hilbert')
+    %timefreq_data = parload(files(1).name,'timefreq_data');
+    for c = 2:length(timefreq_data)
+        parents(c) = timefreq_data{c}.parent;
+    end
+    newmeas = cell(1,length(settings.tfparams.fbands));
+    for c = 2:length(settings.tfparams.fbands)
+        children{c} = find(parents == c);
+        fields = fieldnames_recurse(datacalc{c});
+        fields = cell_unpack(fields);
+        for cc = 1:length(fields)
+            tmp = [];
+            for ccc = 1:length(children{c})
+                dimn = length(size(getfield_nest(datacalc{children{c}(ccc)},fields{cc})));
+                tmp = cat(dimn+1,tmp,getfield_nest(datacalc{children{c}(ccc)},(fields{cc})));
+            end
+            newmeas{c} = assignfield_nest(newmeas{c},fields{cc},nanmean(tmp,dimn+1));
+        end
+    end
+    
+    dimn = [];
+    children{1} = 2:length(timefreq_data);
+    fields = fieldnames_recurse(datacalc{1});
+    fields = cell_unpack(fields);
+    
+    for cc = 1:length(fields)
+        tmp = [];
+        for ccc = 1:length(children{1})
+            dimn = length(size(getfield_nest(datacalc{children{1}(ccc)},fields{cc})));
+            tmp = cat(dimn+1,tmp,getfield_nest(datacalc{children{1}(ccc)},(fields{cc})));
+        end
+        newmeas{1} = assignfield_nest(newmeas{1},fields{cc},nanmean(tmp,dimn+1));
+    end
+    
+    % for broadband, put the ERP and TTV stuff back to the original values
+    newmeas{1}.erp = datacalc{1}.erp;
+    newmeas{1}.nadderp = datacalc{1}.nadderp;
+    newmeas{1}.ttv = datacalc{1}.ttv;
+    
+    settings.nfreqs = length(settings.tfparams.fbands);
+    numbands = settings.nfreqs;
+    
+    datacalc = newmeas;
+    newmeas = [];
+end
+
 end

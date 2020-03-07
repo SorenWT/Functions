@@ -1,4 +1,4 @@
-function p = Permtest_ISC(data1,data2,nperm,type)
+function [p,orig_tstat] = Permtest_ISC(data1,data2,nperm,type)
 % Permtest_ISC uses a permutation test to test for difference in means 
 % between two intersubject correlation matrices
 %
