@@ -1,4 +1,4 @@
-function tevals = stim_TE(braints,musicts,fs,labels,filename)
+function teresults = stim_TE(braints,musicts,fs,labels,filename)
 
 if size(braints,1) > size(braints,2)
    braints = braints'; 
