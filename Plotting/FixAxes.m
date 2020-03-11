@@ -16,6 +16,7 @@ set(ax, ...
 
 ax.XLabel.Color = [0.15 0.15 0.15];
 ax.YLabel.Color = [0.15 0.15 0.15];
+set(gcf,'color','w')
 
 % ticks = get(ax,'XTick');
 % % while any(rem(ticks,1))
