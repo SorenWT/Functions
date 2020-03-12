@@ -66,7 +66,7 @@ for i = 1:length(lags)
     cfg.sgncmb = cat(2,repmat({'Music'},length(labels),1),vert(labels));
     cfg.toi = [-Inf Inf];
     cfg.ragtaurange = [0.2 0.5]; cfg.ragdim = 2:12; cfg.actthrvalue = length(musicts);
-    cfg.minnrtrials = length(data.trial); cfg.maxlag = length(musicts); cfg.repPred = 0.2*length(musicts);
+    cfg.minnrtrials = length(data.trial); cfg.maxlag = 0.5*length(musicts); cfg.repPred = ceil(0.2*length(musicts));
     cfg.predicttime_u = lags(i);
     cfg.flagNei = 'Mass'; cfg.sizeNei = 4;
     
@@ -74,7 +74,7 @@ for i = 1:length(lags)
     
     if strcmpi(stats,'yes')
         cfg = []; cfg.optdimusage = 'maxdim';
-        cfg.fileidout = filename;
+        cfg.fileidout = 'test';
         cfg.surrogatetype = 'trialshuffling';
         cfg.shifttest = 'no';
         cfg.numpermutation = 1000;
