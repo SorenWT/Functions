@@ -49,8 +49,8 @@ for m = mvals
             
             data_allrange = (settings.pseudo.prestim(1)-ceil(settings.srate/5)):(settings.real.poststim(end));
             cfg = []; cfg.method = 'wavelet'; cfg.output = 'fourier'; cfg.foi = exp(linspace(log(8),log(13),6));
-            cfg.keeptrials = 'yes'; cfg.toi = data.time{1}(data_allrange); cfg.width = 3;
-            freqdata = ft_freqanalysis(cfg,data);
+            cfg.keeptrials = 'yes'; cfg.toi = task{i}.time{1}(data_allrange); cfg.width = 3;
+            freqdata = ft_freqanalysis(cfg,task{i});
             
             timefreq_data = cell(1,length(freqdata.freq)+1);
             timefreq_data{1} = data;

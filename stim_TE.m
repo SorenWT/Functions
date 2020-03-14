@@ -55,10 +55,10 @@ for i = 1:size(braints, 3)
 end
 
 if size(braints,3) == 1
-   shifttimes = [(max(lags)+ceil(0.25*max(lags))):(max(lags)+5*length(lags))+ceil(0.25*max(lags))-1];
-   for i = 1:length(shiftimes)
-        data.trial{i+1} = [braints; musicts([shifttimes(i):end 1:(shifttimes(i)-1)])];
-        data.time{i} = linspace(0,length(braints)/fs,length(braints));
+   shifttimes = [(2*max(lags)):(2*max(lags)+5*length(lags)-1)];
+   for i = 1:length(shifttimes)
+        data.trial{i+1} = [braints; musicts([(shifttimes(i)+1):end 1:(shifttimes(i))])];
+        data.time{i+1} = linspace(0,length(braints)/fs,length(braints));
    end
 end
 
