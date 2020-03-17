@@ -117,7 +117,6 @@ for i = 1:length(lags)
     
     teresults{i}.act = act;
     teresults{i}.sgncmb = cat(2,repmat({'Music'},length(labels),1),vert(labels));
-    teresults{i}.trials(125,:) = teresults.trials(124,:);
     tmp = NaN(length(goodact),size(teresults{i}.TEmat,2));
     tmp(goodact,:) = teresults{i}.TEmat;
     teresults{i}.TEmat = tmp;
