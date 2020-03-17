@@ -1,12 +1,12 @@
 function teresults = stim_TE(braints,musicts,fs,labels,lags,shiftstats)
-% Inputs: 
+% Inputs:
 %     braints: a 2D or 3D matrix of the measure time series in the form
 %        channels x time points x music pieces (can do only one music piece
 %        if you want)
 %     musicts: a row vector or 2D matrix of music measure time series in
-%        the form music pieces x time points (should have same order as the 
+%        the form music pieces x time points (should have same order as the
 %        3rd dimension of braints)
-%     fs: the sampling frequency of your data (should be equal to 1 over 
+%     fs: the sampling frequency of your data (should be equal to 1 over
 %        the step size for measure time series)
 %     labels: either a cell array containing the channel names for your
 %        braints data, or an EEGLAB chanlocs structure (the channel names
@@ -17,7 +17,7 @@ function teresults = stim_TE(braints,musicts,fs,labels,lags,shiftstats)
 %        time-shifted surrogates (default = 'yes' if only one trial input -
 %        otherwise trial-shuffling is implemented instead)
 %
-% Outputs: 
+% Outputs:
 %     teresults: transfer entropy results. Important fields are:
 %         TEmat: the actual transfer entropy values. The format is channels
 %         x music pieces, or channels x shifts for single-trial data
@@ -26,7 +26,7 @@ function teresults = stim_TE(braints,musicts,fs,labels,lags,shiftstats)
 
 
 if size(braints,1) > size(braints,2)
-   braints = braints'; 
+    braints = braints';
 end
 
 if isstruct(labels)
@@ -34,7 +34,7 @@ if isstruct(labels)
 end
 
 if ~exist('lags','var')
-   lags = 1:ceil(fs); 
+    lags = 1:ceil(fs);
 end
 
 if ~exist('stats','var')
@@ -47,19 +47,19 @@ end
 
 labels = vert(labels);
 
-data = struct; 
-%data.trial{1} = [braints; horz(musicts)]; 
+data = struct;
+%data.trial{1} = [braints; horz(musicts)];
 for i = 1:size(braints, 3)
-   data.trial{i} = [braints(:,:,i); musicts(i,:)]; 
-   data.time{i} = linspace(0,length(braints)/fs,length(braints));
+    data.trial{i} = [braints(:,:,i); musicts(i,:)];
+    data.time{i} = linspace(0,length(braints)/fs,length(braints));
 end
 
 if size(braints,3) == 1
-   shifttimes = [(2*max(lags)):(2*max(lags)+5*length(lags)-1)];
-   for i = 1:length(shifttimes)
+    shifttimes = [(2*max(lags)):(2*max(lags)+5*length(lags)-1)];
+    for i = 1:length(shifttimes)
         data.trial{i+1} = [braints; musicts([(shifttimes(i)+1):end 1:(shifttimes(i))])];
         data.time{i+1} = linspace(0,length(braints)/fs,length(braints));
-   end
+    end
 end
 
 data.label = [labels; {'Music'}];
@@ -76,14 +76,25 @@ data.fsample = fs;
 for i = 1:length(lags)
     cfg = [];
     cfg.ensemblemethod = 'no';
-    cfg.sgncmb = cat(2,repmat({'Music'},length(labels),1),vert(labels));
     cfg.toi = [-Inf Inf];
-    cfg.ragtaurange = [0.2 0.5]; cfg.ragdim = 2:12; cfg.actthrvalue = length(musicts);
-    cfg.minnrtrials = length(data.trial); cfg.maxlag = ceil(0.5*length(musicts)); cfg.repPred = ceil(0.2*length(musicts));
+    cfg.ragtaurange = [0.2 0.5]; cfg.ragdim = 2:12;
+    cfg.actthrvalue = length(musicts)/3;
+    cfg.minnrtrials = 1; cfg.maxlag = ceil(0.5*length(musicts)); cfg.repPred = ceil(0.2*length(musicts));
     cfg.predicttime_u = lags(i);
     cfg.flagNei = 'Mass'; cfg.sizeNei = 4;
     
-    dataprep = TEprepare(cfg,data);
+    % remove electrodes with outlier ACT
+    act = TEgetACT(cfg,data);
+    act_thr = max(mean(mean(act,3),1)+3*std(mean(act,3),[],1));
+    for ii = 1:size(act,1)
+        goodact(ii) = isempty(find(act(ii,:,:) > act_thr));
+    end
+    tmpcfg = []; tmpcfg.channel = [vert(labels(goodact)); {'Music'}];
+    seldata = ft_selectdata(tmpcfg,data);
+    cfg.actthrvalue = act_thr;
+    cfg.sgncmb = cat(2,repmat({'Music'},length(seldata.label),1)-1,vert(seldata.label(1:end-1)));
+    
+    dataprep = TEprepare(cfg,seldata);
     
     if strcmpi(shiftstats,'no')
         cfg = []; cfg.optdimusage = 'maxdim';
@@ -103,7 +114,28 @@ for i = 1:length(lags)
         teresults{i}.te_z = zscore(teresults{i}.TEmat,[],2);
         teresults{i}.mi_z = zscore(teresults{i}.MImat,[],2);
     end
+    
+    teresults{i}.act = act;
+    teresults{i}.sgncmb = cat(2,repmat({'Music'},length(labels),1),vert(labels));
+    teresults{i}.trials(125,:) = teresults.trials(124,:);
+    tmp = NaN(length(goodact),size(teresults{i}.TEmat,2));
+    tmp(goodact,:) = teresults{i}.TEmat;
+    teresults{i}.TEmat = tmp;
+    tmp = NaN(length(goodact),size(teresults{i}.TEmat,2));
+    tmp(goodact,:) = teresults{i}.MImat;
+    teresults{i}.MImat = tmp;
+    
+    if strcmpi(shiftstats,'yes')
+        tmp = NaN(length(goodact),size(teresults{i}.TEmat,2));
+        tmp(goodact,:) = teresults{i}.te_z;
+        teresults{i}.te_z = tmp;
+        tmp = NaN(length(goodact),size(teresults{i}.TEmat,2));
+        tmp(goodact,:) = teresults{i}.mi_z;
+        teresults{i}.mi_z = tmp;
+    end
 end
+
+
 
 
 
