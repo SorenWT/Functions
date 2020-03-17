@@ -76,6 +76,7 @@ data.fsample = fs;
 for i = 1:length(lags)
     cfg = [];
     cfg.ensemblemethod = 'no';
+    cfg.sgncmb = cat(2,repmat({'Music'},length(labels),1),vert(labels));
     cfg.toi = [-Inf Inf];
     cfg.ragtaurange = [0.2 0.5]; cfg.ragdim = 2:12;
     cfg.actthrvalue = length(musicts)/3;
