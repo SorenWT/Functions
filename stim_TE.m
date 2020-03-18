@@ -55,7 +55,7 @@ for i = 1:size(braints, 3)
 end
 
 if size(braints,3) == 1
-    shifttimes = [(2*max(lags)):(2*max(lags)+5*length(lags)-1)];
+    shifttimes = [(2*max(lags)+5):(2*max(lags)+5*length(lags)+4)];
     for i = 1:length(shifttimes)
         data.trial{i+1} = [braints; musicts([(shifttimes(i)+1):end 1:(shifttimes(i))])];
         data.time{i+1} = linspace(0,length(braints)/fs,length(braints));
@@ -93,7 +93,7 @@ for i = 1:length(lags)
     tmpcfg = []; tmpcfg.channel = [vert(labels(goodact)); {'Music'}];
     seldata = ft_selectdata(tmpcfg,data);
     cfg.actthrvalue = act_thr;
-    cfg.sgncmb = cat(2,repmat({'Music'},length(seldata.label),1)-1,vert(seldata.label(1:end-1)));
+    cfg.sgncmb = cat(2,repmat({'Music'},length(seldata.label)-1,1),vert(seldata.label(1:end-1)));
     
     dataprep = TEprepare(cfg,seldata);
     
@@ -118,7 +118,7 @@ for i = 1:length(lags)
     
     teresults{i}.act = act;
     teresults{i}.sgncmb = cat(2,repmat({'Music'},length(labels),1),vert(labels));
-    teresults{i}.trials(125,:) = teresults.trials(124,:);
+    %teresults{i}.trials(125,:) = teresults.trials(124,:);
     tmp = NaN(length(goodact),size(teresults{i}.TEmat,2));
     tmp(goodact,:) = teresults{i}.TEmat;
     teresults{i}.TEmat = tmp;
