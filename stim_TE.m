@@ -78,10 +78,10 @@ for i = 1:length(lags)
     cfg.ensemblemethod = 'no';
     cfg.sgncmb = cat(2,repmat({'Music'},length(labels),1),vert(labels));
     cfg.toi = [-Inf Inf];
-    cfg.ragtaurange = [0.2 0.5]; cfg.ragdim = 2:12;
+    cfg.ragtaurange = [0.1 0.5]; cfg.ragdim = 2:12;
     cfg.actthrvalue = length(musicts)/3;
     cfg.minnrtrials = 1; cfg.maxlag = ceil(0.5*length(musicts)); cfg.repPred = ceil(0.2*length(musicts));
-    cfg.predicttime_u = lags(i);
+    cfg.predicttime_u = 1000*lags(i)/fs;
     cfg.flagNei = 'Mass'; cfg.sizeNei = 4;
     
     % remove electrodes with outlier ACT
