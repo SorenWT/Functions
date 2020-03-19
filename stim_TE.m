@@ -88,7 +88,7 @@ for i = 1:length(lags)
     act = TEgetACT(cfg,data);
     act_thr = max(mean(mean(act,3),1)+3*std(mean(act,3),[],1));
     for ii = 1:size(act,1)
-        goodact(ii) = isempty(find(act(ii,2,:) > act_thr));
+        goodact(ii) = act(ii,2,:) < act_thr;
     end
     tmpcfg = []; tmpcfg.channel = [vert(labels(goodact)); {'Music'}];
     seldata = ft_selectdata(tmpcfg,data);
