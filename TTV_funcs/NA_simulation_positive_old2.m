@@ -20,12 +20,6 @@ freqs = {[] [8 13]};
 for m = mvals
     for n = nvals
         datacalc = cell(1,48);
-        varspont = cell(1,48);
-        varevo = cell(1,48);
-        spont = cell(1,48);
-        evo = cell(1,48);
-        corrfact = cell(1,48);
-        
         
         parfor i = 1:48
             % Simulate resting-state
@@ -53,25 +47,15 @@ for m = mvals
             %cfg.osci.s1.ampl = [ones(1,1000) -0.3*sin((1:1000)*pi/(1000))+1];
             cfg.numtrl = 128;
             cfg.noise.ampl = m + n*rand(1,128);
-            
-            spont{i} = zeros(128,2000);
-            evo{i} = zeros(128,2000);
             for cc = 1:128
-                spont{i}(cc,:) = createFN(0.625,2000);%*subAmpl;
-                spont{i}(cc,:) = ft_preproc_lowpassfilter(spont{i}(cc,:),500,1,4);
-                spont{i}(cc,:) = NormOntoRange(spont{i}(cc,:),[1.25 1.75]);
-                %corrfact{i}(cc) = 0.5*(mean(spont{i}(cc,951:1000))-0.5);
-                corrfact{i}(cc) = 0.25*(rand+0.375);
-                evo{i}(cc,:) = -[zeros(1,1000) corrfact{i}(cc)*sin((1:500)*pi/500) zeros(1,500)]
+                spont = createFN(1.75/2,2000);%*subAmpl;
+                spont = ft_preproc_lowpassfilter(spont,500,5,4);
+                spont = NormOntoRange(spont,[1 2]);
+                corrfact = 1.25*(mean(spont(951:1000))-0.5);
+                corrfact = max(corrfact,0);
+                evoked = -[zeros(1,1000) corrfact*sin((1:500)*pi/500) zeros(1,500)];
+                cfg.osci.s1.ampl{cc} = horz(spont)+horz(evoked);
             end
-            
-            varspont{i} = std(spont{i},[],1);
-            varevo{i} = std(evo{i},[],1);
-            
-            for cc = 1:128
-                cfg.osci.s1.ampl{cc} = spont{i}(cc,:)+evo{i}(cc,:);
-            end
-            
             task{i} = ft_freqsimulation_swt(cfg);
             
             data_allrange = 1:2000;
@@ -125,43 +109,6 @@ for m = mvals
     end
 end
 
-%diagnostics - comment out when running for real
-% 
-% varspont = cat(1,varspont{:});
-% varevo = cat(1,varevo{:});
-% spont = cat(3,spont{:});
-% evo = cat(3,evo{:});
-% corrfact = cat(1,corrfact{:});
-% 
-% for i = 1:48
-%     for ii = 1:2000
-%         r(i,ii) = corr(spont(:,ii,i),evo(:,ii,i));
-%     end
-% end
-% 
-% critvar = -varevo./(2*varspont);
-% 
-% plot(mean(critvar,1)); hold on; plot(mean(r,1));
-% 
-% tmp = mergestructs(datacalc);
-% 
-% figure
-% plot(squeeze(mean(tmp.ttversp.real(1,:,:),3)))
-% 
-% figure
-% plot(squeeze(mean(tmp.naddersp.diff(1,:,1,:),4)),'b');
-% hold on
-% plot(squeeze(mean(tmp.naddersp.diff(1,:,2,:),4)),'r')
-% 
-% figure 
-% hold on
-% for i = 1:48
-% ft_psdplot(task{i},1,[0.5 50]);
-% end
-% set(gca,'XScale','log','YScale','log')
-
-%end of diagnostics
-
 for c = 1:length(mvals)
     for cc = 1:length(nvals)
         all_datacalc{c,cc} = mergestructs(all_datacalc{c,cc,:});
@@ -184,7 +131,7 @@ prestim_pseudo = 351:400; poststim_pseudo = 401:800; prestim_real = 951:1000; po
 for c = 1:length(mvals)
     opts.minnbchan = 0; opts.nrand = 1000; opts.distmethod = 'distance';
     stats_ersp_pt = cell(1,length(nvals));
-    stats_ersp_ttv = cell(1,length(nvals));
+    stats_ersp_ttv = stats_ersp_pt;
     parfor cc = 1:length(nvals)
         stats_ersp_pt{cc} = EasyClusterCorrect({permute(squeeze(all_datacalc{c,cc}.naddersp.diff(1,:,1,:)),[3 2 1]),...
             permute(squeeze(all_datacalc{c,cc}.naddersp.diff(1,:,2,:)),[3 2 1])},datasetinfo,'ft_statfun_fast_signrank',opts);
@@ -194,7 +141,7 @@ for c = 1:length(mvals)
         %stats_erp_pt{cc} = EasyClusterCorrect({permute(squeeze(all_datacalc{c,cc}.nadderp.diff(1,:,1,:)),[3 2 1]),...
         %    permute(squeeze(all_datacalc{c,cc}.nadderp.diff(1,:,2,:)),[3 2 1])},datasetinfo,'ft_statfun_fast_signrank',opts);
         %stats_erp_ttv{cc} = EasyClusterCorrect({permute(all_datacalc{c,cc}.ttv.real(1,:,:),[1 3 2]) 0.*permute(all_datacalc{c,cc}.ttversp.real(1,:,:),[1 3 2])},...
-        %    datasetinfo,'ft_statfun_fast_signrank',opts)
+         %   datasetinfo,'ft_statfun_fast_signrank',opts)
         % Testing the mediation model
 %         med{c,cc} = mediation_covariates(vert(squeeze(mean(all_datacalc{c,cc}.raw.ersp(1,poststim_real,:),2))),...
 %             all_restmeas{c,cc}.bp(:,1),vert(squeeze(mean(all_datacalc{c,cc}.raw.ersp(1,prestim_real,:),2))),...
@@ -208,7 +155,7 @@ for c = 1:length(mvals)
 end
 
 
-save('simulation_negative_alloutputs.mat','allstats_ersp_pt','allstats_ersp_ttv','all_datacalc','-v7.3')
+save('simulation_positive_alloutputs.mat','allstats_ersp_pt','allstats_ersp_ttv','all_datacalc','-v7.3')
 
 p = panel('no-manage-font');
 
@@ -252,10 +199,10 @@ for c = 1:length(mvals)
     end
 end
 
-set(gcf,'Color','w','units','normalized','position',[0 0 1 1])
+set(gcf,'Color','w')
 
-savefig('Simulation_negative_fig_pseudotrial.fig')
-export_fig('Simulation_negative_fig_pseudotrial.png','-m4')
+savefig('Simulation_positive_fig_pseudotrial.fig')
+export_fig('Simulation_positive_fig_pseudotrial.png','-m4')
 
 
 
@@ -282,7 +229,7 @@ for c = 1:length(mvals)
         if length(ytick) > 4
            set(gca,'YTickLabel',ytick([1:2:length(ytick)])) 
         end
-        Plot_sigmask(gca,allstats_ersp_ttv{c,cc}.prob < 0.05,'bar')
+        Plot_sigmask(gca,allstats_ersp_pt{c,cc}.prob < 0.05,'bar')
         set(gca,'XLim',[0 800])
         if c == 1
             title(['Noise TTV ' num2str(round(0.3*nvals(cc),3,'significant'))],'FontSize',10)
@@ -299,10 +246,10 @@ for c = 1:length(mvals)
     end
 end
 
-set(gcf,'Color','w','units','normalized','position',[0 0 1 1])
+set(gcf,'Color','w')
 
-savefig('Simulation_negative_fig_ttv.fig')
-export_fig('Simulation_negative_fig_ttv.png','-m4')
+savefig('Simulation_positive_fig_ttv.fig')
+export_fig('Simulation_positive_fig_ttv.png','-m4')
 
 function [restmeas] = Rest_calc(foi,bandpass,sim)
     sim.fsample = 500;

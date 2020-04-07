@@ -59,9 +59,9 @@ for m = mvals
             for cc = 1:128
                 spont{i}(cc,:) = createFN(0.625,2000);%*subAmpl;
                 spont{i}(cc,:) = ft_preproc_lowpassfilter(spont{i}(cc,:),500,1,4);
-                spont{i}(cc,:) = NormOntoRange(spont{i}(cc,:),[1.25 1.75]);
-                %corrfact{i}(cc) = 0.5*(mean(spont{i}(cc,951:1000))-0.5);
-                corrfact{i}(cc) = 0.25*(rand+0.375);
+                spont{i}(cc,:) = NormOntoRange(spont{i}(cc,:),[1.5 2]);
+                corrfact{i}(cc) = 0.5*(mean(spont{i}(cc,951:1000))-0.5);
+                corrfact{i}(cc) = rand+0.75;
                 evo{i}(cc,:) = -[zeros(1,1000) corrfact{i}(cc)*sin((1:500)*pi/500) zeros(1,500)]
             end
             
@@ -124,7 +124,6 @@ for m = mvals
 %        all_restmeas{find(mvals == m,1),find(nvals == n,1),:} = restmeas;
     end
 end
-
 %diagnostics - comment out when running for real
 % 
 % varspont = cat(1,varspont{:});
@@ -252,7 +251,7 @@ for c = 1:length(mvals)
     end
 end
 
-set(gcf,'Color','w','units','normalized','position',[0 0 1 1])
+set(gcf,'Color','w')
 
 savefig('Simulation_negative_fig_pseudotrial.fig')
 export_fig('Simulation_negative_fig_pseudotrial.png','-m4')
@@ -282,7 +281,7 @@ for c = 1:length(mvals)
         if length(ytick) > 4
            set(gca,'YTickLabel',ytick([1:2:length(ytick)])) 
         end
-        Plot_sigmask(gca,allstats_ersp_ttv{c,cc}.prob < 0.05,'bar')
+        Plot_sigmask(gca,allstats_ersp_pt{c,cc}.prob < 0.05,'bar')
         set(gca,'XLim',[0 800])
         if c == 1
             title(['Noise TTV ' num2str(round(0.3*nvals(cc),3,'significant'))],'FontSize',10)
@@ -299,7 +298,7 @@ for c = 1:length(mvals)
     end
 end
 
-set(gcf,'Color','w','units','normalized','position',[0 0 1 1])
+set(gcf,'Color','w')
 
 savefig('Simulation_negative_fig_ttv.fig')
 export_fig('Simulation_negative_fig_ttv.png','-m4')

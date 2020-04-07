@@ -145,6 +145,7 @@ function settings = SetDefaults(settings)
 
 settings = setdefault(settings,'comparefreqs','no');
 
+
 if ~isfield(settings,'files')
     if strmcpi(settings.datatype,'EEG')
         settings.files = '*.set';
@@ -162,7 +163,8 @@ if isfield(settings,'rest')
     settings.rest = setdefault(settings.rest,'powermode','normal');
 end
 
-settings.tfparams = setdefault(settings.tfparams,'pf_adjust','yes');
+settings.tfparams = setdefault(settings.tfparams,'pf_adjust','no');
+settings.tfparams = setdefault(settings.tfparams,'naddple','no');
 
 settings = setdefault(settings,'steps',{'all'});
 
@@ -194,7 +196,8 @@ end
 
 settings.nfreqs = length(settings.tfparams.fbandnames);
 
-settings = setdefault(settings,'pool',24);
+
+settings = setdefault(settings,'pool',8);
 
 if isfield(settings.datasetinfo,'label')
     settings.nbchan = length(settings.datasetinfo.label);

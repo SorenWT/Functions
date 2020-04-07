@@ -182,7 +182,10 @@ if settings.pool > 1
                     
                     
                     
-                    foi{i} = freqdata.freq;
+                    %foi{i} = freqdata.freq;
+                    foi{i} = exp(linspace(log(freqs{2}(1)),log(freqs{end}(2)),50));
+                    foi{i} = FindClosest(freqdata.freq,foi{i},1);
+                    %disc_foi = discretize(freqdata.freq,foi{i});
                     cfg.foi = freqdata.freq;
                     
                     freqdata.fourierspctrm = permute(freqdata.fourierspctrm,[1 3 2 4]);
@@ -475,8 +478,8 @@ aucindex = settings.aucindex;
 %    parpool(numbands)
 %end
 
-datacalc = cell(1,length(settings.tfparams.fbands));
-for c = 1:length(datacalc)
+datacalc = cell(1,settings.nfreqs);
+for c = 1:settings.nfreqs
     datacalc{c} = struct;
 end
 
@@ -506,92 +509,17 @@ else
     poststim_real = settings.real.poststim - settings.pseudo.prestim(1)+1+ceil(settings.srate/5);
 end
 
-datacat = cell(size(timefreq_data));
-for c = 1:length(datacat)
-    datacat{c} = struct;
-end
-
-nbchan = length(timefreq_data{1}.label);
-
 for q = 1:numbands
-    trlmat = cat(3,timefreq_data{q}.trial{:});
-       
-    datacat{q}.pow = pfunc(abs(trlmat));
-    datacat{q}.real = real(trlmat);
+    nbchan = length(timefreq_data{q}.label);
+    timefreq_data{q}.matrix = cat(3,timefreq_data{q}.trial{:});
     
-    datacat{q}.raw.itc = abs(mean(trlmat./abs(trlmat),3));
-
-    datacat{q}.itc.real(:,:) = (datacat{q}.raw.itc(:,poststim_real)-mean(datacat{q}.raw.itc(:,prestim_real),2));
-    datacat{q}.itc.pseudo(:,:) = (datacat{q}.raw.itc(:,poststim_pseudo)-mean(datacat{q}.raw.itc(:,prestim_pseudo),2))./...
-        mean(datacat{q}.raw.itc(:,prestim_pseudo),2);
-    
-    switch settings.units
-        case 'prcchange'
-            datacat{q}.itc.real(:,:) = 100*datacat{q}.itc.real(:,:)./mean(datacat{q}.raw.itc(:,prestim_real),2);
-            datacat{q}.itc.pseudo(:,:) = 100*datacat{q}.itc.pseudo(:,:)./mean(datacat{q}.raw.itc(:,prestim_pseudo),2);
-        case 'zscore'
-            datacat{q}.itc.real(:,:) = zscore(datacat{q}.itc.real(:,:),0,2);
-            datacat{q}.itc.pseudo(:,:) = zscore(datacat{q}.itc.pseudo(:,:),0,2);
-        case 'log'
-            datacat{q}.itc.real(:,:) = 10*log10(datacat{q}.itc.real(:,:));
-            datacat{q}.itc.pseudo(:,:) = 10*log10(datacat{q}.itc.pseudo(:,:));
-    end
-end
-
-if ~strcmpi(settings.tfparams.method,'hilbert')
-    %timefreq_data = parload(files(1).name,'timefreq_data');
-    for c = 2:length(timefreq_data)
-        parents(c) = timefreq_data{c}.parent;
-    end
-    newmeas = cell(1,length(settings.tfparams.fbands));
-    
-    for c = 2:length(settings.tfparams.fbands)
-        children{c} = find(parents == c);
-        fields = fieldnames_recurse(datacat{c});
-        fields = cell_unpack(fields);
-        for cc = 1:length(fields)
-            tmp = [];
-            for ccc = 1:length(children{c})
-                dimn = length(size(getfield_nest(datacat{children{c}(ccc)},fields{cc})));
-                tmp = cat(dimn+1,tmp,getfield_nest(datacat{children{c}(ccc)},(fields{cc})));
-            end
-            newmeas{c} = assignfield_nest(newmeas{c},fields{cc},nanmean(tmp,dimn+1));
-        end
-    end
-    
-    dimn = [];
-    children{1} = 2:length(timefreq_data);
-    fields = fieldnames_recurse(datacat{1});
-    fields = cell_unpack(fields);
-    
-    for cc = 1:length(fields)
-        tmp = [];
-        for ccc = 1:length(children{1})
-            dimn = length(size(getfield_nest(datacat{children{1}(ccc)},fields{cc})));
-            tmp = cat(dimn+1,tmp,getfield_nest(datacat{children{1}(ccc)},(fields{cc})));
-        end
-        newmeas{1} = assignfield_nest(newmeas{1},fields{cc},nanmean(tmp,dimn+1));
-    end
-    
-    % for broadband, put the ERP and TTV stuff back to the original values
-    newmeas{1}.real = datacat{1}.real;
-    
-    settings.nfreqs = length(settings.tfparams.fbands);
-    numbands = settings.nfreqs;
-    
-    datacat = newmeas;
-    newmeas = [];
-end
-
-for q = 1:settings.nfreqs
-    SD_all = zeros(nbchan,size(datacat{q}.real,2));
+    SD_all = zeros(length(timefreq_data{q}.label),size(timefreq_data{q}.matrix,2));
     for c = 1:length(timefreq_data{q}.label)
-        SD_all(c,:) = std(datacat{q}.real(c,:,:),[],3);
+        SD_all(c,:) = std(real(timefreq_data{q}.matrix(c,:,:)),[],3);
     end
+    datacalc{q}.raw.sd(:,:) = SD_all;
     
-    datacalc{q}.raw.sd = SD_all;
-    
-    % normalize by prestim for both real and pseudotrial
+    % normalize by 50ms prestim ifor both real and pseudotrial
     datacalc{q}.ttv.pseudo(:,:) = (SD_all(:,poststim_pseudo)-...
         mean(SD_all(:,prestim_pseudo),2));
     datacalc{q}.ttv.real(:,:) = (SD_all(:,poststim_real)-...
@@ -611,18 +539,21 @@ for q = 1:settings.nfreqs
     end
     
     
-    %% ERSP and ITC    
-    datacalc{q}.raw.ersp(:,:) = mean(datacat{q}.pow,3);
+    %% ERSP and ITC
+    datacat = timefreq_data{q}.matrix;
     
-    datacalc{q}.ersp.pseudo(:,:) = (mean(datacat{q}.pow(:,poststim_pseudo,:),3)...
-        -mean(mean(datacat{q}.pow(:,prestim_pseudo,:),3),2));
-    datacalc{q}.ersp.real(:,:) = (mean(datacat{q}.pow(:,poststim_real,:),3)...
-        -mean(mean(datacat{q}.pow(:,prestim_real,:),3),2));
+    datacalc{q}.raw.ersp(:,:) = mean(pfunc(abs(timefreq_data{q}.matrix)),3);
+    datacalc{q}.raw.itc(:,:) = abs(mean(datacat./abs(datacat),3));
+    
+    datacalc{q}.ersp.pseudo(:,:) = (mean(pfunc(abs(datacat(:,poststim_pseudo,:))),3)...
+        -mean(mean(pfunc(abs(datacat(:,prestim_pseudo,:))),3),2));
+    datacalc{q}.ersp.real(:,:) = (mean(pfunc(abs(datacat(:,poststim_real,:))),3)...
+        -mean(mean(pfunc(abs(datacat(:,prestim_real,:))),3),2));
     
     switch settings.units
         case 'prcchange'
-            datacalc{q}.ersp.pseudo(:,:) = 100*datacalc{q}.ersp.pseudo(:,:)./mean(mean(datacat{q}.pow(:,prestim_pseudo,:),3),2);
-            datacalc{q}.ersp.real(:,:) = 100*datacalc{q}.ersp.real(:,:)./mean(mean(datacat{q}.pow(:,prestim_real,:),3),2);
+            datacalc{q}.ersp.pseudo(:,:) = 100*datacalc{q}.ersp.pseudo(:,:)./mean(mean(pfunc(abs(datacat(:,prestim_pseudo,:))),3),2);
+            datacalc{q}.ersp.real(:,:) = 100*datacalc{q}.ersp.real(:,:)./mean(mean(pfunc(abs(datacat(:,prestim_real,:))),3),2);
         case 'zscore'
             datacalc{q}.ersp.pseudo(:,:) = zscore(datacalc{q}.ersp.pseudo(:,:),0,2);
             datacalc{q}.ersp.real(:,:) = zscore(datacalc{q}.ersp.real(:,:),0,2);
@@ -631,24 +562,48 @@ for q = 1:settings.nfreqs
             datacalc{q}.ersp.real(:,:) = 10*log10(datacalc{q}.ersp.real(:,:));
     end
     
-    split_real = squeeze(mean(datacat{q}.pow(:,prestim_real,:),2));
-    split_pseudo = squeeze(mean(datacat{q}.pow(:,prestim_pseudo,:),2));
+    datacalc{q}.itc.real(:,:) = (datacalc{q}.raw.itc(:,poststim_real)-mean(datacalc{q}.raw.itc(:,prestim_real),2));
+    datacalc{q}.itc.pseudo(:,:) = (datacalc{q}.raw.itc(:,poststim_pseudo)-mean(datacalc{q}.raw.itc(:,prestim_pseudo),2))./...
+        mean(datacalc{q}.raw.itc(:,prestim_pseudo),2);
+    
+    switch settings.units
+        case 'prcchange'
+            datacalc{q}.itc.real(:,:) = 100*datacalc{q}.itc.real(:,:)./mean(datacalc{q}.raw.itc(:,prestim_real),2);
+            datacalc{q}.itc.pseudo(:,:) = 100*datacalc{q}.itc.pseudo(:,:)./mean(datacalc{q}.raw.itc(:,prestim_pseudo),2);
+        case 'zscore'
+            datacalc{q}.itc.real(:,:) = zscore(datacalc{q}.itc.real(:,:),0,2);
+            datacalc{q}.itc.pseudo(:,:) = zscore(datacalc{q}.itc.pseudo(:,:),0,2);
+        case 'log'
+            datacalc{q}.itc.real(:,:) = 10*log10(datacalc{q}.itc.real(:,:));
+            datacalc{q}.itc.pseudo(:,:) = 10*log10(datacalc{q}.itc.pseudo(:,:));
+    end
+    
+    split_real = squeeze(mean(abs(timefreq_data{q}.matrix(:,prestim_real,:)),2));
+    split_pseudo = squeeze(mean(abs(timefreq_data{q}.matrix(:,prestim_pseudo,:)),2));
     
     for c = 1:nbchan
         splitindex = split_pseudo(c,:) > median(split_pseudo(c,:));
         
-        datacalc{q}.naddersp.raw.pseudo(c,:,1) = mean(datacat{q}.pow(c,:,find(~splitindex)),3);
-        datacalc{q}.naddersp.raw.pseudo(c,:,2) = mean(datacat{q}.pow(c,:,find(splitindex)),3);
+        datacalc{q}.naddersp.raw.pseudo(c,:,1) = mean(pfunc(abs(datacat(c,:,find(~splitindex)))),3);
+        datacalc{q}.naddersp.raw.pseudo(c,:,2) = mean(pfunc(abs(datacat(c,:,find(splitindex)))),3);
         
-        datacalc{q}.naddersp.pseudo(c,:,1) = (mean(datacat{q}.pow(c,poststim_pseudo,find(~splitindex)),3)...
-            -mean(mean(datacat{q}.pow(c,prestim_pseudo,find(~splitindex)),3),2));
-        datacalc{q}.naddersp.pseudo(c,:,2) = (mean(datacat{q}.pow(c,poststim_pseudo,find(splitindex)),3)...
-            -mean(mean(datacat{q}.pow(c,prestim_pseudo,find(splitindex)),3),2));
+        datacalc{q}.naddersp.pseudo(c,:,1) = (mean(pfunc(abs(datacat(c,poststim_pseudo,find(~splitindex)))),3)...
+            -mean(mean(pfunc(abs(datacat(c,prestim_pseudo,find(~splitindex)))),3),2));
+        datacalc{q}.naddersp.pseudo(c,:,2) = (mean(pfunc(abs(datacat(c,poststim_pseudo,find(splitindex)))),3)...
+            -mean(mean(pfunc(abs(datacat(c,prestim_pseudo,find(splitindex)))),3),2));
+        
+        %         tmp = abs(datacat(c,poststim_pseudo,find(~splitindex)))...
+        %             -mean(abs(datacat(c,prestim_pseudo,find(~splitindex))),2);
+        %         tmppseudo{1} = squeeze(trapz(tmp,2));
+        %
+        %         tmp = abs(datacat(c,poststim_pseudo,find(splitindex)))...
+        %             -mean(abs(datacat(c,prestim_pseudo,find(splitindex))),2);
+        %         tmppseudo{2} = squeeze(trapz(tmp,2));
         
         switch settings.units
             case 'prcchange'
-                datacalc{q}.naddersp.pseudo(c,:,1) = 100*datacalc{q}.naddersp.pseudo(c,:,1)./mean(mean(datacat{q}.pow(c,prestim_pseudo,:),3),2);
-                datacalc{q}.naddersp.pseudo(c,:,2) = 100*datacalc{q}.naddersp.pseudo(c,:,2)./mean(mean(datacat{q}.pow(c,prestim_pseudo,:),3),2);
+                datacalc{q}.naddersp.pseudo(c,:,1) = 100*datacalc{q}.naddersp.pseudo(c,:,1)./mean(mean(pfunc(abs(datacat(c,prestim_pseudo,:))),3),2);
+                datacalc{q}.naddersp.pseudo(c,:,2) = 100*datacalc{q}.naddersp.pseudo(c,:,2)./mean(mean(pfunc(abs(datacat(c,prestim_pseudo,:))),3),2);
             case 'zscore'
                 datacalc{q}.naddersp.pseudo(c,:,1) = zscore(datacalc{q}.naddersp.pseudo(c,:,1),0,2);
                 datacalc{q}.naddersp.pseudo(c,:,2) = zscore(datacalc{q}.naddersp.pseudo(c,:,2),0,2);
@@ -659,18 +614,29 @@ for q = 1:settings.nfreqs
         
         splitindex = split_real(c,:) > median(split_real(c,:));
         
-        datacalc{q}.naddersp.raw.real(c,:,1) = mean(datacat{q}.pow(c,:,find(~splitindex)),3);
-        datacalc{q}.naddersp.raw.real(c,:,2) = mean(datacat{q}.pow(c,:,find(splitindex)),3);
+        datacalc{q}.naddersp.raw.real(c,:,1) = mean(pfunc(abs(datacat(c,:,find(~splitindex)))),3);
+        datacalc{q}.naddersp.raw.real(c,:,2) = mean(pfunc(abs(datacat(c,:,find(splitindex)))),3);
         
-        datacalc{q}.naddersp.real(c,:,1) = (mean(datacat{q}.pow(c,poststim_real,find(~splitindex)),3)...
-            -mean(mean(datacat{q}.pow(c,prestim_real,find(~splitindex)),3),2));
-        datacalc{q}.naddersp.real(c,:,2) = (mean(datacat{q}.pow(c,poststim_real,find(splitindex)),3)...
-            -mean(mean(datacat{q}.pow(c,prestim_real,find(splitindex)),3),2));
-       
+        datacalc{q}.naddersp.real(c,:,1) = (mean(pfunc(abs(datacat(c,poststim_real,find(~splitindex)))),3)...
+            -mean(mean(pfunc(abs(datacat(c,prestim_real,find(~splitindex)))),3),2));
+        datacalc{q}.naddersp.real(c,:,2) = (mean(pfunc(abs(datacat(c,poststim_real,find(splitindex)))),3)...
+            -mean(mean(pfunc(abs(datacat(c,prestim_real,find(splitindex)))),3),2));
+        
+        %         tmp = abs(datacat(c,poststim_pseudo,find(~splitindex)))...
+        %             -mean(abs(datacat(c,prestim_pseudo,find(~splitindex))),2);
+        %         tmpreal{1}(:) = squeeze(trapz(tmp,2));
+        %
+        %         tmp = abs(datacat(c,poststim_pseudo,find(splitindex)))...
+        %             -mean(abs(datacat(c,prestim_pseudo,find(splitindex))),2);
+        %         tmpreal{2}(:) = squeeze(trapz(tmp,2));
+        
+        %        [~,~,~,stats] = ttest2(tmpreal{2}-tmppseudo{2},tmpreal{1}-tmppseudo{1});
+        %        datacalc{q}.t(c) = stats.t;
+        
         switch settings.units
             case 'prcchange'
-                datacalc{q}.naddersp.real(c,:,1) = 100*datacalc{q}.naddersp.real(c,:,1)./mean(mean(datacat{q}.pow(c,prestim_real,:),3),2);
-                datacalc{q}.naddersp.real(c,:,2) = 100*datacalc{q}.naddersp.real(c,:,2)./mean(mean(datacat{q}.pow(c,prestim_real,:),3),2);
+                datacalc{q}.naddersp.real(c,:,1) = 100*datacalc{q}.naddersp.real(c,:,1)./mean(mean(pfunc(abs(datacat(c,prestim_real,:))),3),2);
+                datacalc{q}.naddersp.real(c,:,2) = 100*datacalc{q}.naddersp.real(c,:,2)./mean(mean(pfunc(abs(datacat(c,prestim_real,:))),3),2);
             case 'zscore'
                 datacalc{q}.naddersp.real(c,:,1) = zscore(datacalc{q}.naddersp.real(c,:,1),0,2);
                 datacalc{q}.naddersp.real(c,:,2) = zscore(datacalc{q}.naddersp.real(c,:,2),0,2);
@@ -683,11 +649,11 @@ for q = 1:settings.nfreqs
     end
     %% TTV of ERSP
     
-    datacalc{q}.raw.ttversp(:,:) = std(datacat{q}.pow,[],3);
-    datacalc{q}.ttversp.pseudo(:,:) = (std(datacat{q}.pow(:,poststim_pseudo,:),[],3)...
-        -mean(std(datacat{q}.pow(:,prestim_pseudo,:),[],3),2));
-    datacalc{q}.ttversp.real(:,:) = (std(datacat{q}.pow(:,poststim_real,:),[],3)...
-        -mean(std(datacat{q}.pow(:,prestim_real,:),[],3),2));
+    datacalc{q}.raw.ttversp(:,:) = std(pfunc(abs(datacat)),[],3);
+    datacalc{q}.ttversp.pseudo(:,:) = (std(pfunc(abs(datacat(:,poststim_pseudo,:))),[],3)...
+        -mean(std(pfunc(abs(datacat(:,prestim_pseudo,:))),[],3),2));
+    datacalc{q}.ttversp.real(:,:) = (std(pfunc(abs(datacat(:,poststim_real,:))),[],3)...
+        -mean(std(pfunc(abs(datacat(:,prestim_real,:))),[],3),2));
     
     switch settings.units
         case 'prcchange'
@@ -702,40 +668,109 @@ for q = 1:settings.nfreqs
     end
     
     %% ERP nonadditivity
-    datacalc{q}.erp(:,:) = mean(datacat{q}.real,3);
+    datacalc{q}.erp(:,:) = mean(real(timefreq_data{q}.matrix),3);
     
-    split_real = squeeze(mean(datacat{q}.real(:,prestim_real,:),2));
-    split_pseudo = squeeze(mean(datacat{q}.real(:,prestim_pseudo,:),2));
+    split_real = squeeze(mean(real(timefreq_data{q}.matrix(:,prestim_real,:)),2));
+    split_pseudo = squeeze(mean(real(timefreq_data{q}.matrix(:,prestim_pseudo,:)),2));
     
+    %datacat = timefreq_data{q}.matrix;
     
     for c = 1:nbchan
         splitindex = split_pseudo(c,:) > median(split_pseudo(c,:));
         
-        datacalc{q}.nadderp.raw.pseudo(c,:,1) = mean(datacat{q}.real(c,:,find(~splitindex)),3);
-        datacalc{q}.nadderp.raw.pseudo(c,:,2) = mean(datacat{q}.real(c,:,find(splitindex)),3);
+        datacalc{q}.nadderp.raw.pseudo(c,:,1) = mean(real(datacat(c,:,find(~splitindex))),3);
+        datacalc{q}.nadderp.raw.pseudo(c,:,2) = mean(real(datacat(c,:,find(splitindex))),3);
         
         
-        datacalc{q}.nadderp.pseudo(c,:,1) = (mean(datacat{q}.real(c,poststim_pseudo,find(~splitindex)),3)...
-            -mean(mean(datacat{q}.real(c,prestim_pseudo,find(~splitindex)),3),2));
-        datacalc{q}.nadderp.pseudo(c,:,2) = (mean(datacat{q}.real(c,poststim_pseudo,find(splitindex)),3)...
-            -mean(mean(datacat{q}.real(c,prestim_pseudo,find(splitindex)),3),2));
+        datacalc{q}.nadderp.pseudo(c,:,1) = (mean(real(datacat(c,poststim_pseudo,find(~splitindex))),3)...
+            -mean(mean(real(datacat(c,prestim_pseudo,find(~splitindex))),3),2));
+        datacalc{q}.nadderp.pseudo(c,:,2) = (mean(real(datacat(c,poststim_pseudo,find(splitindex))),3)...
+            -mean(mean(real(datacat(c,prestim_pseudo,find(splitindex))),3),2));
+        
+        %             switch settings.units
+        %                 case 'prcchange'
+        %                     datacalc{q}.nadderp.pseudo(c,:,1) = 100*datacalc{q}.nadderp.pseudo(c,:,1)./mean(mean(real(datacat(c,prestim_pseudo,:)),3),2);
+        %                     datacalc{q}.nadderp.pseudo(c,:,2) = 100*datacalc{q}.nadderp.pseudo(c,:,2)./mean(mean(real(datacat(c,prestim_pseudo,:)),3),2);
+        %                 case 'zscore'
+        %                     datacalc{q}.nadderp.pseudo(c,:,1) = zscore(datacalc{q}.nadderp.pseudo(c,:,1),0,2);
+        %                     datacalc{q}.nadderp.pseudo(c,:,2) = zscore(datacalc{q}.nadderp.pseudo(c,:,2),0,2);
+        %                 case 'log'
+        %                     datacalc{q}.nadderp.pseudo(c,:,1) = 10*log10(datacalc{q}.nadderp.pseudo(c,:,1));
+        %                     datacalc{q}.nadderp.pseudo(c,:,2) = 10*log10(datacalc{q}.nadderp.pseudo(c,:,2));
+        %             end
         
         splitindex = split_real(c,:) > median(split_real(c,:));
         
-        datacalc{q}.nadderp.raw.real(c,:,1) = mean(datacat{q}.real(c,:,find(~splitindex)),3);
-        datacalc{q}.nadderp.raw.real(c,:,2) = mean(datacat{q}.real(c,:,find(splitindex)),3);
+        datacalc{q}.nadderp.raw.real(c,:,1) = mean(real(datacat(c,:,find(~splitindex))),3);
+        datacalc{q}.nadderp.raw.real(c,:,2) = mean(real(datacat(c,:,find(splitindex))),3);
         
         
-        datacalc{q}.nadderp.real(c,:,1) = (mean(datacat{q}.real(c,poststim_real,find(~splitindex)),3)...
-            -mean(mean(datacat{q}.real(c,prestim_real,find(~splitindex)),3),2));
-        datacalc{q}.nadderp.real(c,:,2) = (mean(datacat{q}.real(c,poststim_real,find(splitindex)),3)...
-            -mean(mean(datacat{q}.real(c,prestim_real,find(splitindex)),3),2));
+        datacalc{q}.nadderp.real(c,:,1) = (mean(real(datacat(c,poststim_real,find(~splitindex))),3)...
+            -mean(mean(real(datacat(c,prestim_real,find(~splitindex))),3),2));
+        datacalc{q}.nadderp.real(c,:,2) = (mean(real(datacat(c,poststim_real,find(splitindex))),3)...
+            -mean(mean(real(datacat(c,prestim_real,find(splitindex))),3),2));
+        
+        %             switch settings.units
+        %                 case 'prcchange'
+        %                     datacalc{q}.nadderp.real(c,:,1) = 100*datacalc{q}.nadderp.real(c,:,1)./mean(mean(real(datacat(c,prestim_real,:)),3),2);
+        %                     datacalc{q}.nadderp.real(c,:,2) = 100*datacalc{q}.nadderp.real(c,:,2)./mean(mean(real(datacat(c,prestim_real,:)),3),2);
+        %                 case 'zscore'
+        %                     datacalc{q}.nadderp.real(c,:,1) = zscore(datacalc{q}.nadderp.real(c,:,1),0,2);
+        %                     datacalc{q}.nadderp.real(c,:,2) = zscore(datacalc{q}.nadderp.real(c,:,2),0,2);
+        %                 case 'log'
+        %                     datacalc{q}.nadderp.real(c,:,1) = 10*log10(datacalc{q}.nadderp.real(c,:,1));
+        %                     datacalc{q}.nadderp.real(c,:,2) = 10*log10(datacalc{q}.nadderp.real(c,:,2))
+        %             end
         
         datacalc{q}.nadderp.diff = datacalc{q}.nadderp.real-datacalc{q}.nadderp.pseudo;
     end
+end
+
+
+if ~strcmpi(settings.tfparams.method,'hilbert')
+    %timefreq_data = parload(files(1).name,'timefreq_data');
+    for c = 2:length(timefreq_data)
+        parents(c) = timefreq_data{c}.parent;
+    end
+    newmeas = cell(1,length(settings.tfparams.fbands));
+    for c = 2:length(settings.tfparams.fbands)
+        children{c} = find(parents == c);
+        fields = fieldnames_recurse(datacalc{c});
+        fields = cell_unpack(fields);
+        for cc = 1:length(fields)
+            tmp = [];
+            for ccc = 1:length(children{c})
+                dimn = length(size(getfield_nest(datacalc{children{c}(ccc)},fields{cc})));
+                tmp = cat(dimn+1,tmp,getfield_nest(datacalc{children{c}(ccc)},(fields{cc})));
+            end
+            newmeas{c} = assignfield_nest(newmeas{c},fields{cc},nanmean(tmp,dimn+1));
+        end
+    end
     
-    datacalc{q}.itc = datacat{q}.itc;
-    datacalc{q}.raw.itc = datacat{q}.raw.itc;
+    dimn = [];
+    children{1} = 2:length(timefreq_data);
+    fields = fieldnames_recurse(datacalc{1});
+    fields = cell_unpack(fields);
+    
+    for cc = 1:length(fields)
+        tmp = [];
+        for ccc = 1:length(children{1})
+            dimn = length(size(getfield_nest(datacalc{children{1}(ccc)},fields{cc})));
+            tmp = cat(dimn+1,tmp,getfield_nest(datacalc{children{1}(ccc)},(fields{cc})));
+        end
+        newmeas{1} = assignfield_nest(newmeas{1},fields{cc},nanmean(tmp,dimn+1));
+    end
+    
+    % for broadband, put the ERP and TTV stuff back to the original values
+    newmeas{1}.erp = datacalc{1}.erp;
+    newmeas{1}.nadderp = datacalc{1}.nadderp;
+    newmeas{1}.ttv = datacalc{1}.ttv;
+    
+    settings.nfreqs = length(settings.tfparams.fbands);
+    numbands = settings.nfreqs;
+    
+    datacalc = newmeas;
+    newmeas = [];
 end
 
 
