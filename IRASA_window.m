@@ -3,7 +3,7 @@ function [specout,specs] = IRASA_window(datain,srate,varargin)
 
 
 if ~CheckInput(varargin,'winsize')
-winsize = round(10*srate);
+    winsize = round(10*srate);
 else
     winsize = round(EasyParse(varargin,'winsize')*srate);
 end
