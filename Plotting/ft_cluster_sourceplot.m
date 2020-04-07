@@ -1,4 +1,4 @@
-function [ROI] = ft_cluster_sourceplot(datain,sourcemodel,atlas,roimask,varargin)
+function figaxes = ft_cluster_sourceplot(datain,sourcemodel,atlas,roimask,varargin)
 
 for c = 1:length(sourcemodel.pos)
     if isfield(atlas,'parcellation')
@@ -11,15 +11,22 @@ for c = 1:length(sourcemodel.pos)
 end
 plotmask = double(plotmask);
 
-bnd.pnt = sourcemodel.pos;
-bnd.tri = sourcemodel.tri;
+argsin = varargin;
 
-ft_plot_mesh(bnd,'facealpha',vert(1-plotmask));
-ft_plot_mesh(bnd, 'vertexcolor', vert(plotdata), 'facealpha', vert(plotmask), 'maskstyle', 'opacity');
+argsin = setdefault(argsin,'method','brains4');
 
-lighting gouraud
-camlight
-
+if EasyParse(argsin,'method','wholebrain')
+    bnd.pnt = sourcemodel.pos;
+    bnd.tri = sourcemodel.tri;
+    
+    ft_plot_mesh(bnd,'facealpha',vert(1-plotmask));
+    ft_plot_mesh(bnd, 'vertexcolor', vert(plotdata), 'facealpha', vert(plotmask), 'maskstyle', 'opacity');
+    
+    lighting gouraud
+    camlight
+elseif EasyParse(argsin,'method','brains4')
+    figaxes = brains4(datain,sourcemodel,atlas,'mask',roimask);
+end
 
     
 

@@ -26,6 +26,8 @@ elseif strcmpi(postype,'upperleft')
     offset = [outpos(1)-tbsize(1)*2 inpos(2)+inpos(4)+-tbsize(2)/2+1/2*(outpos(2)+outpos(4)-inpos(2)-inpos(4))];
 elseif strcmpi(postype,'middle_left')
     offset = [outpos(1)-tbsize(1) inpos(2)+0.5*inpos(4)+-tbsize(2)/2];
+%elseif strcmpi(postype,'title')
+%    off
 end
 
 offset(find(offset < 0)) = 0;

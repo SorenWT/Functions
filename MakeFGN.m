@@ -11,5 +11,7 @@ end
 
 output = diff(fbmseq);
 
+output = output(1:seqLen);
+
 
 

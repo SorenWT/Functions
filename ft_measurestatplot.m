@@ -22,6 +22,9 @@ function figs = ft_measurestatplot(cfg,data,stats)
 %         (default = 'combined')
 %      colormap: the colormap to use when plotting topographies (default =
 %         parula)
+%      plotparam: the parameter to be plotted topographically for the
+%         difference in conditions - either 'dif' for the difference or
+%         'effsize' for the effect size statistic (default = 'dif')
 %      datasetinfo: used for source-space plotting. Should contain the
 %         fields:
 %
@@ -67,6 +70,8 @@ if ~cfgcheck(cfg,'plotmode')
     cfg.plotmode = 'combined';
 end
 
+cfg = setdefault(cfg,'plotparam','dif');
+
 cfg = setdefault(cfg,'savefig','no');
 
 if nargin < 3
@@ -100,14 +105,21 @@ if cfgcheck(cfg,'plotmode','topo')
                 
                 
                 subplot(1,length(data)+1,length(data)+1)
+                if cfgcheck(cfg,'plotparam','dif')
+                    plotparam = mean(data{cord(1)}.data(:,:,c),1)-mean(data{cord(2)}.data(:,:,c),1);
+                elseif cfgcheck(cfg,'plotparam','effsize')
+                    tmp = cat(1,stats{c}.effsize{:});
+                    plotparam = horz(extractfield(tmp,stats{c}.cfg.effectsize));
+                end
+                
                 if isfield(stats{c},'cluster')
-                    cluster_topoplot(mean(data{cord(1)}.data(:,:,c),1)-mean(data{cord(2)}.data(:,:,c),1),...
+                    cluster_topoplot(plotparam,...
                         data{1}.chanlocs,stats{c}.p,stats{c}.cluster.mask)
                 elseif isfield(stats{c},'fdr')
-                    cluster_topoplot(mean(data{cord(1)}.data(:,:,c),1)-mean(data{cord(2)}.data(:,:,c),1),...
+                    cluster_topoplot(plotparam,...
                         data{1}.chanlocs,stats{c}.p,stats{c}.fdr < 0.05)
                 else
-                    cluster_topoplot(mean(data{cord(1)}.data(:,:,c),1)-mean(data{cord(2)}.data(:,:,c),1),...
+                    cluster_topoplot(plotparam,...
                         data{1}.chanlocs,stats{c}.p,stats{c}.p < 0.05)
                 end
                 title([cfg.cond{cord(1)} ' - ' cfg.cond{cord(2)}])
@@ -130,15 +142,22 @@ if cfgcheck(cfg,'plotmode','topo')
                 end
                 Normalize_Clim(ax)
                 
+                if cfgcheck(cfg,'plotparam','dif')
+                    plotparam = mean(data{cord(1)}.data(:,:,c),1)-mean(data{cord(2)}.data(:,:,c),1);
+                elseif cfgcheck(cfg,'plotparam','effsize')
+                    tmp = cat(1,stats{c}.effsize{:});
+                    plotparam = horz(extractfield(tmp,stats{c}.cfg.effectsize));
+                end
+                
                 subplot(1,length(data)+1,length(data)+1)
                 if isfield(stats{c},'cluster')
-                    ft_cluster_topoplot(cfg.lay,mean(data{cord(1)}.data(:,:,c),1)-mean(data{cord(2)}.data(:,:,c),1),...
+                    ft_cluster_topoplot(cfg.lay,plotparam,...
                         data{1}.chan,stats{c}.p,stats{c}.cluster.mask)
                 elseif isfield(stats{c},'fdr')
-                    ft_cluster_topoplot(cfg.lay,mean(data{cord(1)}.data(:,:,c),1)-mean(data{cord(2)}.data(:,:,c),1),...
+                    ft_cluster_topoplot(cfg.lay,plotparam,...
                         data{1}.chan,stats{c}.p,stats{c}.fdr < 0.05)
                 else
-                    ft_cluster_topoplot(cfg.lay,mean(data{cord(1)}.data(:,:,c),1)-mean(data{cord(2)}.data(:,:,c),1),...
+                    ft_cluster_topoplot(cfg.lay,plotparam,...
                         data{1}.chan,stats{c}.p,stats{c}.p < 0.05)
                 end
                 title([cfg.cond{cord(1)} ' - ' cfg.cond{cord(2)}])
@@ -164,15 +183,22 @@ if cfgcheck(cfg,'plotmode','topo')
                 end
                 Normalize_Clim(ax)
                 
+                if cfgcheck(cfg,'plotparam','dif')
+                    plotparam = mean(data{cord(1)}.data(:,:,c),1)-mean(data{cord(2)}.data(:,:,c),1);
+                elseif cfgcheck(cfg,'plotparam','effsize')
+                    tmp = cat(1,stats{c}.effsize{:});
+                    plotparam = horz(extractfield(tmp,stats{c}.cfg.effectsize));
+                end
+                
                 subplot(1,length(data)+1,length(data)+1)
                 if isfield(stats{c},'cluster')
-                    ft_cluster_sourceplot(mean(data{cord(1)}.data(:,:,c),1)-mean(data{cord(2)}.data(:,:,c),1),...
+                    ft_cluster_sourceplot(plotparam,...
                         cfg.datasetinfo.sourcemodel,cfg.datasetinfo.atlas,stats{c}.cluster.mask)
                 elseif isfield(stats{c},'fdr')
-                    ft_cluster_topoplot(mean(data{cord(1)}.data(:,:,c),1)-mean(data{cord(2)}.data(:,:,c),1),...
+                    ft_cluster_topoplot(plotparam,...
                         cfg.datasetinfo.sourcemodel,cfg.datasetinfo.atlas,stats{c}.fdr < 0.05)
                 else
-                    ft_cluster_topoplot(cfg.lay,mean(data{cord(1)}.data(:,:,c),1)-mean(data{cord(2)}.data(:,:,c),1),...
+                    ft_cluster_topoplot(cfg.lay,plotparam,...
                         cfg.datasetinfo.sourcemodel,cfg.datasetinfo.atlas,stats{c}.p < 0.05)
                 end
                 title([cfg.cond{cord(1)} ' - ' cfg.cond{cord(2)}])

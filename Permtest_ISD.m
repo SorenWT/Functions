@@ -1,4 +1,4 @@
-function p = Permtest_ISD(data1,data2,nperm)
+function [p, orig_tstat] = Permtest_ISD(data1,data2,nperm)
 % Permtest_ISD uses a permutation test to test for difference in means 
 % between two intersubject distance matrices
 %

@@ -125,7 +125,7 @@ else
                 neighbs(c).neighblabel(1) = [];
                 neighbs(c).neighblabel = unique(neighbs(c).neighblabel);
             end
-        case 'mmp','yeo'
+        case {'mmp','yeo'}
             
             if strcmpi(datasetinfo.atlasname,'yeo')
                 datasetinfo.atlas.parcellationlabel = cellstr(num2str([1:8004]'));
