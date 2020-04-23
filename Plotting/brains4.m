@@ -146,3 +146,7 @@ if CheckInput(varargin,'frame')
     delete(gcf)
 end
 
+if ~exist('pnl','var')
+pnl = [];
+end
+

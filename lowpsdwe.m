@@ -48,6 +48,8 @@ fitfreq = log10(freq(slope_index));
 fitdata = log10(pdata(slope_index));
 linfreq = linspace(min(fitfreq),max(fitfreq),length(fitfreq));
 fitdata = interp1(fitfreq,fitdata,linfreq);
+%linfreq = log10(freq(slope_index));
+%fitdata = log10(pdata(slope_index));
 
 p = polyfit(vert(linfreq),vert(fitdata),1);
 ple = -p(1);

@@ -1,4 +1,4 @@
-function [mdl,multcompare] = artanova(data,frmla)
+function [mdl] = artanova(data,frmla)
 % data should be a table
 % frmla is the relevant anova formula
 
@@ -27,7 +27,7 @@ system(['R -e ''source("' fullfile(path,funcname) '"); artanova("'...
     fullfile(currdir,fileout) '")'''])
 
 mdl = jsonread(fullfile(currdir,[fileout '_results.json']));
-multcompare = jsonread(fullfile(currdir,[fileout '_multcompare.json']));
+%multcompare = jsonread(fullfile(currdir,[fileout '_multcompare.json']));
 
 system(['rm ' filein]);
 system(['rm ' fileout '_results.json']);
