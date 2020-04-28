@@ -107,6 +107,10 @@ function H=sigstar(groups,stats,nosort,fsize)
         error('groups and stats must be the same length')
     end
 
+    
+    %SWT edit Apr. 27 2020 - remove non-significant values
+    groups = groups(find(stats < 0.05));
+    stats = stats(find(stats < 0.05));
 
 
 

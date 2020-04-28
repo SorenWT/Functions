@@ -23,8 +23,8 @@ function [ple,pdata,freq] = JF_power_law(time_series,TR,low_range,high_range,var
 Fs = 1/TR;
 nfft = 2^nextpow2((3/low_range)*Fs);
 
-if nfft > length(time_series)
-   nfft = []; % if nfft is too large, just use the default Welch window
+if nfft > length(time_series) || nfft/(2*Fs) < 1
+   nfft = []; % if nfft is too large or too small, just use the default Welch window
 end
 
 [pdata,freq] = pwelch(time_series,[],[],nfft,Fs); %want 3 cycles of lowest frequency in window
@@ -38,16 +38,18 @@ fitfreq = log10(freq(slope_index));
 fitdata = log10(pdata(slope_index));
 linfreq = linspace(min(fitfreq),max(fitfreq),length(fitfreq));
 fitdata = interp1(fitfreq,fitdata,linfreq);
+%linfreq = log10(freq(slope_index));
+%fitdata = log10(pdata(slope_index));
 
 p = polyfit(vert(linfreq),vert(fitdata),1);
 ple = -p(1);
 
 
 if length(varargin) > 0 && any(varargin{1} == 'Plot')
-    y = p(2) + p(1)*log(freq(slope_index));
+    y = p(2) + p(1)*log10(freq(slope_index));
     loglog(freq(slope_index),pdata(slope_index));
     hold on;
-    loglog(freq(slope_index),exp(y),'r--');
+    loglog(freq(slope_index),10.^y,'r--');
     xlabel('Log Frequency')
     ylabel('Log Power')
     title(['Estimated PLE is ' num2str(ple)])

@@ -1,10 +1,11 @@
 function [p,teststat] = CVtest(data)
-% data input can be a N x 2 array, or a 2 element cell array
+% data input can be a N x k array, or a k element cell array
 % this wrapper function assumes that the original R file is located in the
 % same folder as this wrapper function
 
 if iscell(data)
-    newdat = cat(1,vert(data{1}),vert(data{2}));
+    vertdata = cellfun(@vert,data,'UniformOutput',false);
+    newdat = cat(1,vertdata{:});
     grp = Make_designVect(cellfun(@length,data,'UniformOutput',true))';
 else
     newdat = reshape(data,[],1);

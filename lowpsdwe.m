@@ -33,7 +33,7 @@ time_series = time_series - mean(time_series);
 %from here on same as JF_power_law
 nfft = 2^nextpow2((3/low_range)*Fs);
 
-if nfft > length(time_series)
+if nfft > length(time_series) || nfft/(2*Fs) < 1
    nfft = []; % if nfft is too large, just use the default Welch window
 end
 
@@ -56,10 +56,10 @@ ple = -p(1);
 
 
 if length(varargin) > 0 && any(varargin{1} == 'Plot')
-    y = p(2) + p(1)*log(freq(slope_index));
+    y = p(2) + p(1)*log10(freq(slope_index));
     loglog(freq(slope_index),pdata(slope_index));
     hold on;
-    loglog(freq(slope_index),exp(y),'r--');
+    loglog(freq(slope_index),10.^y,'r--');
     xlabel('Log Frequency')
     ylabel('Log Power')
     title(['Estimated PLE is ' num2str(ple)])

@@ -201,7 +201,7 @@ else
     
     %% Start up fieldtrip, eeglab if necessary
     if cfgcheck(cfg,'format','eeglab')
-        eeglab rebuild
+%        eeglab rebuild
     end
     
     ft_defaults
