@@ -59,6 +59,9 @@ end
 
 post = cell(1,size(meanpost.frac.fourierspctrm,1));
 bl = post;
+postint = post;
+blint = bl;
+
 
 parfor i = 1:size(meanpost.frac.fourierspctrm,1)
     for ii = 1:size(meanpost.frac.fourierspctrm,2)
@@ -69,6 +72,7 @@ parfor i = 1:size(meanpost.frac.fourierspctrm,1)
             pow = interp1(tmp,pow,lintmp);
             p = polyfit(lintmp,pow,1);
             post{i}(1,ii,iii) = -p(1);
+            postint{i}(1,ii,iii) = p(2);
             
             tmp = log10(meanbl.frac.freq);
             pow = log10(squeeze(meanbl.frac.fourierspctrm(i,ii,:,iii)));
@@ -76,12 +80,16 @@ parfor i = 1:size(meanpost.frac.fourierspctrm,1)
             pow = interp1(tmp,pow,lintmp);
             p = polyfit(lintmp,pow,1);
             bl{i}(1,ii,iii) = -p(1);
+            blint{i}(1,ii,iii) = p(2);
         end
     end
 end
 
 pledata.post = cat(1,post{:});
 pledata.bl = cat(1,bl{:});
+
+intdata.post = cat(1,postint{:});
+intdata.bl = cat(1,blint{:});
 
 for c = 1:3
     cfg = []; cfg.channel = {'MEG'}; cfg.avgoverchan = 'yes'; cfg.latency = [0 0.75];
@@ -118,7 +126,10 @@ opts = []; opts.nrand = 2000; opts.parpool = 48; opts.minnbchan = 0;
 stats_ple = EasyClusterCorrect({permute(pledata.post,[2 1 3]) repmat(mean(pledata.bl,3)',1,1,38)},...
     datasetinfo,'ft_statfun_fast_signrank',opts);
 
-stats_bb = EasyClusterCorrect({permute(squeeze(mean(meanpost.frac.fourierspctrm,3)),[2 1 3]) repmat(mean(squeeze(mean(meanbl.frac.fourierspctrm,3)),3)',1,1,38)},...
+%stats_bb = EasyClusterCorrect({permute(squeeze(mean(meanpost.frac.fourierspctrm,3)),[2 1 3]) repmat(mean(squeeze(mean(meanbl.frac.fourierspctrm,3)),3)',1,1,38)},...
+%    datasetinfo,'ft_statfun_fast_signrank',opts);
+
+stats_int = EasyClusterCorrect({permute(intdata.post,[2 1 3]) repmat(mean(intdata.bl,3)',1,1,38)},...
     datasetinfo,'ft_statfun_fast_signrank',opts);
 
 % for divisive baseline/gain model, set gc1 = 0, gc2 = 1

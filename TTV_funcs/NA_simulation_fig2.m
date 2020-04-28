@@ -103,13 +103,16 @@ stats_erp_ttv_pos = EasyClusterCorrect({permute(datacalc_pos.ttv.real(1,:,:),[1 
     datasetinfo,'ft_statfun_fast_signrank',opts);
 
 
-save('simulation_fig2_outputs.mat','datacalc_neg','datacalc_pos','stats_erp_pt_neg','stats_erp_ttv_neg',...
+save('simulation_fig4_outputs.mat','datacalc_neg','datacalc_pos','stats_erp_pt_neg','stats_erp_ttv_neg',...
     'stats_erp_pt_pos','stats_erp_ttv_pos','task_neg','task_pos','-v7.3')
 
 %% Making the figure
 
+t = linspace(0,0.8,400);
 
 p = panel('no-manage-font')
+
+set(gcf,'units','normalized','position',[0 0 1 1])
 
 p.pack('h',{1/2 1/2})
 p(1).pack('v',{1/3 1/3 1/3})

@@ -218,7 +218,7 @@ set(gcf,'position',[pos(1) pos(2) pos(3)*3 pos(4)*3]);
 
 p.pack(7,7)
 
-p.de.margin = [7 7 7 7];
+p.de.margin = [8 8 8 8];
 p.marginleft = 18;
 
 t = linspace(0,800,400);
@@ -230,9 +230,10 @@ for c = 1:length(mvals)
         hold on
         ylim2 = stdshade(t,squeeze(all_datacalc{c,cc}.naddersp.diff(1,:,2,:)),[1 0 0],0.15,1,'std');
         set(gca,'XTickLabel',{},'XLim',[0 800],'YLim',[min(ylim1(1),ylim2(1)) max(ylim1(2),ylim2(2))])
-                ytick = get(gca,'YTickLabel');
-        if length(ytick) > 4
-           set(gca,'YTickLabel',ytick([1:2:length(ytick)])) 
+        ytickl = get(gca,'YTickLabel');
+        ytick = get(gca,'YTick');
+        if length(ytickl) > 4
+           set(gca,'YTickLabel',ytickl([1:2:length(ytick)]),'YTick',ytick([1:2:length(ytick)])) 
         end
         Plot_sigmask(gca,allstats_ersp_pt{c,cc}.prob < 0.05,'bar')
         set(gca,'XLim',[0 800])
@@ -243,6 +244,7 @@ for c = 1:length(mvals)
             AddFigureLabel(gca,['SNR ' newline num2str(round(1/mvals(c),3,'significant'))],'middle_left','FontSize',10)
         
         end
+        FixAxes(gca,11)
         %         if c == length(mvals)
         %            xlabel('Time (ms)')
         %         end
@@ -267,7 +269,7 @@ set(gcf,'position',[pos(1) pos(2) pos(3)*3 pos(4)*3]);
 
 p.pack(7,7)
 
-p.de.margin = [7 7 7 7];
+p.de.margin = [8 8 8 8];
 
 p.marginleft = 18;
 
@@ -278,9 +280,10 @@ for c = 1:length(mvals)
         p(c,cc).select()
         ylim1 = stdshade(t,squeeze(all_datacalc{c,cc}.ttversp.real(1,:,:)),[0 0 1],0.15,1,'std');
         set(gca,'XTickLabel',{},'XLim',[0 800],'YLim',ylim1)
-        ytick = get(gca,'YTickLabel');
-        if length(ytick) > 4
-           set(gca,'YTickLabel',ytick([1:2:length(ytick)])) 
+        ytickl = get(gca,'YTickLabel');
+        ytick = get(gca,'YTick');
+        if length(ytickl) > 4
+           set(gca,'YTickLabel',ytickl([1:2:length(ytick)]),'YTick',ytick([1:2:length(ytick)])) 
         end
         Plot_sigmask(gca,allstats_ersp_ttv{c,cc}.prob < 0.05,'bar')
         set(gca,'XLim',[0 800])
@@ -290,6 +293,7 @@ for c = 1:length(mvals)
         if cc == 1
             AddFigureLabel(gca,['SNR ' newline num2str(round(1/mvals(c),3,'significant'))],'middle_left','FontSize',10)
         end
+        FixAxes(gca,11)
         %         if c == length(mvals)
         %            xlabel('Time (ms)')
         %         end

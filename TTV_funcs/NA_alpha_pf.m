@@ -22,11 +22,11 @@ parfor i = 1:length(files)
         data = parload(fullfile(files(i).folder,files(i).name),'data');
     end
         
-   [fbands{i},pf{i}] = NA_convert_alpha_pf(settings,data);
+   [fbands{i},pf{i}] = NA_convert_alpha_pf(settings,ft_concat(data));
 end
 
 fbands = cat(1,fbands{:});
 pf = cat(1,pf{:});
 
 settings.tfparams.fbands = fbands;
-settings.tfparams.alpha_pf = pf;
+settings.alpha_pf = pf;
