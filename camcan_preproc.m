@@ -53,6 +53,9 @@ if ~exist('cont_data','var')
     data = ft_epoch(cfg,data);
     data.trialinfo = ones(length(data.sampleinfo),1);
     
+    cfg = []; cfg.channel = {'megmag'};
+    data = ft_selectdata(cfg,data);
+    
     save(fullfile(basedir,['sub-' subid],[subid '_cont_epochs.mat']),'data')
     
     pyscript = fopen([subid '_pyscript.py'],'w');

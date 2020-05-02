@@ -11,8 +11,12 @@ freqs = intersect(find(spec.freq > bandpass(1)), find(spec.freq < bandpass(2)));
 % end
 
 subplot(2,2,[1 2])
-loglog(spec.freq(freqs),mean(spec.mixd(freqs,:),2))
+loglog(spec.freq(freqs),mean(spec.mixd(freqs,:),2),'LineWidth',2)
+FixAxes(gca,12)
 subplot(2,2,3)
-plot(spec.freq(freqs),mean(spec.osci(freqs,:),2))
+plot(spec.freq(freqs),mean(spec.osci(freqs,:),2),'LineWidth',2)
+FixAxes(gca,12)
 subplot(2,2,4)
-loglog(spec.freq(freqs),mean(spec.frac(freqs,:),2))
+loglog(spec.freq(freqs),mean(spec.frac(freqs,:),2),'LineWidth',2)
+FixAxes(gca,12)
+

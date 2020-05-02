@@ -23,7 +23,7 @@ end
 
 if strcmp(cfg.computestat,'yes') % compute the statistic
   % calculate the correlation coefficient between the dependent variable and the predictor
-  rho = partcorr_pairwise(dat', design', vert(cfg.partial), 'type', cfg.type);
+  rho = partcorr_pairwise(dat', design', cfg.partial, 'type', cfg.type);
   clear dat
   
   % convert correlation coefficient to t-statistic (for MCP correction): t^2 = DF*R^2 / (1-R^2)
