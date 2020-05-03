@@ -27,16 +27,16 @@ if ~exist('cont_data','var')
     cfg.hdr = filename;
     cont_data = ft_preprocessing(cfg);
     
+    %% Resample to 500 Hz
+    
+    cfg = []; cfg.resamplefs = 500;
+    cont_data = ft_resampledata(cfg,cont_data);
+    
     %% Filter
     
     cfg = []; cfg.lpfilter = 'yes'; cfg.lpfreq = 200;
     cfg.bsfilter = 'yes'; cfg.bsfreq = [49 51; 99 101; 149 151; 199 201];
     cont_data = ft_preprocessing(cfg,cont_data);
-    
-    %% Resample to 500 Hz
-    
-    cfg = []; cfg.resamplefs = 500;
-    cont_data = ft_resampledata(cfg,cont_data);
     
     %% Consider only magnetometers (and EOG/ECG) for now
     
