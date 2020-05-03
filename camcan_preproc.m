@@ -3,6 +3,7 @@ function [data,cont_data,comp_class,iteration] = camcan_preproc(subid,filename,c
 % Assuming ComputeCanada
 basedir = extractBefore(filename,['sub-' subid]);
 basedir = char(basedir);
+do_epoch = 0;
 if contains(basedir,'task')
     do_epoch = 1;
 elseif contains(basedir,'Rest')
@@ -53,6 +54,9 @@ if ~exist('cont_data','var')
     data = ft_epoch(cfg,data);
     data.trialinfo = ones(length(data.sampleinfo),1);
     
+    cfg = []; cfg.channel = {'EOG','ECG'};
+    refdata = ft_selectdata(cfg,data);
+    
     cfg = []; cfg.channel = {'megmag'};
     data = ft_selectdata(cfg,data);
     
@@ -75,20 +79,22 @@ if ~exist('cont_data','var')
     cfg = []; cfg.trials = ~bads;
     data = ft_selectdata(cfg,data);
     
+    cfg = []; cfg.trials = ~bads;
+    refdata = ft_selectdata(cfg,refdata);
+    
     cont_data_clean = ft_concat(data);
     cont_data_clean = rmfield(cont_data_clean,'trialinfo');
     cont_data_clean = rmfield(cont_data_clean,'sampleinfo');
+    
+        
+    refdata = ft_concat(refdata);
+    refdata = rmfield(refdata,'trialinfo');
+    refdata = rmfield(refdata,'sampleinfo');
     
     %cfg = []; cfg.hpfilter = 'yes'; cfg.hpfreq = 1;
     %cont_data_clean = ft_preprocessing(cfg,cont_data_clean);
     
     %cont_data_clean = ft_concat(cont_data_clean);
-    
-    cfg = []; cfg.channel = {'EOG','ECG'};
-    refdata = ft_selectdata(cfg,cont_data_clean);
-    
-    cfg = []; cfg.channel = {'megmag'};
-    cont_data_clean = ft_selectdata(cfg,cont_data_clean);
     
     %%% Rescale planar gradiometers
     
