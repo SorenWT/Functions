@@ -27,25 +27,32 @@ if nfft > length(time_series) || nfft/(2*Fs) < 1
    nfft = []; % if nfft is too large or too small, just use the default Welch window
 end
 
-[pdata,freq] = pwelch(time_series,[],[],nfft,Fs); %want 3 cycles of lowest frequency in window
+if CheckInput(varargin,'pmethod') && EasyParse(varargin,'pmethod','periodogram')
+    [pdata,freq] = periodogram(time_series,[],nfft,Fs); %want 3 cycles of lowest frequency in window
+else
+    [pdata,freq] = pwelch(time_series,[],[],nfft,Fs); %want 3 cycles of lowest frequency in window
+end
 %     power_spec = psd(HS,time_series,'NFFT',nfft,'Fs',Fs);
 %pdata = pxx;
 %freq = f;
 
 slope_index = find(freq > low_range & freq < high_range);
 %freq = freq(slope_index)';
-fitfreq = log10(freq(slope_index));
-fitdata = log10(pdata(slope_index));
-linfreq = linspace(min(fitfreq),max(fitfreq),length(fitfreq));
-fitdata = interp1(fitfreq,fitdata,linfreq);
-%linfreq = log10(freq(slope_index));
-%fitdata = log10(pdata(slope_index));
+if CheckInput(varargin,'interp') && EasyParse(varargin,'interp','off')
+    linfreq = log10(freq(slope_index));
+    fitdata = log10(pdata(slope_index));
+else
+    fitfreq = log10(freq(slope_index));
+    fitdata = log10(pdata(slope_index));
+    linfreq = linspace(min(fitfreq),max(fitfreq),length(fitfreq));
+    fitdata = interp1(fitfreq,fitdata,linfreq);
+end
 
 p = polyfit(vert(linfreq),vert(fitdata),1);
 ple = -p(1);
 
 
-if length(varargin) > 0 && any(varargin{1} == 'Plot')
+if CheckInput(varargin,'Plot') && EasyParse(varargin,'Plot','on')
     y = p(2) + p(1)*log10(freq(slope_index));
     loglog(freq(slope_index),pdata(slope_index));
     hold on;

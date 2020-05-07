@@ -19,7 +19,6 @@ function [ple,pdata,freq] = lowpsdwe(time_series,Fs,low_range,high_range,varargi
 %    pdata: the power spectrum
 %    freq: the frequencies from the power spectrum estimation
 
-
 % Parabolic windowing
 pwindow = 1-((2.*(1:length(time_series))./(length(time_series)+1)-1).^2);
 time_series = pwindow.*time_series;
@@ -37,25 +36,31 @@ if nfft > length(time_series) || nfft/(2*Fs) < 1
    nfft = []; % if nfft is too large, just use the default Welch window
 end
 
-[pdata,freq] = pwelch(time_series,[],[],nfft,Fs); %want 3 cycles of lowest frequency in window
-%     power_spec = psd(HS,time_series,'NFFT',nfft,'Fs',Fs);
+if CheckInput(varargin,'pmethod') && EasyParse(varargin,'pmethod','periodogram')
+    [pdata,freq] = periodogram(time_series,[],nfft,Fs); %want 3 cycles of lowest frequency in window
+else
+    [pdata,freq] = pwelch(time_series,[],[],nfft,Fs); %want 3 cycles of lowest frequency in window
+end%     power_spec = psd(HS,time_series,'NFFT',nfft,'Fs',Fs);
 %pdata = pxx;
 %freq = f;
 
 slope_index = find(freq > low_range & freq < high_range);
 %freq = freq(slope_index)';
-fitfreq = log10(freq(slope_index));
-fitdata = log10(pdata(slope_index));
-linfreq = linspace(min(fitfreq),max(fitfreq),length(fitfreq));
-fitdata = interp1(fitfreq,fitdata,linfreq);
-%linfreq = log10(freq(slope_index));
-%fitdata = log10(pdata(slope_index));
+if CheckInput(varargin,'interp') && EasyParse(varargin,'interp','off')
+    linfreq = log10(freq(slope_index));
+    fitdata = log10(pdata(slope_index));
+else
+    fitfreq = log10(freq(slope_index));
+    fitdata = log10(pdata(slope_index));
+    linfreq = linspace(min(fitfreq),max(fitfreq),length(fitfreq));
+    fitdata = interp1(fitfreq,fitdata,linfreq);
+end
 
 p = polyfit(vert(linfreq),vert(fitdata),1);
 ple = -p(1);
 
 
-if length(varargin) > 0 && any(varargin{1} == 'Plot')
+if CheckInput(varargin,'Plot') && EasyParse(varargin,'Plot','on')
     y = p(2) + p(1)*log10(freq(slope_index));
     loglog(freq(slope_index),pdata(slope_index));
     hold on;

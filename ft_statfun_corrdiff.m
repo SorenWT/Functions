@@ -23,37 +23,41 @@ end
 
 if strcmp(cfg.computestat,'yes') % compute the statistic
   % calculate the correlation coefficient between the dependent variable and the predictor
-  rho = partcorr_pairwise(dat', design', t3d(cfg.partial), 'type', cfg.type);
+  rho1 = corr(dat', design', 'type', cfg.type);
+  rho2 = corr(cfg.partial', design', 'type', cfg.type);
+  [z,p] = diffcorr(rho1,rho2,length(cfg.design),length(cfg.design));
   clear dat
   
   % convert correlation coefficient to t-statistic (for MCP correction): t^2 = DF*R^2 / (1-R^2)
-  tstat = rho*(sqrt(nrepl-2))./sqrt((1-rho.^2));
+  %tstat = rho*(sqrt(nrepl-2))./sqrt((1-rho.^2));
   
-  s.stat = tstat; % store t values in s.stat variable for use with ft_statistics_montecarlo.m
-  s.rho = rho; % store r values in s.rho variable (these are the actual correlation coefficients)
+  s.stat = z; % store t values in s.stat variable for use with ft_statistics_montecarlo.m
+  s.rho = rho1-rho2; % store r values in s.rho variable (these are the actual correlation coefficients)
   clear rho tstat
 end
 
 if strcmp(cfg.computecritval,'yes')
   % also compute the critical values
-  s.df      = df;
-  if cfg.tail==-1
-    s.critval = tinv(cfg.alpha,df);
-  elseif  cfg.tail==0
-    s.critval = [tinv(cfg.alpha/2,df),tinv(1-cfg.alpha/2,df)];
-  elseif cfg.tail==1
-    s.critval = tinv(1-cfg.alpha,df);
-  end
+  s.df      = df-2;
+%   if cfg.tail==-1
+%     s.critval = tinv(cfg.alpha,df);
+%   elseif  cfg.tail==0
+%     s.critval = [tinv(cfg.alpha/2,df),tinv(1-cfg.alpha/2,df)];
+%   elseif cfg.tail==1
+%     s.critval = tinv(1-cfg.alpha,df);
+%   end
+s.critval = [-1.96 1.96];
 end
 
 if strcmp(cfg.computeprob,'yes')
   % also compute the p-values
-  s.df      = df;
-  if cfg.tail==-1
-    s.prob = tcdf(s.stat,s.df);
-  elseif  cfg.tail==0
-    s.prob = 2*tcdf(-abs(s.stat),s.df);
-  elseif cfg.tail==1
-    s.prob = 1-tcdf(s.stat,s.df);
-  end
+  s.df      = df-2;
+  s.prob = p;
+%   if cfg.tail==-1
+%     s.prob = tcdf(s.stat,s.df);
+%   elseif  cfg.tail==0
+%     s.prob = 2*tcdf(-abs(s.stat),s.df);
+%   elseif cfg.tail==1
+%     s.prob = 1-tcdf(s.stat,s.df);
+%   end
 end
