@@ -1,4 +1,4 @@
-function [ple,pdata,freq] = JF_power_law(time_series,TR,low_range,high_range,varargin)
+function [ple,pdata,freq] = JF_power_law(time_series,fs,low_range,high_range,varargin)
 % JF_power_law is a modification of Jianfeng Zhang's JF_power_law_nfft1024
 % script for calculating the power-law exponent based on Welch's power
 % spectral density estimate. The modifications include automatically
@@ -20,21 +20,18 @@ function [ple,pdata,freq] = JF_power_law(time_series,TR,low_range,high_range,var
 %    freq: the frequencies from the power spectrum estimation
 
 
-Fs = 1/TR;
-nfft = 2^nextpow2((3/low_range)*Fs);
+nfft = 2^nextpow2((3/low_range)*fs);
 
-if nfft > length(time_series) || nfft/(2*Fs) < 1
+if nfft > length(time_series) || nfft/(2*fs) < 1
    nfft = []; % if nfft is too large or too small, just use the default Welch window
 end
 
 if CheckInput(varargin,'pmethod') && EasyParse(varargin,'pmethod','periodogram')
-    [pdata,freq] = periodogram(time_series,[],nfft,Fs); %want 3 cycles of lowest frequency in window
+    [pdata,freq] = periodogram(time_series,[],nfft,fs); %want 3 cycles of lowest frequency in window
 else
-    [pdata,freq] = pwelch(time_series,[],[],nfft,Fs); %want 3 cycles of lowest frequency in window
+    [pdata,freq] = pwelch(time_series,[],[],nfft,fs); %want 3 cycles of lowest frequency in window
 end
-%     power_spec = psd(HS,time_series,'NFFT',nfft,'Fs',Fs);
-%pdata = pxx;
-%freq = f;
+
 
 slope_index = find(freq > low_range & freq < high_range);
 %freq = freq(slope_index)';
@@ -61,7 +58,3 @@ if CheckInput(varargin,'Plot') && EasyParse(varargin,'Plot','on')
     ylabel('Log Power')
     title(['Estimated PLE is ' num2str(ple)])
 end
-
-
-%[b,bint,r,rint,stats] = regress(log(power_data(slope_index)),[ones(length(power_freq(slope_index)),1) log(power_freq')*p(1)+ p(2)]);
-%r_resi = stats(4);

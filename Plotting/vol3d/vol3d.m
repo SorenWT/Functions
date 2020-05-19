@@ -128,6 +128,10 @@ model.texture = '3D';
 tag = tempname;
 model.tag = ['vol3d_' tag(end-11:end)];
 
+axis off
+axis vis3d
+axis equal
+
 %------------------------------------------%
 function [model,ax] = local_draw(model)
 

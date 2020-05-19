@@ -1,10 +1,10 @@
-function [p, orig_tstat] = Permtest_ISD(data1,data2,nperm,varargin)
-% Permtest_ISD uses a permutation test to test for difference in means 
+function [p, orig_stat] = Permtest_ISD(data1,data2,nperm,varargin)
+% Permtest_ISD uses a permutation test to test for difference in means
 % between two intersubject distance matrices
 %
-% Input arguments: 
+% Input arguments:
 %
-% data1 and data2 are the data from which the ISC matrices are defined. 
+% data1 and data2 are the data from which the ISC matrices are defined.
 %    They should be in the form observations x subjects
 % nperm is the number of permutations to use
 %
@@ -15,7 +15,7 @@ function [p, orig_tstat] = Permtest_ISD(data1,data2,nperm,varargin)
 % p is the p-value from the permutation test
 
 if ~CheckInput(varargin,'stattype')
-   stattype = 'meandiff';
+    stattype = 'meandiff';
 else
     stattype = EasyParse(varargin,'stattype');
 end
@@ -33,6 +33,8 @@ switch stattype
         orig_stat = stat.tstat;
     case 'meandiff'
         orig_stat = mean(corrvals1) - mean(corrvals2);
+    case 'mediandiff'
+        orig_stat = median(corrvals1) - median(corrvals2);
 end
 
 alldata = cat(2,data1,data2);
@@ -53,13 +55,15 @@ for i = 1:nperm
             perm_stat(i) = stat.tstat;
         case 'meandiff'
             perm_stat(i) = mean(newcorrvals1) - mean(newcorrvals2);
+        case 'mediandiff'
+            perm_stat(i) = median(newcorrvals1) - median(newcorrvals2);
     end
 end
 
 p = value_prctile(perm_stat,orig_stat);
 
 if p > 0.5
-   p = 1-p; 
+    p = 1-p;
 end
 
 p = 2*p; %two-sided test
@@ -67,9 +71,9 @@ p = 2*p; %two-sided test
 end
 
 function [dist] = EucDist(data)
-    for c = 1:size(data,2)
-        for cc = 1:size(data,2)
-            dist(c,cc) = norm(data(:,c) - data(:,cc));
-        end
+for c = 1:size(data,2)
+    for cc = 1:size(data,2)
+        dist(c,cc) = norm(data(:,c) - data(:,cc));
     end
+end
 end

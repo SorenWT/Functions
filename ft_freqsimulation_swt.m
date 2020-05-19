@@ -344,7 +344,10 @@ elseif strcmp(cfg.method,'mix_oscifrac') % added by SWT on 11/06/2019
     
     % make data
     for iTr = 1 : length(timevec)
-        n1    = ft_preproc_bandpassfilter(cfg.frac.ampl*zscore(createFN(cfg.frac.ple,length(timevec{iTr}))), cfg.fsample, cfg.frac.bpfreq);
+        n1 = cfg.frac.ampl*zscore(createFN(cfg.frac.ple,length(timevec{iTr})));
+        if ~isempty(cfg.frac.bpfreq)
+            n1    = ft_preproc_bandpassfilter(n1, cfg.fsample, cfg.frac.bpfreq);
+        end
         noise = cfg.noise.ampl(iTr)*randn(size(timevec{iTr}));
         mix   = horz(n1) + noise + sum(sim_osci.trial{iTr},1); % add broadband signal, noise, and oscillatory components
         

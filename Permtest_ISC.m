@@ -1,10 +1,10 @@
 function [p,orig_stat] = Permtest_ISC(data1,data2,nperm,type,varargin)
-% Permtest_ISC uses a permutation test to test for difference in means 
+% Permtest_ISC uses a permutation test to test for difference in means
 % between two intersubject correlation matrices
 %
-% Input arguments: 
+% Input arguments:
 %
-% data1 and data2 are the data from which the ISC matrices are defined. 
+% data1 and data2 are the data from which the ISC matrices are defined.
 %    They should be in the form observations x subjects
 % nperm is the number of permutations to use
 %
@@ -36,6 +36,8 @@ switch stattype
         orig_stat = stat.tstat;
     case 'meandiff'
         orig_stat = mean(corrvals1) - mean(corrvals2);
+    case 'mediandiff'
+        orig_stat = median(corrvals1) - median(corrvals2);
 end
 
 
@@ -55,13 +57,15 @@ for i = 1:nperm
             perm_stat(i) = stat.tstat;
         case 'meandiff'
             perm_stat(i) = mean(newcorrvals1) - mean(newcorrvals2);
+        case 'mediandiff'
+            perm_stat(i) = median(newcorrvals1) - median(newcorrvals2);
     end
 end
 
 p = value_prctile(perm_stat,orig_stat);
 
 if p > 0.5
-   p = 1-p; 
+    p = 1-p;
 end
 
 p = 2*p; %two-sided test
