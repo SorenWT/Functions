@@ -7,7 +7,7 @@ end
 disp('Computing individualized alpha power...')
 disp('')
 
-[psum,~,f] = restingIAF(EEG.data,EEG.nbchan,3,[1 40],EEG.srate,[5 15],11,5);
+[psum,~,f] = restingIAF(EEG.data,EEG.nbchan,3,[1 30],EEG.srate,[5 15],11,5);
 
 if ~isnan(psum.paf)
     pf = psum.paf;
