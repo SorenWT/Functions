@@ -17,7 +17,7 @@ function [p,orig_stat] = Permtest_ISC(data1,data2,nperm,type,varargin)
 % p is the p-value from the permutation test
 
 if ~CheckInput(varargin,'stattype')
-    stattype = 'meandiff';
+    stattype = 'mediandiff';
 else
     stattype = EasyParse(varargin,'stattype');
 end
@@ -28,8 +28,8 @@ end
 
 corrmat1 = corr(data1,'Type',type);
 corrmat2 = corr(data2,'Type',type);
-corrvals1 = belowDiag(corrmat1);
-corrvals2 = belowDiag(corrmat2);
+corrvals1 = rtoz(belowDiag(corrmat1));
+corrvals2 = rtoz(belowDiag(corrmat2));
 switch stattype
     case 't'
         [~,~,~,stat] = ttest2(corrvals1,corrvals2);
@@ -49,8 +49,8 @@ for i = 1:nperm
     design = origdesign(randperm(length(origdesign)));
     newcorrmat1 = corr(alldata(:,find(design == 1)),'Type',type);
     newcorrmat2 = corr(alldata(:,find(design == 2)),'Type',type);
-    newcorrvals1 = belowDiag(newcorrmat1);
-    newcorrvals2 = belowDiag(newcorrmat2);
+    newcorrvals1 = rtoz(belowDiag(newcorrmat1));
+    newcorrvals2 = rtoz(belowDiag(newcorrmat2));
     switch stattype
         case 't'
             [~,~,~,stat] = ttest2(newcorrvals1,newcorrvals2);

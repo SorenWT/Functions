@@ -14,6 +14,11 @@ end
 
 datatbl = array2table([newdat grp],'VariableNames',{'X','G'});
 
+nanindx = find(isnan(newdat));
+if ~isempty(nanindx)
+    datatbl{nanindx,:} = [];
+end
+
 currdir = pwd;
 
 writetable(datatbl,fullfile(currdir,'datatbl.csv'))

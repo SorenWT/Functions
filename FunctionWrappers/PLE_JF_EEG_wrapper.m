@@ -17,5 +17,5 @@ disp('Computing power law exponent...')
 
 for c = 1:EEG.nbchan
     fprintf([num2str(c) ' ']);
-    PLEout(c) = JF_power_law(EEG.data(c,:),1/EEG.srate,frange(1),frange(2),argsin{:});
+    PLEout(c) = JF_power_law(EEG.data(c,:),EEG.srate,frange(1),frange(2),argsin{:});
 end
