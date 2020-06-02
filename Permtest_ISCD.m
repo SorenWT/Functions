@@ -21,7 +21,7 @@ function [p,orig_stat] = Permtest_ISCD(data,nperm,type,varargin)
 
 if ~CheckInput(varargin,'stattype')
     if length(data) == 2
-        stattype = 'ranksum';
+        stattype = 'mediandiff';
     else
         stattype = 'kruskalwallis';
     end
