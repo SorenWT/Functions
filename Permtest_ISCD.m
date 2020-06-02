@@ -21,7 +21,7 @@ function [p,orig_stat] = Permtest_ISCD(data,nperm,type,varargin)
 
 if ~CheckInput(varargin,'stattype')
     if length(data) == 2
-        stattype = 'mediandiff';
+        stattype = 'ranksum';
     else
         stattype = 'kruskalwallis';
     end
@@ -51,6 +51,9 @@ switch stattype
         orig_stat = mean(corrvals{1}) - mean(corrvals{2});
     case 'mediandiff'
         orig_stat = median(corrvals{1}) - median(corrvals{2});
+    case 'ranksum'
+        [~,~,stat] = ranksum(corrvals{1},corrvals{2});
+        orig_stat = stat.zval;
     case 'anova'
         grp = Make_designVect(cellfun(@length,corrvals,'UniformOutput',true));
         [~,stat] = anova1(cat(1,corrvals{:}),grp,'off');
@@ -86,6 +89,9 @@ for i = 1:nperm
             perm_stat(i) = mean(newcorrvals{1}) - mean(newcorrvals{2});
         case 'mediandiff'
             perm_stat(i) = median(newcorrvals{1}) - median(newcorrvals{2});
+        case 'ranksum'
+            [~,~,stat] = ranksum(newcorrvals{1},newcorrvals{2});
+            perm_stat(i) = stat.zval;
         case 'anova'
             grp = Make_designVect(cellfun(@length,newcorrvals,'UniformOutput',true));
             [~,stat] = anova1(cat(1,newcorrvals{:}),grp,'off');
