@@ -1,6 +1,6 @@
-function [p,orig_stat] = Permtest_ISC(data,nperm,type,varargin)
-% Permtest_ISC uses a permutation test to test for difference in means
-% between two intersubject correlation matrices
+function [p,orig_stat] = Permtest_ISCD(data,nperm,type,varargin)
+% Permtest_ISCD uses a permutation test to test for difference in means
+% between two intersubject correlation or intersubject distance matrices
 %
 % Input arguments:
 %
@@ -9,13 +9,15 @@ function [p,orig_stat] = Permtest_ISC(data,nperm,type,varargin)
 %    observations x subjects
 % nperm is the number of permutations to use
 %
-% type should be either 'pearson' or 'spearman'
+% type defines what is tested. If testing correlation, input 'pearson',
+% 'spearman', or 'kendall'. If testing euclidean distance, input 'eucdist'
 %
 % this method assumes the same number of observations in each group
 %
 % Output arguments:
 %
 % p is the p-value from the permutation test
+% orig_stat is the observed value of the test statistic
 
 if ~CheckInput(varargin,'stattype')
     if length(data) == 2
@@ -27,12 +29,17 @@ else
     stattype = EasyParse(varargin,'stattype');
 end
 
-if nargin < 4
+if ~exist('type','var')
     type = 'pearson';
 end
 
 for i = 1:length(data)
-    corrmat{i} = corr(data{i},'Type',type);
+    switch type
+        case {'spearman','pearson','kendall'}
+            corrmat{i} = corr(data{i},'Type',type);
+        case 'eucdist'
+            corrmat{i} = eucdist(data{i});
+    end
     corrvals{i} = vert(rtoz(belowDiag(corrmat{i})));
 end
 
@@ -62,7 +69,12 @@ origdesign = Make_designVect(cellfun(@(dat)size(dat,2),data,'UniformOutput',true
 for i = 1:nperm
     design = origdesign(randperm(length(origdesign)));
     for ii = 1:length(data)
-        newcorrmat{ii} = corr(alldata(:,find(design == ii)),'Type',type);
+        switch type
+            case {'spearman','pearson','kendall'}
+                newcorrmat{ii} = corr(alldata(:,design == ii),'Type',type);
+            case 'eucdist'
+                newcorrmat{ii} = eucdist(alldata(:,design==ii));
+        end
         newcorrvals{ii} = rtoz(belowDiag(newcorrmat{ii}));
     end
     

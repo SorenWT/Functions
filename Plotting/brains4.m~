@@ -38,7 +38,7 @@ if CheckInput(varargin,'panel')
     panelindx = EasyParse(varargin,'panelindx');
     pnl = EasyParse(varargin,'panel');
     pnl(panelindx{:}).pack(2,2)
-    pnl(panelindx{:}).de.margin = [3 3 3 3];
+    
     pnl(panelindx{:},1,1).select();
     ax(1) = gca;
 else
@@ -52,11 +52,7 @@ bnd.tri = sourcemodel.tri(trindx,:);
 ft_plot_mesh(bnd,'facealpha',vert(1-plotmask(sourcemodel.brainstructure==1)),'edgealpha',0,'vertexcolor',repmat(clr,sum(sourcemodel.brainstructure==1),1));
 hold on
 ft_plot_mesh(bnd, 'vertexcolor', vert(plotdata(sourcemodel.brainstructure==1)), 'facealpha', double(vert(plotmask(sourcemodel.brainstructure==1))), 'maskstyle', 'opacity','edgealpha',0);
-try
 set(gca,'CLim',[min(vert(plotdata(sourcemodel.brainstructure==1)).*vert(plotmask(sourcemodel.brainstructure==1))) max(vert(plotdata(sourcemodel.brainstructure==1)).*vert(plotmask(sourcemodel.brainstructure==1)))]);
-catch 
-end
-
 
 %ft_plot_mesh(bnd,'vertexcolor',plotdata(sourcemodel.brainstructure == 1)','edgealpha',0);
 view(-180,0)
@@ -79,10 +75,7 @@ view(0,0)
 ft_plot_mesh(bnd,'facealpha',vert(1-plotmask(sourcemodel.brainstructure==2)),'edgealpha',0,'vertexcolor',repmat(clr,sum(sourcemodel.brainstructure==2),1));
 hold on
 ft_plot_mesh(bnd, 'vertexcolor', vert(plotdata(sourcemodel.brainstructure==2)), 'facealpha', double(vert(plotmask(sourcemodel.brainstructure==2))), 'maskstyle', 'opacity','edgealpha',0);
-try
 set(gca,'CLim',[min(vert(plotdata(sourcemodel.brainstructure==2)).*vert(plotmask(sourcemodel.brainstructure==2))) max(vert(plotdata(sourcemodel.brainstructure==2)).*vert(plotmask(sourcemodel.brainstructure==2)))]);
-catch
-end
 
 lighting gouraud 
 camlight
@@ -101,10 +94,7 @@ bnd.tri = sourcemodel.tri(trindx,:);
 ft_plot_mesh(bnd,'facealpha',vert(1-plotmask(sourcemodel.brainstructure==1)),'edgealpha',0,'vertexcolor',repmat(clr,sum(sourcemodel.brainstructure==1),1));
 hold on
 ft_plot_mesh(bnd, 'vertexcolor', vert(plotdata(sourcemodel.brainstructure==1)), 'facealpha', double(vert(plotmask(sourcemodel.brainstructure==1))), 'maskstyle', 'opacity','edgealpha',0);
-try
 set(gca,'CLim',[min(vert(plotdata(sourcemodel.brainstructure==1)).*vert(plotmask(sourcemodel.brainstructure==1))) max(vert(plotdata(sourcemodel.brainstructure==1)).*vert(plotmask(sourcemodel.brainstructure==1)))]);
-catch
-end
 
 view(0,0)
 
@@ -126,10 +116,7 @@ bnd.tri = bnd.tri - cort_size;
 ft_plot_mesh(bnd,'facealpha',vert(1-plotmask(sourcemodel.brainstructure==2)),'edgealpha',0,'vertexcolor',repmat(clr,sum(sourcemodel.brainstructure==2),1));
 hold on
 ft_plot_mesh(bnd, 'vertexcolor', vert(plotdata(sourcemodel.brainstructure==2)), 'facealpha', double(vert(plotmask(sourcemodel.brainstructure==2))), 'maskstyle', 'opacity','edgealpha',0);
-try
 set(gca,'CLim',[min(vert(plotdata(sourcemodel.brainstructure==2)).*vert(plotmask(sourcemodel.brainstructure==2))) max(vert(plotdata(sourcemodel.brainstructure==2)).*vert(plotmask(sourcemodel.brainstructure==2)))]);
-catch
-end
 
 view(180,0)
 

@@ -45,8 +45,7 @@ for i = 1:nperm
     design = origdesign(randperm(length(origdesign)));
     newcorrmat1 = EucDist(alldata(:,find(design == 1)));
     newcorrmat2 = EucDist(alldata(:,find(design == 2)));
-    %newcorrmat1 = corr(alldata(:,find(design == 1)),'Type',type);
-    %newcorrmat2 = corr(alldata(:,find(design == 2)),'Type',type);
+
     newcorrvals1 = belowDiag(newcorrmat1);
     newcorrvals2 = belowDiag(newcorrmat2);
     switch stattype
