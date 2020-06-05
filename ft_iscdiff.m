@@ -9,9 +9,9 @@ cfg = setdefault(cfg,'thresh',0.1);
 
 for c = 1:length(data{1}.meas)
    
-   p(c) = Permtest_ISC(data{1}.data(:,:,c)',data{2}.data(:,:,c)',1000,'spearman');
-   isc1{c} = corr(data{1}.data(:,:,c)','Type','Spearman');
-   isc2{c} = corr(data{2}.data(:,:,c)','Type','Spearman');
+   p(c) = Permtest_ISCD({data{1}.data(:,:,c)',data{2}.data(:,:,c)'},1000,'pearson');
+   isc1{c} = corr(data{1}.data(:,:,c)','type','pearson');
+   isc2{c} = corr(data{2}.data(:,:,c)','type','pearson');
    meanisc1(c) = mean(mean(isc1{c}));
    meanisc2(c) = mean(mean(isc2{c}));
    diff(c) = meanisc1(c)-meanisc2(c);

@@ -192,9 +192,9 @@ if length(datasetinfo.label) > 1
 end
 
 if length(data) == 2
-    cfg.tail = 0; cfg.clustertail = 0; cfg.alpha = 0.025; cfg.clusteralpha = 0.025;
+    cfg.tail = 0; cfg.clustertail = 0; cfg.alpha = 0.025; cfg.clusteralpha = 0.05;
 else
-    cfg.tail = 0; cfg.clustertail = 0; cfg.alpha = 0.025; cfg.clusteralpha = 0.025; %look into this
+    cfg.tail = 0; cfg.clustertail = 0; cfg.alpha = 0.025; cfg.clusteralpha = 0.05;
 end
 cfg.numrandomization = opts.nrand; cfg.spmversion = 'spm12'; cfg.minnbchan = opts.minnbchan;
 
@@ -246,3 +246,20 @@ cfg.latency = [0 0.5];
 cfg.parameter = 'trial';
 
 stats = ft_timelockstatistics(cfg,tlock{:});
+
+% fixing outputs to be more intuitive
+
+if isfield(stats,'posclusters')
+    for i = 1:length(stats.posclusters)
+        stats.posclusters(i).prob = 2*stats.posclusters(i).prob;
+    end
+end
+
+if isfield(stats,'negclusters')
+    for i = 1:length(stats.negclusters)
+        stats.negclusters(i).prob = 2*stats.negclusters(i).prob;
+    end
+end
+
+stats.prob = 2*stats.prob; stats.prob(stats.prob > 1) = 1;
+stats.message = 'p values multiplied by 2 to reflect overall two-tailed alpha level of 0.05';

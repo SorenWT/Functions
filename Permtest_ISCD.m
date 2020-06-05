@@ -37,10 +37,11 @@ for i = 1:length(data)
     switch type
         case {'spearman','pearson','kendall'}
             corrmat{i} = corr(data{i},'Type',type);
+            corrvals{i} = vert(rtoz(belowDiag(corrmat{i})));
         case 'eucdist'
             corrmat{i} = eucdist(data{i});
+            corrvals{i} = vert(belowDiag(corrmat{i}));
     end
-    corrvals{i} = vert(rtoz(belowDiag(corrmat{i})));
 end
 
 switch stattype
@@ -75,10 +76,11 @@ for i = 1:nperm
         switch type
             case {'spearman','pearson','kendall'}
                 newcorrmat{ii} = corr(alldata(:,design == ii),'Type',type);
+                newcorrvals{ii} = rtoz(belowDiag(newcorrmat{ii}));
             case 'eucdist'
                 newcorrmat{ii} = eucdist(alldata(:,design==ii));
+                newcorrvals{ii} = belowDiag(newcorrmat{ii});
         end
-        newcorrvals{ii} = rtoz(belowDiag(newcorrmat{ii}));
     end
     
     switch stattype

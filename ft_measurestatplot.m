@@ -62,7 +62,7 @@ end
 
 cfg = setdefault(cfg,'reverse',0);
 
-cfg = setdefault(cfg,'measname',cellfun(@func2str,data{1}.meas(cfg.meas),'UniformOutput',false));
+cfg = setdefault(cfg,'measname',extractBefore(cellfun(@func2str,data{1}.meas(cfg.meas),'UniformOutput',false),'_'));
 
 cfg = setdefault(cfg,'colormap',parula);
 
