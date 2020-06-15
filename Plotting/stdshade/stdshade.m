@@ -38,7 +38,11 @@ if ne(size(F,1),1)
     F=F';
 end
 
-amean=smooth(nanmean(amatrix),smth)';
+if strcmpi(method,'mad')
+    amean = smooth(nanmedian(amatrix),smth)';
+else
+    amean=smooth(nanmean(amatrix),smth)';
+end
 
 switch method
     case 'std'

@@ -227,9 +227,9 @@ if isfield(opts,'partial')
    cfg.partial = opts.partial; 
 end
 
-if any(cell2mat(cellfun(@any,cellfun(@isnan,newdata,'UniformOutput',false),'UniformOutput',false)))
-    cfg.nanrand = 'yes';
-end
+%if any(cell2mat(cellfun(@any,cellfun(@isnan,newdata,'UniformOutput',false),'UniformOutput',false)))
+%    cfg.nanrand = 'yes';
+%end
 
 if isfield(opts,'eqinterval')
    cfg.eqinterval = opts.eqinterval; 

@@ -114,14 +114,14 @@ Normalize_Ylim(ax2)
 for c = 1:settings.nfreqs
     p(c,1).select()
     %Plot_sigmask(p(2,c,1).axis,alloutputs.ersp.pt.stats{c}.prob < 0.05,'cmapline','LineWidth',5)
-    H = sigstar({get(p(c,1).axis,'XLim')},min(min(alloutputs.ersp.pt.stats{c}.prob)),0,18)
+    H = sigstar({get(p(c,1).axis,'XLim')},2*min(min(alloutputs.ersp.pt.stats{c}.prob)),0,18)
     delete(H(1)); pos = get(H(2),'position'); yl = get(gca,'YLim'); set(H(2),'position',[pos(1) yl(2)-0.05*diff(yl) pos(3)])
 end
 
 
-savefig('Fig2a.fig')
-export_fig('Fig2a.png','-m5')
-save('Panel2a.mat','p')
+savefig('Fig2a_300.fig')
+export_fig('Fig2a_300.png','-m5')
+save('Panel2a_300.mat','p')
 close
 
 
@@ -1034,7 +1034,7 @@ for c = 1:settings_osci.nfreqs
     
     t = linspace(0,length(settings_osci.real.poststim)*(1/settings_osci.srate),length(settings_osci.real.poststim));
     hold on
-    stdshade(t,squeeze(nanmedian(allmeas_osci{plotband}.ersp.real,1)),pris(2,:),0.15,1,'sem')
+    stdshade(t,squeeze(nanmean(allmeas_osci{plotband}.ersp.real,1)),pris(2,:),0.15,1,'sem')
     
     %plot(t,zeros(1,length(plotdata)),'k--','LineWidth',1.5)
     hold on
@@ -1048,7 +1048,7 @@ for c = 1:settings_osci.nfreqs
     set(gca,'XLim',[0 max(t)])
     
     p(2,c).select()
-        stdshade(t,squeeze(nanmedian(allmeas_frac{plotband}.ersp.real,1)),pris(4,:),0.15,1,'sem')
+        stdshade(t,squeeze(nanmean(allmeas_frac{plotband}.ersp.real,1)),pris(4,:),0.15,1,'sem')
     xlabel('Time (s)')
     if c ==1 
     ylabel('% change of ERSP')

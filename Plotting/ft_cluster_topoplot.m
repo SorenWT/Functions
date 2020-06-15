@@ -22,8 +22,8 @@ cfg.highlight = {'on','on'};
 cfg.highlightchannel = {intersect(find(sig < 0.05),find(~sigmask)),find(sigmask)};
 cfg.highlightsymbol = {'.','.'};
 cfg.highlightcolor = {[0 0 0], [1 1 1]};
-cfg.highlightsize = {[2],[5]};
-cfg.comment = 'no'; cfg.interactive = 'no';
+cfg.highlightsize = {[2],[7]};
+cfg.comment = 'no'; cfg.interactive = 'no'; cfg.style = 'straight';
 
 ft_topoplotER(cfg,tlock);
 
