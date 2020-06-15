@@ -30,5 +30,7 @@ z = zdiff./se;
 % Calculate p-value
 p = 1 - normcdf(abs(z));
 
+p = 2*p; %two-tailed test
+
 clear r1 r2 n1 n2 z1 z2 zdiff se
 
