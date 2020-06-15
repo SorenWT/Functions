@@ -19,9 +19,15 @@ if iscell(design)
 %         end
     end
 else
-    tmp = unique(design);
-    indices{1} = find(design == tmp(1));
-    indices{2} = find(design == tmp(2));
+    poslabel1        = find(design(cfg.ivar,:)==1);
+    poslabel2        = find(design(cfg.ivar,:)==2);
+    [dum,i]          = sort(design(cfg.uvar,poslabel1), 'ascend');
+    poslabelsperunit(:,1) = poslabel1(i);
+    [dum,i]          = sort(design(cfg.uvar,poslabel2), 'ascend');
+    poslabelsperunit(:,2) = poslabel2(i);
+    
+    indices{1} = poslabelsperunit(:,1);
+    indices{2} = poslabelsperunit(:,2);
     
     teststat = ones(size(dat,1),1);
     for c = 1:size(dat,1)

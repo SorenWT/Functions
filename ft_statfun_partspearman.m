@@ -1,4 +1,4 @@
-function [s, cfg] = ft_statfun_spearman(cfg, dat, design)
+function [s, cfg] = ft_statfun_partspearman(cfg, dat, design)
 
 if iscell(design)
     design = design{1};
@@ -11,7 +11,7 @@ if iscell(design)
     
     p = ones(size(dat,1),1);
     for c = 1:size(dat,1)
-        [r,p(c)] = nancorr(find(~isnan(dat(c,indices{c,1})))',find(~isnan(dat(c,indices{c,2})))','Type','Spearman');
+        [r,p(c)] = partcorr_pairwise(find(~isnan(dat(c,indices{c,1})))',find(~isnan(dat(c,indices{c,2})))',t3d(cfg.partial),'Type','Spearman');
         if r > 0
             p(c) = 1-p(c);
         else
@@ -30,7 +30,7 @@ else
     
     p = ones(size(dat,1),1);
     for c = 1:size(dat,1)
-        [r,p(c)] = nancorr(dat(c,indices{1})',dat(c,indices{2})','Type','Spearman');
+        [r,p(c)] = partcorr_pairwise(dat(c,indices{1})',dat(c,indices{2})',t3d(cfg.partial),'Type','Spearman');
         if r > 0
             p(c) = 1-p(c);
         else
