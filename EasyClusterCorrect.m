@@ -49,7 +49,9 @@ end
 
 if ~isfield(opts,'designtype')
    switch statfun
-       case {'ft_statfun_signrank','ft_statfun_fast_signrank','ft_statfun_spearman','ft_statfun_depsamplesT','ft_statfun_friedman'}
+       case {'ft_statfun_signrank','ft_statfun_fast_signrank','ft_statfun_spearman',...
+               'ft_statfun_depsamplesT','ft_statfun_friedman','ft_statfun_partspearman',...
+               'ft_statfun_depsamplesregrT','ft_statfun_actvsblT'}
             opts.designtype = 'dep';
        otherwise
            opts.designtype = 'indep';
@@ -272,12 +274,18 @@ stats = ft_timelockstatistics(cfg,tlock{:});
 if isfield(stats,'posclusters')
     for i = 1:length(stats.posclusters)
         stats.posclusters(i).prob = 2*stats.posclusters(i).prob;
+        if stats.posclusters(i).prob > 1
+           stats.posclusters(i).prob = 1; 
+        end
     end
 end
 
 if isfield(stats,'negclusters')
     for i = 1:length(stats.negclusters)
         stats.negclusters(i).prob = 2*stats.negclusters(i).prob;
+        if stats.negclusters(i).prob > 1
+           stats.negclusters(i).prob = 1; 
+        end
     end
 end
 

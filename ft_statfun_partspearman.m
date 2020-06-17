@@ -1,5 +1,17 @@
 function [s, cfg] = ft_statfun_partspearman(cfg, dat, design)
 
+switch cfg.tail
+    case 0
+        tail = 'both';
+        s.critval = [-1+cfg.alpha 1-cfg.alpha];
+    case 1
+        tail = 'right';
+        s.critval = 1-cfg.alpha;
+    case -1
+        tail = 'left';
+        s.critval = -1+cfg.alpha;
+end
+
 if iscell(design)
     design = design{1};
     tmp = unique(design(find(~isnan(design))));
@@ -11,7 +23,7 @@ if iscell(design)
     
     p = ones(size(dat,1),1);
     for c = 1:size(dat,1)
-        [r,p(c)] = partcorr_pairwise(find(~isnan(dat(c,indices{c,1})))',find(~isnan(dat(c,indices{c,2})))',t3d(cfg.partial),'Type','Spearman');
+        [r,p(c)] = partcorr_pairwise(find(~isnan(dat(c,indices{c,1})))',find(~isnan(dat(c,indices{c,2})))',t3d(cfg.partial),'Type','Spearman','tail',tail);
         if r > 0
             p(c) = 1-p(c);
         else
@@ -19,18 +31,19 @@ if iscell(design)
         end
     end
 else
-    tmp = unique(design);
-    if length(tmp) == 2 % hacked together solution for ft_statistics_montecarlo
-        indices{1} = find(design == tmp(1));
-        indices{2} = find(design == tmp(2));
-    else
-       indices{1} = design(1:(length(design)/2));
-       indices{2} = design((1+length(design)/2):end);
-    end
+    poslabel1        = find(design(cfg.ivar,:)==1);
+    poslabel2        = find(design(cfg.ivar,:)==2);
+    [dum,i]          = sort(design(cfg.uvar,poslabel1), 'ascend');
+    poslabelsperunit(:,1) = poslabel1(i);
+    [dum,i]          = sort(design(cfg.uvar,poslabel2), 'ascend');
+    poslabelsperunit(:,2) = poslabel2(i);
+    
+    indices{1} = poslabelsperunit(:,1);
+    indices{2} = poslabelsperunit(:,2);
     
     p = ones(size(dat,1),1);
     for c = 1:size(dat,1)
-        [r,p(c)] = partcorr_pairwise(dat(c,indices{1})',dat(c,indices{2})',t3d(cfg.partial),'Type','Spearman');
+        [r,p(c)] = partcorr_pairwise(dat(c,indices{1})',dat(c,indices{2})',t3d(cfg.partial),'Type','Spearman','tail',tail);
         if r > 0
             p(c) = 1-p(c);
         else
@@ -40,13 +53,5 @@ else
 end
 s.stat = p;
 
-switch cfg.tail
-    case 0
-        s.critval = [-0.95 0.95];
-    case 1
-        s.critval = 0.95;
-    case -1
-        s.critval = -0.95;
-end
 s.df = size(dat,2)-2;
 end

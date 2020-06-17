@@ -1,5 +1,17 @@
 function [s, cfg] = ft_statfun_signrank(cfg, dat, design)
 
+switch cfg.tail
+    case 0
+        tail = 'both';
+        s.critval = [-1+cfg.alpha 1-cfg.alpha];
+    case 1
+        tail = 'right';
+        s.critval = 1-cfg.alpha;
+    case -1
+        tail = 'left';
+        s.critval = -1+cfg.alpha;
+end
+
 if iscell(design)
     design = design{1};
     
@@ -31,7 +43,7 @@ else
     
     p = ones(size(dat,1),1);
     for c = 1:size(dat,1)
-        p(c) = signrank(dat(c,indices{1}),dat(c,indices{2}));
+        p(c) = signrank(dat(c,indices{1}),dat(c,indices{2}),'tail');
         if median(dat(c,indices{1})) > median(dat(c,indices{2}))
             p(c) = 1-p(c);
         else
@@ -41,14 +53,7 @@ else
 end
 s.stat = p;
 
-switch cfg.tail
-    case 0
-        s.critval = [-0.95 0.95];
-    case 1
-        s.critval = 0.95;
-    case -1
-        s.critval = -0.95;
-end
+
 
 s.df = size(dat,2)-2;
 
