@@ -39,6 +39,7 @@ for c = 1:length(fields)
    meandata.(fields{c}).fourierspctrm = permute(meandata.(fields{c}).fourierspctrm,[1 3 2 4]); 
    meandata.(fields{c}).fourierspctrm_dimord = meandata.(fields{c}).dimord;
    meandata.(fields{c}).grad = settings.datasetinfo.grad;
+   meandata.(fields{c}.fourierspctrm = meandata.(fields{c}).fourierspctrm(1:length(files),:,:,:);
 end
 
 
@@ -219,8 +220,8 @@ for i = 2:settings.nfreqs
             intersect(find(meandata.osci.freq >= settings.tfparams.fbands{q,i}(1)),...
             find(meandata.osci.freq <= settings.tfparams.fbands{q,i}(2))),bl),3));
     end
-    stats_fbands{i} = EasyClusterCorrect({permute(fbands{i}.post,[2 1 3]) repmat(mean(fbands{i}.bl,3)',1,1,38)},...
-        datasetinfo,'ft_statfun_fast_signrank',opts);
+    %stats_fbands{i} = EasyClusterCorrect({permute(fbands{i}.post,[2 1 3]) repmat(mean(fbands{i}.bl,3)',1,1,38)},...
+    %    datasetinfo,'ft_statfun_fast_signrank',opts);
 end
 
 

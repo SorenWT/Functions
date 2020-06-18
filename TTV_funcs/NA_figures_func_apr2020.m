@@ -119,9 +119,9 @@ for c = 1:settings.nfreqs
 end
 
 
-savefig('Fig2a.fig')
-export_fig('Fig2a.png','-m5')
-save('Panel2a.mat','p')
+savefig('Fig2a_400.fig')
+export_fig('Fig2a_400.png','-m5')
+save('Panel2a_400.mat','p')
 close
 
 
@@ -176,7 +176,7 @@ for c = 1:settings.nfreqs
     plotindx(1) = [];
     for cc = 1:4
         p(c,cc+1).select()
-        plotdata = mean(allmeas{c}.ttversp.real(:,plotindx(cc),:),3);
+        plotdata = nanmean(allmeas{c}.ttversp.real(:,plotindx(cc),:),3);
         if strcmpi(settings.datatype,'MEG')
             ft_cluster_topoplot(settings.layout,plotdata,settings.datasetinfo.label,...
                 ones(size(alloutputs.ersp.ttv.stats{c}.mask(:,plotindx(cc)))),0.*alloutputs.ersp.ttv.stats{c}.mask(:,plotindx(cc)));
@@ -921,12 +921,12 @@ p(settings_osci.nfreqs,1).select()
 legend({'Oscillatory component','Fractal component'},'FontSize',10)
 
 p.margintop = 8;
-p.marginleft = 18;
+p.marginleft = 24;
 p.de.marginleft = 12;
 
-savefig('Fig6c.fig')
-export_fig('Fig6c.png','-m4')
-save('Panel6c.mat','p')
+savefig('Fig6c_rev3.fig')
+export_fig('Fig6c_rev3.png','-m4')
+save('Panel6c_rev3.mat','p')
 
 
 %% Figure xxx (supplement) - pseudotrial-based and ttv-based time course differences?
@@ -1077,12 +1077,16 @@ for c = 1:settings_osci.nfreqs
     delete(H(1)); pos = get(H(2),'position'); yl = get(gca,'YLim'); set(H(2),'position',[pos(1) yl(2)-0.05*diff(yl) pos(3)]);
 end
 
-p(settings_osci.nfreqs,1).select()
+%p(settings_osci.nfreqs,1).select()
 %legend({'Oscillatory power','Fractal power'})
 
 p.margintop = 8;
 p.marginleft = 18;
 p.de.marginleft = 12;
+
+savefig('FigS1_rev3.fig')
+export_fig('FigS1_rev3.png','-m4')
+save('PanelS1_rev3.mat','p')
 
 end
 
