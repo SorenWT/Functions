@@ -109,8 +109,8 @@ function H=sigstar(groups,stats,nosort,fsize)
 
     
     %SWT edit Apr. 27 2020 - remove non-significant values
-    groups = groups(find(stats < 0.05));
-    stats = stats(find(stats < 0.05));
+    groups = groups(find(stats <= 0.1));
+    stats = stats(find(stats <= 0.1));
 
 
 
@@ -245,6 +245,8 @@ function H=makeSignificanceBar(x,y,p,fsize)
         stars='**';
     elseif p<=0.05
         stars='*';
+    elseif p <= 0.1 
+        stars = '(*)';
     elseif isnan(p)
         stars='n.s.';
     else

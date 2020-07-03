@@ -16,7 +16,7 @@ datatbl = array2table([newdat grp],'VariableNames',{'X','G'});
 
 nanindx = find(isnan(newdat));
 if ~isempty(nanindx)
-    datatbl{nanindx,:} = [];
+    datatbl(nanindx,:) = [];
 end
 
 currdir = pwd;

@@ -1,44 +1,44 @@
-%permutation test thing
+function p = permtest(stat,y,group,nrand,diffflag)
 
-selfTimeOutputs = selfOutputs(:,5:10);
-goodMeasures = allMeasures(:,[1:2 4:5 8:9]);
-
-rng(101);
-
-seedval = rng;
-
-nperm = 5000;
-
-permP = [];
-
-for q = 1:nperm
-    
-    shuffleOrder = randperm(31);
-    
-    shuffleMeasures = goodMeasures(shuffleOrder,:);
-    %selfOutputs = selfOutputs(shuffleOrder,:);
-    
-    [~,p] = CorrMatrix(shuffleMeasures,selfTimeOutputs,'Plot','off');
-    permP = cat(3,permP,p);
+if nargin < 5
+   diffflag = 0;
 end
 
-for q = 1:nperm
-   rankedp(q,:) = sort(reshape(permP(:,:,q),1,[])); 
+if nargin < 4
+   nrand = 1000; 
 end
 
-% for q = 1:size(rankedp,2)
-%     x = rankedp(:,q);
-%     SEM = std(x)/sqrt(length(x));               % Standard Error
-%     ts = tinv([0.025  0.975],length(x)-1);      % T-Score
-%     CI_rank{q} = mean(x) + ts*SEM;
-% end
+if diffflag && isa(stat,'function_handle')
+   stat = @(x1,x2)(stat(x1)-stat(x2));
+end
 
-[~,pvals] = CorrMatrix(goodMeasures,selfTimeOutputs,'Plot','off');
-ranked_realp = sort(reshape(pvals,1,[]));
+if ischar(stat)
+   switch stat
+       case {'anova1'}     
+           stat = @(y,grp)anova1(y,grp,'off');
+   end
+end
 
-%pvals = reshape(p_corrected,10,10);
+statobs = stat(y,group);
 
+if diffflag == 1
+   n1 = length(y); n2 = length(group);
+   y = cat(1,vert(y),vert(group));
+   group = Make_designVect([n1 n2])';
+end
 
+for i = 1:nrand
+    perm = randperm(length(y));
+    permgroup = group(perm);
+    if diffflag == 1
+        statperm(i) = stat(y(permgroup==1),y(permgroup==2));
+    else
+        statperm(i) = stat(y,permgroup);
+    end
+end
 
-
-
+p = value_prctile(statperm,statobs);
+if p > 0.5
+    p = 1-p;
+end
+p = p*2; %two tailed test

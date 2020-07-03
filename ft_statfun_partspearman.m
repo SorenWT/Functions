@@ -43,7 +43,7 @@ else
     
     p = ones(size(dat,1),1);
     for c = 1:size(dat,1)
-        [r,p(c)] = partcorr_pairwise(dat(c,indices{1})',dat(c,indices{2})',t3d(cfg.partial),'Type','Spearman','tail',tail);
+        [r,p(c)] = partialcorr(dat(c,indices{1})',dat(c,indices{2})',t3d(cfg.partial(c,:,:)),'Type','Spearman','tail',tail);
         if r > 0
             p(c) = 1-p(c);
         else
