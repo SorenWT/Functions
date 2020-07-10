@@ -790,6 +790,20 @@ if ~strcmpi(STYLE,'grid')                     % if not plot grid only
         ContourVals = ContourVals(plotchans);
     end;
     
+    if ~isempty(EMARKER2CHANS)
+       tmpemarkerchans = zeros(size(tmpeloc));
+       tmpemarkerchans(EMARKER2CHANS) = 1;
+       tmpemarkerchans = tmpemarkerchans(plotchans);
+       EMARKER2CHANS = find(tmpemarkerchans); 
+    end
+    
+    if ~isempty(EMARKER3CHANS)
+       tmpemarkerchans = zeros(size(tmpeloc));
+       tmpemarkerchans(EMARKER3CHANS) = 1;
+       tmpemarkerchans = tmpemarkerchans(plotchans);
+       EMARKER3CHANS = find(tmpemarkerchans); 
+    end
+    
     %
     %%%%%%%%%%%%%%%%%% Read plotting radius from chanlocs  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %
@@ -1574,7 +1588,7 @@ if ~strcmpi(STYLE,'grid')                     % if not plot grid only
     % Added by SWT 23/03/2019
     
     if strcmp(ELECTRODES,'off') & ~isempty(EMARKER3CHANS)
-               hp2b = plot3(y(mark3chans),x(mark3chans),ones(size((mark3chans)))*ELECTRODE_HEIGHT,...
+        hp2b = plot3(y(mark3chans),x(mark3chans),ones(size((mark3chans)))*ELECTRODE_HEIGHT,...
             EMARKER3,'Color',EMARKER3COLOR,'markerfacecolor',EMARKER3COLOR,'linewidth',EMARKER3LINEWIDTH,'markersize',EMARKERSIZE3); 
     end
     %

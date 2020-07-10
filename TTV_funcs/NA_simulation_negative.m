@@ -230,10 +230,10 @@ for c = 1:length(mvals)
         hold on
         ylim2 = stdshade(t,squeeze(all_datacalc{c,cc}.naddersp.diff(1,:,2,:)),[1 0 0],0.15,1,'std');
         set(gca,'XTickLabel',{},'XLim',[0 800],'YLim',[min(ylim1(1),ylim2(1)) max(ylim1(2),ylim2(2))])
-                ytick = get(gca,'YTickLabel');
-        if length(ytick) > 4
-           set(gca,'YTickLabel',ytick([1:2:length(ytick)])) 
-        end
+        %        ytick = get(gca,'YTickLabel');
+        %if length(ytick) > 4
+        %   set(gca,'YTickLabel',ytick([1:2:length(ytick)])) 
+        %end
         Plot_sigmask(gca,allstats_ersp_pt{c,cc}.prob < 0.05,'bar')
         set(gca,'XLim',[0 800])
         if c == 1
@@ -279,9 +279,9 @@ for c = 1:length(mvals)
         ylim1 = stdshade(t,squeeze(all_datacalc{c,cc}.ttversp.real(1,:,:)),[0 0 1],0.15,1,'std');
         set(gca,'XTickLabel',{},'XLim',[0 800],'YLim',ylim1)
         ytick = get(gca,'YTickLabel');
-        if length(ytick) > 4
-           set(gca,'YTickLabel',ytick([1:2:length(ytick)])) 
-        end
+        %if length(ytick) > 4
+        %   set(gca,'YTickLabel',ytick([1:2:length(ytick)])) 
+        %end
         Plot_sigmask(gca,allstats_ersp_ttv{c,cc}.prob < 0.05,'bar')
         set(gca,'XLim',[0 800])
         if c == 1

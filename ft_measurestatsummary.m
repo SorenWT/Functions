@@ -27,6 +27,8 @@ if isempty(cfg)
     cfg = struct;
 end
 
+pfact = 2-isfield(stats{1}.cluster,'message');
+
 cfg = setdefault(cfg,'thresh',0.1);
 cfg = setdefault(cfg,'cond',{'Condition1','Condition2'});
 if ~isfield(cfg,'test')
@@ -42,7 +44,7 @@ count = 1;
 for c = 1:length(stats)
     if isfield(stats{c}.cluster,'posclusters')
         for cc = 1:length(stats{c}.cluster.posclusters)
-            if stats{c}.cluster.posclusters(cc).prob < cfg.thresh/2
+            if stats{c}.cluster.posclusters(cc).prob < cfg.thresh/pfact
                 measure{count} = func2str(data{1}.meas{c});
                 pvalue(count) = stats{c}.cluster.posclusters(cc).prob;
                 tmp = stats{c}.cluster.label(find(stats{c}.cluster.posclusterslabelmat == cc));
@@ -68,7 +70,7 @@ for c = 1:length(stats)
     end
     if isfield(stats{c}.cluster,'negclusters')
         for cc = 1:length(stats{c}.cluster.negclusters)
-            if stats{c}.cluster.negclusters(cc).prob < cfg.thresh/2
+            if stats{c}.cluster.negclusters(cc).prob < cfg.thresh/pfact
                 measure{count} = func2str(data{1}.meas{c});
                 pvalue(count) = stats{c}.cluster.negclusters(cc).prob;
                 tmp = stats{c}.cluster.label(find(stats{c}.cluster.negclusterslabelmat == cc));
@@ -97,12 +99,24 @@ end
 
 
 tbl = table;
-tbl.measure = vert(measure);
-tbl.pvalue = vert(pvalue*2); %report
-tbl.labels = vert(labels);
-tbl.([cfg.cond{1} '_mean']) = vert(allmean1);
-tbl.([cfg.cond{2} '_mean']) = vert(allmean2);
-tbl.([cfg.cond{1} '_clustermean']) = vert(clustmean1);
-tbl.([cfg.cond{2} '_clustermean']) = vert(clustmean2);
-tbl.cluster_diff = vert(diff);
-tbl.summary = vert(dirn);
+if exist('measure','var')
+    tbl.measure = vert(measure);
+    tbl.pvalue = vert(pvalue*pfact); %report
+    tbl.labels = vert(labels);
+    tbl.([cfg.cond{1} '_mean']) = vert(allmean1);
+    tbl.([cfg.cond{2} '_mean']) = vert(allmean2);
+    tbl.([cfg.cond{1} '_clustermean']) = vert(clustmean1);
+    tbl.([cfg.cond{2} '_clustermean']) = vert(clustmean2);
+    tbl.cluster_diff = vert(diff);
+    tbl.summary = vert(dirn);
+else
+    tbl.measure = zeros(0);
+    tbl.pvalue = zeros(0);
+    tbl.labels = zeros(0);
+    tbl.([cfg.cond{1} '_mean']) = zeros(0);
+    tbl.([cfg.cond{2} '_mean']) = zeros(0);
+    tbl.([cfg.cond{1} '_clustermean']) = zeros(0);
+    tbl.([cfg.cond{2} '_clustermean']) = zeros(0);
+    tbl.cluster_diff = zeros(0);
+    tbl.summary = zeros(0);
+end

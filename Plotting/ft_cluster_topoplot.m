@@ -7,6 +7,9 @@ tlock.avg = vect;
 tlock.dimord = 'chan_time';
 tlock.label = label;
 tlock.time = 1;
+%if ~ischar(layout)
+%   tlock.elec = layout; 
+%end
 
 if ischar(layout)
     cfg = []; cfg.layout = layout;
