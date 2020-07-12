@@ -62,7 +62,7 @@ sources = ft_sourceanalysis(cfg,eegdata);
 voxeldata = struct;
 datacat = cat(2,eegdata.trial{:});
 source_datacat = zeros(size(sources.pos,1),size(datacat,2));
-if opts.parflag
+if parflag
     parfor c = 1:size(sources.pos,1)
         tmp = sources.avg.filter{c}*datacat;
         u = svd(tmp,'econ');
