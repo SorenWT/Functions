@@ -9,7 +9,8 @@ data = eeglab2fieldtrip(EEG,'preprocessing','none');
 % Load templates
 load('standard_bem.mat') %variable is "vol"
 if ~exist('sourcemodel','var') || isempty(sourcemodel)
-    sourcemodel = ft_read_headshape('conte69_fs_LR_8k.mat');
+	sourcemodel = parload('conte69_fs_LR_4k.mat','conte69_4k')
+%    sourcemodel = ft_read_headshape('conte69_fs_LR_8k.mat');
 end
 if ~exist('atlas','var') || isempty(atlas)
     load('brod_balsa_fs_LR_8k.mat');

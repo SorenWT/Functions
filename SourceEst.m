@@ -77,8 +77,10 @@ end
 % Create forward model
 cfg = [];
 if strcmpi(opts.datatype,'MEG')
+    data.grad = ft_convert_units(data.grad,'mm');
     cfg.grad = data.grad;
 elseif strcmpi(opts.datatype,'EEG')
+    data.elec = ft_convert_units(data.elec,'mm');
     cfg.elec = data.elec;
 end
 cfg.channel = {opts.datatype};
