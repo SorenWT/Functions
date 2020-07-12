@@ -26,13 +26,15 @@ end
 % sourcemodel2 = ft_sourceinterpolate(cfg, atlas, sourcemodel);
 
 % Align electrodes to scalp surface
+data.elec = ft_convert_units(data.elec,'mm')
+sourcemodel = ft_convert_units(sourcemodel,'mm');
+vol = ft_convert_units(vol,'mm');
 cfg = []; cfg.method = 'project'; cfg.headshape = vol.bnd(1);
 elec = ft_electroderealign(cfg,data.elec);
 data.elec = elec;
 
 % Create forward model
 cfg = []; cfg.elec = data.elec; cfg.channel = {'EEG'};
-sourcemodel = ft_convert_units(sourcemodel,'mm');
 cfg.grid.pos = sourcemodel.pos; cfg.grid.inside = 1:size(sourcemodel.pos,1);
 cfg.headmodel = vol;
 leadfield = ft_prepare_leadfield(cfg);
