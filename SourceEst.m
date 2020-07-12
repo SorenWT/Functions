@@ -20,6 +20,9 @@ function [roidata,voxeldata,sources] = SourceEst(data,headmodel,sourcemodel,atla
 %       noisecov: noise covariance matrix, if desired
 %       method: source imaging method: currently supports 'eloreta' or 'mne'
 %         (default = 'eloreta')
+%       parflag: whether to use parallel processing (default = 0, no
+%         parallel processing). Parallel pool must be set up prior to
+%         calling the function
 %
 % Outputs: 
 %    roidata: a Fieldtrip-format data structure containing the source-level
@@ -46,6 +49,7 @@ opts = setdefault(opts,'interp','no');
 opts = setdefault(opts,'datatype','MEG');
 opts = setdefault(opts,'noisecov',eye(length(data.label)));
 opts = setdefault(opts,'method','eloreta');
+opts = setdefault(opts,'parflag',0);
 
 % Load headmodel, sourcemodel, atlas if they're strings
 
@@ -122,11 +126,20 @@ sources = ft_sourceanalysis(cfg,tlock);
 % Get voxel time courses
 voxeldata = struct;
 datacat = cat(2,data.trial{:});
-for c = 1:size(sources.pos,1)
-    tmp = sources.avg.filter{c}*datacat;
-    u = svd(tmp,'econ');
-    tmp = u(:,1)'*sources.avg.filter{c}*datacat;
-    source_datacat(c,:) = tmp;
+source_datacat = zeros(size(sources.pos,1),size(datacat,2));
+if opts.parflag
+    parfor c = 1:size(sources.pos,1)
+        tmp = sources.avg.filter{c}*datacat;
+        u = svd(tmp,'econ');
+        source_datacat(c,:) = u(:,1)'*sources.avg.filter{c}*datacat;
+    end
+else
+    for c = 1:size(sources.pos,1)
+        tmp = sources.avg.filter{c}*datacat;
+        u = svd(tmp,'econ');
+        tmp = u(:,1)'*sources.avg.filter{c}*datacat;
+        source_datacat(c,:) = u(:,1)'*sources.avg.filter{c}*datacat;;
+    end
 end
 voxeldata.trial{1} = source_datacat;
 voxeldata.time{1} = linspace(0,length(voxeldata.trial{1}/data.fsample)-1/data.fsample,size(voxeldata.trial{1},2));

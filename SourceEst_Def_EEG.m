@@ -1,4 +1,4 @@
-function [roidata,voxeldata,sources,sourcemodel] = SourceEst_Def_EEG(EEG,sourcemodel,atlas)
+function [roidata,voxeldata,sources,sourcemodel] = SourceEst_Def_EEG(EEG,sourcemodel,atlas,parflag)
 
 [~,ftpath] = ft_version;
 %ftpath = '/group/northoff/share/fieldtrip-master';
@@ -58,11 +58,20 @@ sources = ft_sourceanalysis(cfg,eegdata);
 % Get voxel time courses
 voxeldata = struct;
 datacat = cat(2,eegdata.trial{:});
-for c = 1:size(sources.pos,1)
-    tmp = sources.avg.filter{c}*datacat;
-    [u,s,v] = svd(tmp,'econ');
-    tmp = u(:,1)'*sources.avg.filter{c}*datacat;
-    source_datacat(c,:) = tmp;
+source_datacat = zeros(size(sources.pos,1),size(datacat,2));
+if opts.parflag
+    parfor c = 1:size(sources.pos,1)
+        tmp = sources.avg.filter{c}*datacat;
+        u = svd(tmp,'econ');
+        source_datacat(c,:) = u(:,1)'*sources.avg.filter{c}*datacat;
+    end
+else
+    for c = 1:size(sources.pos,1)
+        tmp = sources.avg.filter{c}*datacat;
+        u = svd(tmp,'econ');
+        tmp = u(:,1)'*sources.avg.filter{c}*datacat;
+        source_datacat(c,:) = u(:,1)'*sources.avg.filter{c}*datacat;;
+    end
 end
 voxeldata.trial{1} = source_datacat;
 voxeldata.time{1} = linspace(0,length(voxeldata.trial{1}/data.fsample)-1/data.fsample,size(voxeldata.trial{1},2));
