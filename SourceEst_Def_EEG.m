@@ -77,22 +77,18 @@ else
     end
 end
 voxeldata.trial{1} = source_datacat;
-voxeldata.time{1} = linspace(0,length(voxeldata.trial{1}/data.fsample)-1/data.fsample,size(voxeldata.trial{1},2));
+voxeldata.time{1} = linspace(0,length(voxeldata.trial{1}/eegdata.fsample)-1/eegdata.fsample,size(voxeldata.trial{1},2));
 voxeldata.label = cellstr(num2str([1:size(sources.pos,1)]'));
 voxeldata.fsample = eegdata.fsample;
 source_datacat = []; %saving memory
 
 % Get ROI time courses
 roidata = voxeldata;
-tissuenums = unique(sourcemodel.tissue);
-tissuenums = tissuenums(find(tissuenums > 0));
-roidata.label = atlas.tissuelabel(tissuenums);
-roidata.trial = []; 
+roidata.label = atlas.BAlabel;
+roidata.trial = [];
 roidata.trial{1} = NaN(length(roidata.label),length(voxeldata.trial{1}));
 for cc = 1:length(roidata.label)
-    if ~isempty(find(sourcemodel.tissue == tissuenums(cc)))
-    roidata.trial{1}(cc,:) = mean(voxeldata.trial{1}(find(sourcemodel.tissue == tissuenums(cc)),:),1);
-    end
+    roidata.trial{1}(cc,:) = mean(voxeldata.trial{1}(find(atlas.BA == cc),:),1);
 end
 %roidata.trial{1}(find(isnan(roidata.trial{1}(:,1))),:) = [];
 

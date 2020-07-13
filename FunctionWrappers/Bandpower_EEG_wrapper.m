@@ -5,7 +5,7 @@ if nargin < 3
 end
 
 for c = 1:EEG.nbchan
-   [pxx,f] = pwelch(EEG.data(c,:),[],[],2^nextpow2((3/2)*data.srate),EEG.srate);
+   [pxx,f] = pwelch(EEG.data(c,:),[],[],2^nextpow2((3/2)*EEG.srate),EEG.srate);
    findx = intersect(find(f > frange(1)),find(f < frange(2)));
    bp(c) = (norm(pxx(findx))^2)./numel(findx);
     %bp(c) = bandpower(EEG.data(c,:),EEG.srate,frange); 

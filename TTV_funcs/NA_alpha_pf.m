@@ -7,6 +7,7 @@ files = dir(settings.files);
 pool = gcp('nocreate');
 
 if isempty(pool) || pool.NumWorkers ~= settings.pool
+    delete(gcp('nocreate'))
     parpool(settings.pool)
 end
 
