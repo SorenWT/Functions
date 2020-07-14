@@ -9,7 +9,7 @@ data = eeglab2fieldtrip(EEG,'preprocessing','none');
 % Load templates
 load('standard_bem.mat') %variable is "vol"
 if ~exist('sourcemodel','var') || isempty(sourcemodel)
-	sourcemodel = parload('conte69_fs_LR_4k.mat','conte69_4k')
+	sourcemodel = parload('conte69_fs_LR_8k.mat','conte69');
 %    sourcemodel = ft_read_headshape('conte69_fs_LR_8k.mat');
 end
 if ~exist('atlas','var') || isempty(atlas)
@@ -26,7 +26,7 @@ end
 % sourcemodel2 = ft_sourceinterpolate(cfg, atlas, sourcemodel);
 
 % Align electrodes to scalp surface
-data.elec = ft_convert_units(data.elec,'mm')
+data.elec = ft_convert_units(data.elec,'mm');
 sourcemodel = ft_convert_units(sourcemodel,'mm');
 vol = ft_convert_units(vol,'mm');
 cfg = []; cfg.method = 'project'; cfg.headshape = vol.bnd(1);
@@ -73,11 +73,11 @@ else
         tmp = sources.avg.filter{c}*datacat;
         u = svd(tmp,'econ');
         tmp = u(:,1)'*sources.avg.filter{c}*datacat;
-        source_datacat(c,:) = u(:,1)'*sources.avg.filter{c}*datacat;;
+        source_datacat(c,:) = u(:,1)'*sources.avg.filter{c}*datacat;
     end
 end
 voxeldata.trial{1} = source_datacat;
-voxeldata.time{1} = linspace(0,length(voxeldata.trial{1}/eegdata.fsample)-1/eegdata.fsample,size(voxeldata.trial{1},2));
+voxeldata.time{1} = linspace(0,length(voxeldata.trial{1})/eegdata.fsample-1/eegdata.fsample,size(voxeldata.trial{1},2));
 voxeldata.label = cellstr(num2str([1:size(sources.pos,1)]'));
 voxeldata.fsample = eegdata.fsample;
 source_datacat = []; %saving memory
