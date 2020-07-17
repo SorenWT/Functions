@@ -41,6 +41,7 @@ for i = 1:length(data)
         case 'eucdist'
             corrmat{i} = eucdist(data{i});
             corrvals{i} = vert(belowDiag(corrmat{i}));
+            %corrvals{i} = log(corrvals{i});
     end
 end
 
@@ -80,6 +81,7 @@ for i = 1:nperm
             case 'eucdist'
                 newcorrmat{ii} = eucdist(alldata(:,design==ii));
                 newcorrvals{ii} = belowDiag(newcorrmat{ii});
+                %newcorrvals{ii} = log(newcorrvals{ii});
         end
     end
     

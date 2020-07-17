@@ -203,8 +203,8 @@ if length(datasetinfo.label) > 1
     cfg.neighbours = neighbs;
 end
 
-if length(data) == 2
-    cfg.tail = 0; cfg.clustertail = 0; cfg.alpha = 0.025; cfg.clusteralpha = 0.05;
+if strcmpi(statfun,'ft_statfun_indepsamplesF')
+    cfg.tail = 1; cfg.clustertail = 1; cfg.alpha = 0.025; cfg.clusteralpha = 0.05;
 else
     cfg.tail = 0; cfg.clustertail = 0; cfg.alpha = 0.025; cfg.clusteralpha = 0.05;
 end

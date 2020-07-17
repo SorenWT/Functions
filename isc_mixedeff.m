@@ -59,6 +59,11 @@ mdlcovars = mdlvars;
 mdlcovars(find(strcmpi(mdlcovars,'grp'))) = [];
 mdlcovars(find(contains(mdlcovars,'Subj'))) = [];
 
+covars = struct;
+covars.name = cell(0);
+covars.data = cell(0);
+covars.type = cell(0);
+
 for i = 1:length(mdlcovars)
     if contains(mdlcovars{i},'sum')
         varname = char(extractBefore(mdlcovars{i},'sum'));
@@ -91,9 +96,10 @@ switch type
         allisc = rtoz(corr(alldata,'Type',type));
     case 'eucdist'
         allisc = eucdist(alldata);
-        alliscvals = boxcox(belowDiag(allisc));
-        allisc = bdiagtomat(alliscvals,size(allisc,1));
-        allisc = allisc+allisc';
+        allisc = log(allisc);
+%         alliscvals = boxcox(belowDiag(allisc));
+%         allisc = bdiagtomat(alliscvals,size(allisc,1));
+%         allisc = allisc+allisc';
         
 end
     
@@ -144,7 +150,7 @@ tblcommand = structfun(@vert,tblcommand,'UniformOutput',false);
 tblcommand = struct2table(tblcommand);
 tmp = tblcommand.Properties.VariableNames;
 indx = find(strcmpi(tmp,'InputFile'));
-% center quantitative variables
+% put inputfile at the end
 tblcommand = tblcommand(:,[except(1:size(tblcommand,2),indx) indx]);
 writetable(tblcommand,fullfile(pwd,'filestbl.txt'),'Delimiter',' ')
 !awk 'NR > 1{print line" \\"}{line=$0;}END{print $0" "}' filestbl.txt > filestbl2.txt
