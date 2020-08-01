@@ -110,7 +110,7 @@ source_datacat = []; %saving memory
 
 % Get ROI time courses
 roidata = voxeldata;
-roidata.label = atlas.parcellationlabel;
+roidata.label = atlas.(opts.atlaslabel);
 roidata.trial = [];
 roidata.trial{1} = NaN(length(roidata.label),length(voxeldata.trial{1}));
 for cc = 1:length(roidata.label)

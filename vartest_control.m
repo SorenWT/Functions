@@ -68,7 +68,7 @@ end
 
 if ~isempty(ctrl)
     if istable(ctrl{1})
-        ctrlnames = ctrl{i}.Properties.VariableNames;
+        ctrlnames = ctrl{1}.Properties.VariableNames;
     else
         if exist('names','var')
             ctrlnames = names(3:end);
@@ -78,8 +78,8 @@ if ~isempty(ctrl)
         for i = 1:length(ctrl)
             ctrl{i} = array2table(ctrl{i},'VariableNames',ctrlnames);
         end
-        ctrltbl = cat(1,ctrl{:});
     end
+    ctrltbl = cat(1,ctrl{:});
 end
 
 if exist('names','var')
@@ -99,7 +99,12 @@ tmp = cat(2,tmp{:});
 mdl = [depvarname '~' indvarname '+' tmp(1:end-1)];
 
 
-lm = fitlm(tbl,mdl);
+if length(dat) > 2
+    [~,lm] = anovan(tbl.(depvarname),[{tbl.(indvarname)} mat2cell(tbl{:,3:end},height(tbl),ones(1,width(tbl)-2))],'Continuous',[2 4],...
+        'varnames',[{indvarname} ctrlnames]); %broken right now
+else
+    lm = fitlm(tbl,mdl);
+end
 
 
 if nargout > 1

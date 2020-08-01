@@ -58,7 +58,7 @@ if ~cfgcheck(cfg,'test')
 end
 
 if ~cfgcheck(cfg,'channel')
-    cfg.channel = 'all';
+    cfg.channel = {'all'};
 end
 
 cfg = setdefault(cfg,'meas',1:length(data{1}.meas));
@@ -85,6 +85,13 @@ if ~cfgcheck(cfg,'effectsize')
     end
 end
 
+switch cfg.test
+    case {'ttest','signrank','friedman'}
+        mesargsin = {'isDep',1};
+    otherwise
+        mesargsin = {};
+end
+
 if cfgcheck(cfg,'multcompare','cluster') && ~cfgcheck(cfg.cluster,'statfun')
     switch cfg.test
         case 'ttest'
@@ -96,10 +103,9 @@ if cfgcheck(cfg,'multcompare','cluster') && ~cfgcheck(cfg.cluster,'statfun')
         case 'signrank'
             cfg.cluster.statfun = 'ft_statfun_fast_signrank';
         case 'anova'
-            cfg.cluster.statfun = 'ft_statfun_indepsamplesF'; % probably broken
+            cfg.cluster.statfun = 'ft_statfun_indepsamplesF'; 
         case 'rmanova'
-            cfg.cluster.statfun = 'ft_statfun_depsamplesF'; %broken
-            warning('Repeated-measures anova not currently supported')
+            cfg.cluster.statfun = 'ft_statfun_depsamplesF';
         case 'kruskalwallis'
             cfg.cluster.statfun = 'ft_statfun_kruskal';
         case 'friedman'
@@ -131,17 +137,21 @@ elseif isfield(data{1},'grad')
     chans = ft_channelselection(cfg.channel,data{1}.grad);
     chans = Subset_index(data{1}.chan,chans);
 else
-    chans = 1:length(data{1}.chan);
+    chans = match_str(data{1}.chan,cfg.channel);
 end
 
-for c = 1:length(data)
-    % for now, chans is always the second dimension, so no need to figure
-    % out how to work with dimord
-    
-    %dimns = tokenize(data{1}.dimord,'_');
-    %chans = find(strcmpi(dimns,'chan'));
-    data{c}.data = data{c}.data(:,chans,:,:);
+if cfgcheck(cfg,'multcompare','cluster')
+    cfg.cluster.channel = data{1}.chan(chans);
 end
+
+% for c = 1:length(data)
+%     % for now, chans is always the second dimension, so no need to figure
+%     % out how to work with dimord
+%     
+%     %dimns = tokenize(data{1}.dimord,'_');
+%     %chans = find(strcmpi(dimns,'chan'));
+%     data{c}.data = data{c}.data(:,chans,:,:);
+% end
 
 %% Select subjects
 
@@ -158,21 +168,21 @@ end
 for i = cfg.meas
     %dimns = tokenize(data{1}.dimord,'_');
     if ~cfgcheck(cfg,'multcompare','mean')
-        for c = 1:length(data{1}.chan)
+        for c = 1:length(chans)
             switch cfg.test
                 case 'ttest'
-                    [~,stats{i}.p(c)] =  ttest(data{1}.data(:,c,i)-data{2}.data(:,c,i));
+                    [~,stats{i}.p(c)] =  ttest(data{1}.data(:,chans(c),i)-data{2}.data(:,chans(c),i));
                 case 'ttest2'
-                    [~,stats{i}.p(c)] = ttest2(data{1}.data(:,c,i),data{2}.data(:,c,i));
+                    [~,stats{i}.p(c)] = ttest2(data{1}.data(:,chans(c),i),data{2}.data(:,chans(c),i));
                 case 'ranksum'
-                    stats{i}.p(c) = ranksum(data{1}.data(:,c,i),data{2}.data(:,c,i));
+                    stats{i}.p(c) = ranksum(data{1}.data(:,chans(c),i),data{2}.data(:,chans(c),i));
                 case 'signrank'
-                    stats{i}.p(c) = signrank(data{1}.data(:,c,i),data{2}.data(:,c,i));
+                    stats{i}.p(c) = signrank(data{1}.data(:,chans(c),i),data{2}.data(:,chans(c),i));
                 case 'anova'
                     dat = []; design = [];
                     for cc = 1:length(data)
-                        dat = cat(2,dat,horz(data{cc}.data(:,c,i)));
-                        design = cat(2,design,ones(1,length(data{cc}.data(:,c,i)))*cc);
+                        dat = cat(2,dat,horz(data{cc}.data(:,chans(c),i)));
+                        design = cat(2,design,ones(1,length(data{cc}.data(:,chans(c),i)))*cc);
                     end
                     stats{i}.p(c) = anovan(dat,design,'off');
                 case 'rmanova'
@@ -180,27 +190,27 @@ for i = cfg.meas
                 case 'kruskalwallis'
                     dat = []; design = [];
                     for cc = 1:length(data)
-                        dat = cat(2,dat,horz(data{cc}.data(:,c,i)));
-                        design = cat(2,design,ones(1,length(data{cc}.data(:,c,i)))*cc);
+                        dat = cat(2,dat,horz(data{cc}.data(:,chans(c),i)));
+                        design = cat(2,design,ones(1,length(data{cc}.data(:,chans(c),i)))*cc);
                     end
                     stats{i}.p(c) = kruskalwallis(dat,design,'off');
                 case 'friedman'
                     dat = [];
                     for cc = 1:length(data)
-                        dat(cc,:) = vert(data{cc}.data(:,c,i));
+                        dat(cc,:) = vert(data{cc}.data(:,chans(c),i));
                     end
                     stats{i}.p(c) = friedman(dat,1,'off');
                 case 'empirical'
                     % finish later
                 case 'tost'
-                    [p1,p2] = TOST(data{1}.data(:,c,i),data{2}.data(:,c,i),...
+                    [p1,p2] = TOST(data{1}.data(:,chans(c),i),data{2}.data(:,chans(c),i),...
                         cfg.eqinterval(1),cfg.eqinterval(2),0.05);
                     stats{i}.p(c) = max(p1,p2);
             end
             
             switch cfg.test
                 case {'ttest','ttest2','ranksum','signrank'}
-                    stats{i}.effsize{c} = mes(data{1}.data(:,c,i),data{2}.data(:,c,i),cfg.effectsize);
+                    stats{i}.effsize{c} = mes(data{1}.data(:,chans(c),i),data{2}.data(:,chans(c),i),cfg.effectsize,mesargsin{:});
                 case {'anova','rmanova','kruskalwallis','friedman'}
                     % not implemented yet
             end
@@ -268,7 +278,7 @@ for i = cfg.meas
         end
         switch cfg.test
             case {'ttest','ttest2','ranksum','signrank''tost'}
-                stats{i}.effsize = mes(mean(data{1}.data(:,:,i),2),mean(data{2}.data(:,:,i),2),cfg.effectsize);
+                stats{i}.effsize = mes(mean(data{1}.data(:,:,i),2),mean(data{2}.data(:,:,i),2),cfg.effectsize,mesargsin{:});
             case {'anova','rmanova','kruskalwallis','friedman'}
                 % not implemented yet
         end

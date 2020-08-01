@@ -1,4 +1,4 @@
-function [R,P] = imagesc_stars(R,P,labels)
+function [R,P,c] = imagesc_stars(R,P,labels)
 % plotCorrelationMatrix
 % Plot correlation matrix
 %

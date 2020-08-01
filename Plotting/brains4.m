@@ -59,7 +59,7 @@ end
 
 
 %ft_plot_mesh(bnd,'vertexcolor',plotdata(sourcemodel.brainstructure == 1)','edgealpha',0);
-view(-180,0)
+view(-90,0)
 lighting gouraud 
 camlight
 axis tight
@@ -75,7 +75,7 @@ bnd.pnt = sourcemodel.pos(find(sourcemodel.brainstructure == 2),:);
 trindx = find(min(sourcemodel.tri,[],2) >= cort_size);
 bnd.tri = sourcemodel.tri(trindx,:);
 bnd.tri = bnd.tri - cort_size;
-view(0,0)
+view(90,0)
 ft_plot_mesh(bnd,'facealpha',vert(1-plotmask(sourcemodel.brainstructure==2)),'edgealpha',0,'vertexcolor',repmat(clr,sum(sourcemodel.brainstructure==2),1));
 hold on
 ft_plot_mesh(bnd, 'vertexcolor', vert(plotdata(sourcemodel.brainstructure==2)), 'facealpha', double(vert(plotmask(sourcemodel.brainstructure==2))), 'maskstyle', 'opacity','edgealpha',0);
@@ -106,7 +106,7 @@ set(gca,'CLim',[min(vert(plotdata(sourcemodel.brainstructure==1)).*vert(plotmask
 catch
 end
 
-view(0,0)
+view(90,0)
 
 lighting gouraud 
 camlight
@@ -131,7 +131,7 @@ set(gca,'CLim',[min(vert(plotdata(sourcemodel.brainstructure==2)).*vert(plotmask
 catch
 end
 
-view(180,0)
+view(-90,0)
 
 lighting gouraud 
 camlight

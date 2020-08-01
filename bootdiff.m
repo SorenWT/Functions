@@ -1,7 +1,15 @@
-function [pvalue] = bootdiff(funcn,samp1,samp2,nboot)
+function [pvalue] = bootdiff(funcn,samp1,samp2,nboot,method)
 
-newfunc = @(x1,x2) funcn(x1)/funcn(x2); % difference is significant if the ratio is significantly different from 1
+if nargin < 4
+   method = 'diff';
+end
 
+switch method
+    case 'diff'
+        newfunc = @(x1,x2) funcn(x1)-funcn(x2);
+    case 'rat'
+        newfunc = @(x1,x2) funcn(x1)/funcn(x2); % difference is significant if the ratio is significantly different from 1
+end
 bootstat = zeros(1,nboot);
 
 sampstat = newfunc(samp1,samp2);

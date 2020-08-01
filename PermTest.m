@@ -31,7 +31,7 @@ for i = 1:nrand
     perm = randperm(length(y));
     permgroup = group(perm);
     if diffflag == 1
-        statperm(i) = stat(y(permgroup==1),y(permgroup==2));
+        statperm(i) = stat(y(permgroup==1,:),y(permgroup==2,:));
     else
         statperm(i) = stat(y,permgroup);
     end

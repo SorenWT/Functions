@@ -3,7 +3,7 @@ function matout = bdiagtomat(vectin,matsize)
 % matsize is a scalar, the size of the original matrix
 
 
-matout = zeros(matsize,matsize);
+matout = ones(matsize,matsize);
 vectindx = 0;
 count = 1;
 for i = matsize:-1:2

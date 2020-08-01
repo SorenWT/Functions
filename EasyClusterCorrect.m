@@ -41,6 +41,8 @@ opts = setdefault(opts,'minnbchan',1);
 
 opts = setdefault(opts,'type','Spearman');
 
+opts = setdefault(opts,'channel',{'all'});
+
 if length(datasetinfo.label) >= 32
     opts = setdefault(opts,'distmethod','distance');
 elseif length(datasetinfo.label) > 1
@@ -84,10 +86,8 @@ for c = 1:length(data)
         switch datasetinfo.atlasname
             case 'aal'
                 tlock{c}.label = datasetinfo.atlas.tissuelabel;
-            case 'mmp'
+            case {'mmp','yeo'}
                 tlock{c}.label = datasetinfo.atlas.parcellationlabel;
-            case 'yeo'
-                %do later
         end
     end
     for cc = 1:length(tlock{c}.label)
@@ -262,7 +262,7 @@ end
 %else
 %    cfg.channel = {'EEG'};
 %end
-cfg.channel = {'all'};
+cfg.channel = opts.channel;
 
 cfg.latency = [0 0.5];
 cfg.parameter = 'trial';
