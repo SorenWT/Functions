@@ -227,13 +227,23 @@ end
 
 %% Plotting the figure
 
+figure
+
 p = panel('no-manage-font');
 
-p.pack('h',{1/2 1/2})
+set(gcf,'units','normalized','position',[0.1 0 0.8 1])
+
+p.pack('v',{1/2 1/2})
+p(1).pack('h',{0.25 0.5 0.25})
+p(2).pack('h',{1/2 1/2})
 
 
-for c = 2:3
-    p(c-1).select()
+for c = 1:3
+    if c == 1
+        p(1,2).select()
+    else
+        p(2,4-c).select()
+    end
     
     plotdata = meandata.(fields{c});
     %plotdata.fourierspctrm(find(plotdata.fourierspctrm < 0)) = min(min(min(min(plotdata.fourierspctrm(find(plotdata.fourierspctrm > 0))))));
@@ -260,61 +270,78 @@ end
 
 Set_Clim(ax,[-4 4])
 
+set(p(1,2).axis,'fontsize',14)
+set(p(2,1).axis,'fontsize',14)
+set(p(2,2).axis,'fontsize',14)
+
+p.marginleft = 18;
+p(2,2).marginleft = 38;
+p(1).marginbottom = 40;
+p.margintop = 8;
+cbars = findall(gcf,'type','colorbar')
+cbars(2).Label.String = 'ERSP (dB)';
+cbars(2).Label.FontSize = 14;
+
+savefig('Fig1a_erspplot.fig'); export_fig('Fig1a_erspplot.png','-m4')
+
 %part 2
 
 figure
 
 p = panel('no-manage-font')
 
-p.pack('v',{35 35 30})
+p.pack('h',{50 50})
 
-p(1).pack('h',{1/6 1/3 1/3 1/6})
-p(2).pack('h',repmat({1/(settings.nfreqs-1)},1,settings.nfreqs-1))
-set(gcf,'units','normalized','position',[0 0 1 1])
+p(1).pack('h',{1/2 1/2})
+p(2).pack(2,3)
+p.de.marginbottom = 22;
+p(2).marginleft = 60; p(2).de.marginleft = 15; p.marginright = 8;
+p(1,2).marginleft = 25;
+p.margintop = 10;
+set(gcf,'units','normalized','position',[0 0.5 1 0.5])
 
 %p(1,4).pack('v',{50 50})
 
 plotdata = 100*(pledata.post-nanmean(pledata.bl,3))./nanmean(pledata.bl,3);
 pleindx = nansum(nansum(plotdata.*repmat(permute(stats_ple.mask,[3 1 2]),49,1,1),2),3);
 
-plot_tc_topo(meanpost.mixd.time*1000,permute(plotdata,[2 3 1]),settings,p,{1 2})
+plot_tc_topo(meanpost.mixd.time*1000,permute(plotdata,[2 3 1]),settings,p,{1 2},'color',{'r'})
 %stdshade(meanpost.mixd.time,squeeze(mean(pledata.post,2)),'k',0.15,2,'sem')
 %Plot_sigmask(gca,stats_ple.mask,'cmapline','LineWidth',4)
 p(1,2,1).select()
 hold on
 xlabel('Time (s)')
-ylabel('Percent change from prestim (%)')
 title('Fractal PLE')
 set(gca,'XLim',[min(meanpost.mixd.time) max(meanpost.mixd.time)]*1000)
 H = sigstar({[min(meanpost.mixd.time) max(meanpost.mixd.time)]*1000},stats_ple.negclusters.prob,0,18);
 delete(H(1));
 
-p(1,3).marginleft = 25;
 
 plotdata = 100*(10.^intdata.post-nanmean(10.^intdata.bl,3))./nanmean(10.^intdata.bl,3);
 intindx = nansum(nansum(plotdata.*repmat(permute(stats_int.mask,[3 1 2]),49,1,1),2),3);
 
-plot_tc_topo(meanpost.mixd.time*1000,permute(plotdata,[2 3 1]),settings,p,{1 3})
+plot_tc_topo(meanpost.mixd.time*1000,permute(plotdata,[2 3 1]),settings,p,{1 1},'color',{'r'})
 %Plot_sigmask(gca,stats_int.mask,'cmapline','LineWidth',4)
-p(1,3,1).select()
+p(1,1,1).select()
 FixAxes(gca,12)
 xlabel('Time (s)')
 %ylabel('Percent change from prestim (%)')
 title('Fractal intercept')
+ylabel('Percent change from prestim (%)')
 set(gca,'XLim',[min(meanpost.mixd.time) max(meanpost.mixd.time)]*1000)
 H = sigstar({[min(meanpost.mixd.time) max(meanpost.mixd.time)]*1000},stats_int.negclusters.prob,0,18);
 delete(H(1));
 
-
+tmpindx = [0 1 2 3 1 2 3];
 for i = 2:settings.nfreqs
    plotdata = 100*(fbands{i}.post-nanmean(fbands{i}.bl(:,:,end-4:end),3))./nanmean(fbands{i}.bl(:,:,end-4:end),3);
    fbandindx(:,i) = nansum(nansum(plotdata.*repmat(permute(stats_fbands{i}.mask,[3 1 2]),49,1,1),2),3);
    
-   plot_tc_topo(meanpost.mixd.time*1000,permute(plotdata,[2 3 1]),settings,p,{2 i-1},'avgfunc',@nanmedian);
-   p(2,i-1,1).select()
+   plot_tc_topo(meanpost.mixd.time*1000,permute(plotdata,[2 3 1]),settings,p,{2,ceil((i-1)/3),tmpindx(i)},'avgfunc',@nanmedian);
+   p(2,ceil((i-1)/3),tmpindx(i),1).select()
    FixAxes(gca,12)
    xlabel('Time (s)')
-   if i ==2
+   if i ==2 || i == 5
     ylabel('Percent change from prestim (%)')
    end
    title(settings.tfparams.fbandnames{i})
@@ -324,7 +351,14 @@ for i = 2:settings.nfreqs
    delete(H(1));
 end
 
-p(3).select()
+
+
+savefig('Fig1b_param_tc.fig'); export_fig('Fig1b_param_tc.png','-m4')
+
+
+
+
+
 indxmat = abs([pleindx intindx fbandindx(:,2:end)]);
 anovap = friedman([pleindx intindx fbandindx(:,2:end)]);
 for i = 1:size(indxmat,2)
@@ -332,6 +366,11 @@ for i = 1:size(indxmat,2)
         mcp(i,ii) = signrank(indxmat(:,i),indxmat(:,ii)); 
     end
 end
+
+
+figure
+
+p = panel('no-manage-font');
 
 bar(mean(indxmat,1))
 hold on
@@ -342,7 +381,6 @@ set(gca,'XTickLabel',[{'PLE','Fractal intercept'} settings.tfparams.fbandnames(2
 
 colormap(lkcmap2)
 
-savefig('Oscifrac_1b.fig'); export_fig
 
 
 % p(1,4,2).select()

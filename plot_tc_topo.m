@@ -18,10 +18,16 @@ p(pindx{:},1).select()
 
 hold on
 
-stdshade(time,squeeze(avgfunc(datamat(:,:,:,1),1)),'b',0.15,1,'sem');
+if CheckInput(varargin,'color')
+    clr = EasyParse(varargin,'color');
+else
+    clr = {'b' 'r'};
+end
+
+stdshade(time,squeeze(avgfunc(datamat(:,:,:,1),1)),clr{1},0.15,1,'sem');
 
 if size(datamat,4) > 1
-    stdshade(time,squeeze(avgfunc(datamat(:,:,:,2),1)),'r',0.15,1,'sem');
+    stdshade(time,squeeze(avgfunc(datamat(:,:,:,2),1)),clr{2},0.15,1,'sem');
 end
 
 

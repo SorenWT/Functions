@@ -144,7 +144,7 @@ else
     end
 end
 voxeldata.trial{1} = source_datacat;
-voxeldata.time{1} = linspace(0,length(voxeldata.trial{1}/data.fsample)-1/data.fsample,size(voxeldata.trial{1},2));
+voxeldata.time{1} = linspace(0,length(voxeldata.trial{1})/data.fsample-1/data.fsample,size(voxeldata.trial{1},2));
 voxeldata.label = cellstr(num2str([1:size(sources.pos,1)]'));
 voxeldata.fsample = data.fsample;
 source_datacat = []; %saving memory
