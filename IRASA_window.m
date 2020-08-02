@@ -20,8 +20,21 @@ else
     hset = EasyParse(varargin,'hset');
 end
 
-for c = 1:size(datain,1)
-   specs(c) = amri_sig_fractal(WindowToMatrix(datain(c,:),winsize,overlap),srate,'hset',hset);
+if CheckInput(varargin,'parflag')
+    parflag = EasyParse(varargin,'parflag');
+else
+    parflag = 0;
+end
+
+specs = cell(1,size(datain,1));
+if parflag
+    parfor c = 1:size(datain,1)
+        specs{c} = amri_sig_fractal(WindowToMatrix(datain(c,:),winsize,overlap),srate,'hset',hset);
+    end
+else
+    for c = 1:size(datain,1)
+        specs{c} = amri_sig_fractal(WindowToMatrix(datain(c,:),winsize,overlap),srate,'hset',hset);
+    end
 end
 
 % for c = 1:length(specs)
@@ -30,14 +43,14 @@ end
 %    specs(c).osci = nan_mean(specs(c).osci,2);
 % end
 
-specout = specs(1);
+specout = specs{1};
 specout.mixd = [];
 specout.frac = [];
 specout.osci = [];
 for c = 1:length(specs)
-   specout.mixd = cat(2,specout.mixd,nanmean(specs(c).mixd,2));
-   specout.frac = cat(2,specout.frac,nanmean(specs(c).frac,2));
-   specout.osci = cat(2,specout.osci,nanmean(specs(c).osci,2));
+   specout.mixd = cat(2,specout.mixd,nanmean(specs{c}.mixd,2));
+   specout.frac = cat(2,specout.frac,nanmean(specs{c}.frac,2));
+   specout.osci = cat(2,specout.osci,nanmean(specs{c}.osci,2));
 end
 end
 
