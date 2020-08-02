@@ -268,19 +268,20 @@ for c = 1:3
     colormap(jet)
 end
 
-Set_Clim(ax,[-4 4])
+Set_Clim(ax,[-3 3])
 
 set(p(1,2).axis,'fontsize',14)
 set(p(2,1).axis,'fontsize',14)
 set(p(2,2).axis,'fontsize',14)
 
 p.marginleft = 18;
-p(2,2).marginleft = 38;
+p(2,2).marginleft = 40;
 p(1).marginbottom = 40;
 p.margintop = 8;
-cbars = findall(gcf,'type','colorbar')
+cbars = findall(gcf,'type','colorbar');
 cbars(2).Label.String = 'ERSP (dB)';
 cbars(2).Label.FontSize = 14;
+set(gcf,'color','w')
 
 savefig('Fig1a_erspplot.fig'); export_fig('Fig1a_erspplot.png','-m4')
 

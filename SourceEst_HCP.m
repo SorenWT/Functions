@@ -114,7 +114,7 @@ roidata.label = atlas.parcellationlabel;
 roidata.trial = [];
 roidata.trial{1} = NaN(length(roidata.label),length(voxeldata.trial{1}));
 for cc = 1:length(roidata.label)
-    roidata.trial{1}(cc,:) = mean(voxeldata.trial{1}(find(atlas.(opts.atlasparam) == cc),:),1);
+    roidata.trial{1}(cc,:) = mean(voxeldata.trial{1}(find(atlas.parcellation == cc),:),1);
 end
 
 end
