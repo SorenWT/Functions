@@ -39,7 +39,7 @@ for c = 1:length(fields)
    meandata.(fields{c}).fourierspctrm = permute(meandata.(fields{c}).fourierspctrm,[1 3 2 4]); 
    meandata.(fields{c}).fourierspctrm_dimord = meandata.(fields{c}).dimord;
    meandata.(fields{c}).grad = settings.datasetinfo.grad;
-   meandata.(fields{c}.fourierspctrm = meandata.(fields{c}).fourierspctrm(1:length(files),:,:,:);
+   meandata.(fields{c}).fourierspctrm = meandata.(fields{c}).fourierspctrm(1:length(files),:,:,:);
 end
 
 
@@ -207,6 +207,8 @@ stats_int = EasyClusterCorrect({permute(intdata.post,[2 1 3]) repmat(mean(intdat
 % end
 
 settings = NA_alpha_pf(settings);
+settings.nfreqs = 6;
+settings.tfparams.fbands = repmat({[] [2 4] [4 8] [8 13] [13 30] [30 85]},49,1);
 
 for i = 2:settings.nfreqs
     tmp = meandata.osci.fourierspctrm;
@@ -220,8 +222,8 @@ for i = 2:settings.nfreqs
             intersect(find(meandata.osci.freq >= settings.tfparams.fbands{q,i}(1)),...
             find(meandata.osci.freq <= settings.tfparams.fbands{q,i}(2))),bl),3));
     end
-    %stats_fbands{i} = EasyClusterCorrect({permute(fbands{i}.post,[2 1 3]) repmat(mean(fbands{i}.bl,3)',1,1,38)},...
-    %    datasetinfo,'ft_statfun_fast_signrank',opts);
+    stats_fbands{i} = EasyClusterCorrect({permute(fbands{i}.post,[2 1 3]) repmat(mean(fbands{i}.bl,3)',1,1,38)},...
+        datasetinfo,'ft_statfun_fast_signrank',opts);
 end
 
 
@@ -352,21 +354,79 @@ for i = 2:settings.nfreqs
    delete(H(1));
 end
 
+colormap(lkcmap2)
 
 
 savefig('Fig1b_param_tc.fig'); export_fig('Fig1b_param_tc.png','-m4')
 
+fbandnames = {'delta','theta','alpha','beta','gamma'};
 
-
-
-
-indxmat = abs([pleindx intindx fbandindx(:,2:end)]);
-anovap = friedman([pleindx intindx fbandindx(:,2:end)]);
-for i = 1:size(indxmat,2)
-    for ii = 1:i
-        mcp(i,ii) = signrank(indxmat(:,i),indxmat(:,ii)); 
-    end
+effsizetc = struct;
+effsizetc.int = nanmean(intdata.post-nanmean(intdata.bl,3),1)./...
+    nanstd(intdata.post-nanmean(intdata.bl,3),[],1);
+effsizetc.ple = nanmean(pledata.post-nanmean(pledata.bl,3),1)./...
+    nanstd(pledata.post-nanmean(pledata.bl,3),[],1);
+for i = 2:settings.nfreqs
+    tmppost = log10(fbands{i}.post); tmppost(find(imag(tmppost)~=0)) = NaN;
+        tmpbl = log10(fbands{i}.post); tmpbl(find(imag(tmpbl)~=0)) = NaN;
+   effsizetc.(fbandnames{i-1}) = nanmean(tmppost-nanmean(tmpbl,3),1)./...
+    nanstd(tmppost-nanmean(tmpbl,3),[],1);
 end
+effsizetc = structfun(@squeeze,effsizetc,'UniformOutput',false);
+
+allstats = [{stats_int stats_ple} stats_fbands(2:end)];
+
+fields = fieldnames(effsizetc);
+
+for i = 1:length(fields)
+    effsizesum(i) = nansum(nansum(abs(effsizetc.(fields{i})).*allstats{i}.mask));
+end
+
+effsizefun = @(post,bl,mask) nansum(nansum((nanmean(post-nanmean(bl,3),1)./nanstd(post-nanmean(bl,3),[],1)).*mean(mask,1)));
+effsizedifffun = @(effsizefun,post1,bl1,mask1,post2,bl2,mask2) effsizefun(post1,bl1,mask1)-effsizefun(post2,bl2,mask2);
+
+effsizediff = ones(length(fields));
+for i = 1:length(fields)
+   if i == 1
+       post1 = intdata.post;
+       bl1 = repmat(nanmean(intdata.bl,3),1,1,size(intdata.bl,3));
+   elseif i == 2
+       post1 = pledata.post;
+       bl1 = repmat(nanmean(pledata.bl,3),1,1,size(pledata.bl,3));
+   else
+       post1 = log10(fbands{i-1}.post);
+       bl1 = repmat(nanmean(log10(fbands{i-1}.bl),3),1,1,size(fbands{i-1}.bl,3));
+   end
+   mask1 = repmat(permute(allstats{i}.mask,[3 1 2]),size(pledata.post,1),1,1);
+   effsizesum_ci(i,:) = bootci(10000,effsizefun,post1,bl1,mask1);
+   for ii = 1:(i-1)
+       if ii == 1
+           post2 = intdata.post;
+           bl2 = repmat(nanmean(intdata.bl,3),1,1,size(intdata.bl,3));
+       elseif ii == 2
+           post2 = pledata.post;
+           bl2 = repmat(nanmean(pledata.bl,3),1,1,size(pledata.bl,3));
+       else
+           post2 = log10(fbands{ii-1}.post);
+           bl2 = repmat(nanmean(log10(fbands{ii-1}.bl),3),1,1,size(fbands{ii-1}.bl,3));
+       end
+       mask2 = repmat(permute(allstats{ii}.mask,[3 1 2]),size(pledata.post,1),1,1);
+       [~,bootstat,S] = bootci_swt(10000,@(p1,b1,m1,p2,b2,m2)effsizedifffun(effsizefun,p1,b1,m1,p2,b2,m2),...
+            post1,bl1,mask1,post2,bl2,mask2);
+   S.a = S.acc; S.type = 'bca';
+    effsizediff(i,ii) = ibootp(0,bootstat,S);
+   end
+end
+
+
+% 
+% indxmat = abs([pleindx intindx fbandindx(:,2:end)]);
+% anovap = friedman([pleindx intindx fbandindx(:,2:end)]);
+% for i = 1:size(indxmat,2)
+%     for ii = 1:i
+%         mcp(i,ii) = signrank(indxmat(:,i),indxmat(:,ii)); 
+%     end
+% end
 
 
 figure

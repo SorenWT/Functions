@@ -12,6 +12,6 @@ for i = 1:length(grpdata.trial)
     for ii = 1:length(grpdata.label)
         roicontrib = find(mmpgroup.roiassign == ii);
         nvertex = mmpgroup.nvertex(roicontrib);
-        grpdata.trial{i}(ii,:) = vert(nvertex).*roidata.trial{i}(roicontrib,:)./sum(nvertex);
+        grpdata.trial{i}(ii,:) = sum(vert(nvertex).*roidata.trial{i}(roicontrib,:),1)./sum(nvertex);
     end
 end

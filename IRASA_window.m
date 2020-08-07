@@ -26,14 +26,15 @@ else
     parflag = 0;
 end
 
+fftw('planner','patient');
 specs = cell(1,size(datain,1));
 if parflag
     parfor c = 1:size(datain,1)
-        specs{c} = amri_sig_fractal(WindowToMatrix(datain(c,:),winsize,overlap),srate,'hset',hset);
+        specs{c} = amri_sig_fractal_fast(WindowToMatrix(datain(c,:),winsize,overlap),srate,'hset',hset);
     end
 else
     for c = 1:size(datain,1)
-        specs{c} = amri_sig_fractal(WindowToMatrix(datain(c,:),winsize,overlap),srate,'hset',hset);
+        specs{c} = amri_sig_fractal_fast(WindowToMatrix(datain(c,:),winsize,overlap),srate,'hset',hset);
     end
 end
 
