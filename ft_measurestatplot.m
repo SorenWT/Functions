@@ -62,7 +62,7 @@ end
 
 cfg = setdefault(cfg,'reverse',0);
 
-cfg = setdefault(cfg,'measname',extractBefore(cellfun(@func2str,data{1}.meas(cfg.meas),'UniformOutput',false),'_'));
+cfg = setdefault(cfg,'measname',cellfun(@func2str,data{1}.meas(cfg.meas),'UniformOutput',false));
 
 cfg = setdefault(cfg,'colormap',parula);
 
@@ -84,6 +84,18 @@ else
     cord = [1 2];
 end
 
+if isfield(data{1},'elec')
+    chans = ft_channelselection(cfg.channel,data{1}.elec);
+    chans = match_str(data{1}.chan,chans);
+elseif isfield(data{1},'grad')
+    chans = ft_channelselection(cfg.channel,data{1}.grad);
+    chans = match_str(data{1}.chan,chans);
+elseif iscell(cfg.channel)
+    chans = match_str(data{1}.chan,cfg.channel);
+else  %assuming index of channels
+    chans = cfg.channel;
+end
+
 %% Plotting topos
 
 if cfgcheck(cfg,'plotmode','topo')
@@ -94,7 +106,7 @@ if cfgcheck(cfg,'plotmode','topo')
                 clear ax
                 for cc = 1:length(data)
                     subplot(1,length(data)+1,cc)
-                    topoplot(mean(data{cc}.data(:,:,c),1),data{1}.chanlocs,'maplimits','maxmin');
+                    topoplot(mean(data{cc}.data(:,chans,c),1),data{1}.chanlocs(chans),'maplimits','maxmin');
                     title(cfg.cond{cc})
                     FixAxes(gca,20)
                     colormap(cfg.colormap)
@@ -106,7 +118,7 @@ if cfgcheck(cfg,'plotmode','topo')
                 
                 subplot(1,length(data)+1,length(data)+1)
                 if cfgcheck(cfg,'plotparam','dif')
-                    plotparam = mean(data{cord(1)}.data(:,:,c),1)-mean(data{cord(2)}.data(:,:,c),1);
+                    plotparam = mean(data{cord(1)}.data(:,chans,c),1)-mean(data{cord(2)}.data(:,chans,c),1);
                 elseif cfgcheck(cfg,'plotparam','effsize')
                     tmp = cat(1,stats{c}.effsize{:});
                     plotparam = horz(extractfield(tmp,stats{c}.cfg.effectsize));
@@ -114,13 +126,13 @@ if cfgcheck(cfg,'plotmode','topo')
                 
                 if isfield(stats{c},'cluster')
                     cluster_topoplot(plotparam,...
-                        data{1}.chanlocs,stats{c}.p,stats{c}.cluster.mask)
+                        data{1}.chanlocs(chans),stats{c}.p,stats{c}.cluster.mask)
                 elseif isfield(stats{c},'fdr')
                     cluster_topoplot(plotparam,...
-                        data{1}.chanlocs,stats{c}.p,stats{c}.fdr < 0.05)
+                        data{1}.chanlocs(chans),stats{c}.p,stats{c}.fdr < 0.05)
                 else
                     cluster_topoplot(plotparam,...
-                        data{1}.chanlocs,stats{c}.p,stats{c}.p < 0.05)
+                        data{1}.chanlocs(chans),stats{c}.p,stats{c}.p < 0.05)
                 end
                 title([cfg.cond{cord(1)} ' - ' cfg.cond{cord(2)}])
                 FixAxes(gca,20)
@@ -134,7 +146,7 @@ if cfgcheck(cfg,'plotmode','topo')
                 clear ax
                 for cc = 1:length(data)
                     subplot(1,length(data)+1,cc)
-                    ft_topoplot_vec(cfg.lay,mean(data{cc}.data(:,:,c),1),data{1}.chan);
+                    ft_topoplot_vec(cfg.lay,mean(data{cc}.data(:,chans,c),1),data{1}.chan(chans));
                     title(cfg.cond{cc})
                     FixAxes(gca,20)
                     colormap(cfg.colormap)
@@ -143,7 +155,7 @@ if cfgcheck(cfg,'plotmode','topo')
                 Normalize_Clim(ax)
                 
                 if cfgcheck(cfg,'plotparam','dif')
-                    plotparam = mean(data{cord(1)}.data(:,:,c),1)-mean(data{cord(2)}.data(:,:,c),1);
+                    plotparam = mean(data{cord(1)}.data(:,chans,c),1)-mean(data{cord(2)}.data(:,chans,c),1);
                 elseif cfgcheck(cfg,'plotparam','effsize')
                     tmp = cat(1,stats{c}.effsize{:});
                     plotparam = horz(extractfield(tmp,stats{c}.cfg.effectsize));
@@ -152,13 +164,13 @@ if cfgcheck(cfg,'plotmode','topo')
                 subplot(1,length(data)+1,length(data)+1)
                 if isfield(stats{c},'cluster')
                     ft_cluster_topoplot(cfg.lay,plotparam,...
-                        data{1}.chan,stats{c}.p,stats{c}.cluster.mask)
+                        data{1}.chan(chans),stats{c}.p,stats{c}.cluster.mask)
                 elseif isfield(stats{c},'fdr')
                     ft_cluster_topoplot(cfg.lay,plotparam,...
-                        data{1}.chan,stats{c}.p,stats{c}.fdr < 0.05)
+                        data{1}.chan(chans),stats{c}.p,stats{c}.fdr < 0.05)
                 else
                     ft_cluster_topoplot(cfg.lay,plotparam,...
-                        data{1}.chan,stats{c}.p,stats{c}.p < 0.05)
+                        data{1}.chan(chans),stats{c}.p,stats{c}.p < 0.05)
                 end
                 title([cfg.cond{cord(1)} ' - ' cfg.cond{cord(2)}])
                 cbar = colorbar('Location','eastoutside'); cbar.Label.String = ['Difference in ' cfg.measname{find(cfg.meas==c)}]; cbar.Label.FontSize = 20;
@@ -174,8 +186,8 @@ if cfgcheck(cfg,'plotmode','topo')
                 clear ax
                 for cc = 1:length(data)
                     subplot(1,length(data)+1,cc)
-                    ft_cluster_sourceplot(mean(data{cc}.data(:,:,c),1),cfg.datasetinfo.sourcemodel,cfg.datasetinfo.atlas,...
-                        ones(size(mean(data{cc}.data(:,:,c),1))));
+                    ft_cluster_sourceplot(mean(data{cc}.data(:,chans,c),1),cfg.datasetinfo.sourcemodel,cfg.datasetinfo.atlas,...
+                        ones(size(mean(data{cc}.data(:,chans,c),1)))); % won't work! Fix later
                     title(cfg.cond{cc})
                     FixAxes(gca,20)
                     colormap(cfg.colormap)
@@ -184,7 +196,7 @@ if cfgcheck(cfg,'plotmode','topo')
                 Normalize_Clim(ax)
                 
                 if cfgcheck(cfg,'plotparam','dif')
-                    plotparam = mean(data{cord(1)}.data(:,:,c),1)-mean(data{cord(2)}.data(:,:,c),1);
+                    plotparam = mean(data{cord(1)}.data(:,chans,c),1)-mean(data{cord(2)}.data(:,chans,c),1);
                 elseif cfgcheck(cfg,'plotparam','effsize')
                     tmp = cat(1,stats{c}.effsize{:});
                     plotparam = horz(extractfield(tmp,stats{c}.cfg.effectsize));
@@ -216,7 +228,7 @@ if cfgcheck(cfg,'plotmode','topo')
                 figs(c) = figure;
                 for cc = 1:length(data)
                     subplot(1,length(data),cc)
-                    topoplot(mean(data{cc}.data(:,:,c),1),data{1}.chanlocs,'maplimits','maxmin');
+                    topoplot(mean(data{cc}.data(:,chans,c),1),data{1}.chanlocs(chans),'maplimits','maxmin');
                     title(cfg.cond{cc})
                     FixAxes(gca,20)
                     colormap(cfg.colormap)
@@ -232,7 +244,7 @@ if cfgcheck(cfg,'plotmode','topo')
                 figs(c) = figure;
                 for cc = 1:length(data)
                     subplot(1,length(data),cc)
-                    ft_topoplot_vec(cfg.lay,mean(data{cc}.data(:,:,c),1),data{1}.chan);
+                    ft_topoplot_vec(cfg.lay,mean(data{cc}.data(:,chans,c),1),data{1}.chan(chans));
                     title(cfg.cond{cc})
                     FixAxes(gca,20)
                     colormap(cfg.colormap)
@@ -247,8 +259,8 @@ if cfgcheck(cfg,'plotmode','topo')
                 figs(c) = figure;
                 for cc = 1:length(data)
                     subplot(1,length(data)+1,cc)
-                    ft_cluster_sourceplot(mean(data{cc}.data(:,:,c),1),cfg.datasetinfo.sourcemodel,cfg.datasetinfo.atlas,...
-                        ones(size(mean(data{cc}.data(:,:,c),1))));
+                    ft_cluster_sourceplot(mean(data{cc}.data(:,chans,c),1),cfg.datasetinfo.sourcemodel,cfg.datasetinfo.atlas,...
+                        ones(size(mean(data{cc}.data(:,chans,c),1)))); %won't work! Fix later
                     title(cfg.cond{cc})
                     FixAxes(gca,20)
                     colormap(cfg.colormap)
@@ -265,7 +277,7 @@ elseif cfgcheck(cfg,'plotmode','violin')
     for i = cfg.meas
         figs(i) = figure;
         for c = 1:length(data)
-            datastruct.(cfg.cond{c}) = mean(data{c}.data(:,cfg.channel,i),2);
+            datastruct.(cfg.cond{c}) = mean(data{c}.data(:,chans,i),2);
         end
         ylabel(cfg.measname{find(cfg.meas==i)})
         violinplot(datastruct)
@@ -274,11 +286,11 @@ elseif cfgcheck(cfg,'plotmode','violin')
     end
 elseif cfgcheck(cfg,'plotmode','combined')
     for i = cfg.meas
-        tmpcfg = cfg; tmpcfg.plotmode = 'topo'; tmpcfg.meas = i; tmpcfg.savefig = 'no';
+        tmpcfg = cfg; tmpcfg.plotmode = 'topo'; tmpcfg.meas = i; tmpcfg.savefig = 'no'; tmpcfg.channel = chans;
         topofig = ft_measurestatplot(tmpcfg,data,stats);
         topofig = topofig(i);
         
-        tmpcfg.plotmode = 'violin'; tmpcfg.meas = i; tmpcfg.savefig = 'no';
+        tmpcfg.plotmode = 'violin'; tmpcfg.meas = i; tmpcfg.savefig = 'no'; tmpcfg.channel = chans;
         violinfig = ft_measurestatplot(tmpcfg,data,stats);
         violinfig = violinfig(i);
         
@@ -306,7 +318,7 @@ elseif cfgcheck(cfg,'plotmode','combined')
         %AddFigureLabel(p(1,1).axis,'A','yes')
         %AddFigureLabel(p(2).axis,'B')
         
-        set(figs(i),'name',cfg.measname{find(cfg.meas==i)},'color','w')
+        set(figs(i),'name',cfg.measname{find(cfg.meas==i)},'color','w','units','normalized','position',[0.15 0.3 0.7 0.7])
         
         close(topofig)
         close(violinfig)

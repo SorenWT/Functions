@@ -132,12 +132,14 @@ cfg = setdefault(cfg,'subs',repmat({'all'},1,length(data)));
 %% Select channels
 if isfield(data{1},'elec')
     chans = ft_channelselection(cfg.channel,data{1}.elec);
-    chans = Subset_index(data{1}.chan,chans);
+    chans = match_str(data{1}.chan,chans);
 elseif isfield(data{1},'grad')
     chans = ft_channelselection(cfg.channel,data{1}.grad);
-    chans = Subset_index(data{1}.chan,chans);
-else
+    chans = match_str(data{1}.chan,chans);
+elseif iscell(cfg.channel)
     chans = match_str(data{1}.chan,cfg.channel);
+else  %assuming index of channels
+    chans = cfg.channel;
 end
 
 if cfgcheck(cfg,'multcompare','cluster')
@@ -233,8 +235,10 @@ for i = cfg.meas
                     input{c} = data{c}.data(:,:,i)';
                 end
                 stats{i}.cluster = EasyClusterCorrect(input,datasetinfo,cfg.cluster.statfun,cfg.cluster);
+                stats{i}.mask = stats{i}.cluster.mask;
             case 'fdr'
-                stats{i}.fdr = mafdr(stats{i}.p,'BHFDR',true);
+                stats{i}.fdr = fdr(stats{i}.p);
+                stats{i}.mask = stats{i}.fdr < 0.05;
         end
     elseif cfgcheck(cfg,'multcompare','mean')
         switch cfg.test
