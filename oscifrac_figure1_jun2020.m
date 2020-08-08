@@ -305,6 +305,7 @@ set(gcf,'units','normalized','position',[0 0.5 1 0.5])
 
 %p(1,4).pack('v',{50 50})
 
+%plotdata = repmat(permute(effsizetc.ple,[3 1 2]),49,1,1);
 plotdata = 100*(pledata.post-nanmean(pledata.bl,3))./nanmean(pledata.bl,3);
 pleindx = nansum(nansum(plotdata.*repmat(permute(stats_ple.mask,[3 1 2]),49,1,1),2),3);
 
@@ -321,6 +322,7 @@ delete(H(1));
 
 
 plotdata = 100*(10.^intdata.post-nanmean(10.^intdata.bl,3))./nanmean(10.^intdata.bl,3);
+%plotdata = repmat(permute(effsizetc.int,[3 1 2]),49,1,1);
 intindx = nansum(nansum(plotdata.*repmat(permute(stats_int.mask,[3 1 2]),49,1,1),2),3);
 
 plot_tc_topo(meanpost.mixd.time*1000,permute(plotdata,[2 3 1]),settings,p,{1 1},'color',{'r'})
@@ -337,9 +339,9 @@ delete(H(1));
 
 tmpindx = [0 1 2 3 1 2 3];
 for i = 2:settings.nfreqs
+   %plotdata = repmat(permute(effsizetc.(fields{i+1}),[3 1 2]),49,1,1);
    plotdata = 100*(fbands{i}.post-nanmean(fbands{i}.bl(:,:,end-4:end),3))./nanmean(fbands{i}.bl(:,:,end-4:end),3);
    fbandindx(:,i) = nansum(nansum(plotdata.*repmat(permute(stats_fbands{i}.mask,[3 1 2]),49,1,1),2),3);
-   
    plot_tc_topo(meanpost.mixd.time*1000,permute(plotdata,[2 3 1]),settings,p,{2,ceil((i-1)/3),tmpindx(i)},'avgfunc',@nanmedian);
    p(2,ceil((i-1)/3),tmpindx(i),1).select()
    FixAxes(gca,12)
@@ -419,28 +421,79 @@ for i = 1:length(fields)
 end
 
 
-% 
-% indxmat = abs([pleindx intindx fbandindx(:,2:end)]);
-% anovap = friedman([pleindx intindx fbandindx(:,2:end)]);
-% for i = 1:size(indxmat,2)
-%     for ii = 1:i
-%         mcp(i,ii) = signrank(indxmat(:,i),indxmat(:,ii)); 
-%     end
-% end
 
+indxmat = abs([intindx pleindx fbandindx(:,2:end)]);
+anovap = friedman(indxmat);
+for i = 1:size(indxmat,2)
+    for ii = 1:i
+        mcp(i,ii) = signrank(indxmat(:,i),indxmat(:,ii)); 
+    end
+end
+
+
+% panel c : effect size
+figure
+
+p = panel('no-manage-font');
+
+set(gcf,'units','normalized','position',[0.15 0.3 0.7 0.7])
+
+
+p.pack()
+p.pack({[0 0.7 0.25 0.3]})
+p(1).select()
+b1 = bar([1 2],effsizesum(1:2),'FaceColor',palecol([1 0 0],0.3));
+hold on
+b2 = bar([4:(length(effsizesum)+1)],effsizesum(3:end),'FaceColor',palecol([0 0 1],0.3));
+set(gca,'XTick',[1 2 4:(length(effsizesum)+1)],'XTickLabel',measnames_short)
+e = errorbar([1 2 4:(length(effsizesum)+1)],effsizesum,...
+    effsizesum'-effsizesum_ci(:,1),effsizesum_ci(:,2)-effsizesum',...
+    'LineStyle','none','LineWidth',2,'Color','k');
+ylabel('Summed effect size')
+FixAxes(gca,14)
+set(gca,'XLim',[0 8.75])
+%sigstar_frommat(1:size(depeffsize_sum,2),pdif_boot(:,:,i));
+p(2).select()
+[~,~,cbar]=imagesc_stars(horz(effsizesum)-vert(effsizesum),effsizediff,measnames_short)
+cbar.Label.String = 'Summed effect size difference';
+cbar.Label.FontSize = 12;
+
+p.marginleft = 26;
+Normalize_Clim(gcf,1)
+
+savefig('Fig1c_effsize_sum.fig'); export_fig('Fig1c_effsize_sum.png','-m5')
 
 figure
 
 p = panel('no-manage-font');
 
-bar(mean(indxmat,1))
-hold on
-errorbar(1:8,mean(indxmat,1),std(indxmat,[],1)./sqrt(size(indxmat,1)),'LineStyle','none','Color',[0 0 0])
-%H = notBoxPlot(indxmat);
-%delete([H(:).data])
-set(gca,'XTickLabel',[{'PLE','Fractal intercept'} settings.tfparams.fbandnames(2:end)])
+set(gcf,'units','normalized','position',[0.15 0.3 0.7 0.7])
 
-colormap(lkcmap2)
+
+p.pack()
+p.pack({[0.7 0.7 0.25 0.3]})
+p(1).select()
+b1 = bar([1 2],mean(indxmat(:,1:2),1),'FaceColor',palecol([1 0 0],0.3));
+hold on
+b2 = bar([4:(length(effsizesum)+1)],mean(indxmat(:,3:end),1),'FaceColor',palecol([0 0 1],0.3));
+set(gca,'XTick',[1 2 4:(length(effsizesum)+1)],'XTickLabel',measnames_short)
+%e = errorbar([1 2 4:(length(effsizesum)+1)],effsizesum,...
+%    effsizesum'-effsizesum_ci(:,1),effsizesum_ci(:,2)-effsizesum',...
+%    'LineStyle','none','LineWidth',2,'Color','k');
+ylabel('Summed percent change')
+FixAxes(gca,14)
+set(gca,'XLim',[0 8.75])
+%sigstar_frommat(1:size(depeffsize_sum,2),pdif_boot(:,:,i));
+p(2).select()
+[~,~,cbar]=imagesc_stars(horz(mean(indxmat,1))-vert(mean(indxmat,1)),mcp,measnames_short)
+cbar.Label.String = 'Summed percent change difference difference';
+cbar.Label.FontSize = 12;
+
+p.marginleft = 26;
+Normalize_Clim(gcf,1)
+
+savefig('Fig1c_prcchange_sum.fig'); export_fig('Fig1c_prcchange_sum.png','-m5')
+
 
 
 
