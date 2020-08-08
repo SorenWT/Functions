@@ -277,7 +277,7 @@ skew = sum(bsxfun(@times,score.^3,weights),1) ./ ...
     (sum(bsxfun(@times,score.^2,weights),1).^1.5) /sqrt(N); % skewness of the score function
 skew(iszer) = 0;
 acc = skew/6;  % acceleration
-bcaparam.acc = acc;
+bcaparam.a = acc;
 
 % transform back with bias corrected and acceleration
 z_alpha1 = norminv(alpha/2);
@@ -300,6 +300,7 @@ end
 
 % return
 ci = sort([lower;upper],1);
+bcaparam.type = 'bca';
 end % bootbca()
  
 %-------------------------------------------------------------------------
