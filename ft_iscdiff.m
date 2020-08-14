@@ -6,10 +6,11 @@ end
 
 cfg = setdefault(cfg,'cond',{'Condition1' 'Condition2'});
 cfg = setdefault(cfg,'thresh',0.1);
+cfg = setdefault(cfg,'nrand',1000);
 
 for c = 1:length(data{1}.meas)
    
-   p(c) = Permtest_ISCD({data{1}.data(:,:,c)',data{2}.data(:,:,c)'},1000,'pearson');
+   p(c) = Permtest_ISCD({data{1}.data(:,:,c)',data{2}.data(:,:,c)'},cfg.nrand,'pearson');
    isc1{c} = corr(data{1}.data(:,:,c)','type','pearson');
    isc2{c} = corr(data{2}.data(:,:,c)','type','pearson');
    meanisc1(c) = mean(mean(isc1{c}));

@@ -1,4 +1,4 @@
-function [R,P,c] = imagesc_stars(R,P,labels)
+function [R,P,c] = imagesc_stars(R,P,labels,fsize)
 % plotCorrelationMatrix
 % Plot correlation matrix
 %
@@ -26,6 +26,10 @@ nVar = size(R,2);
 % if labels are not provided, use numbers
 if nargin==1
     labels = num2cell(1:nVar);
+end
+
+if nargin < 4
+   fsize = 18; %swt edit for changing font size 
 end
 
 % compute correlations
@@ -75,7 +79,7 @@ for row = 1 : nVar
             else
                 str = [' '];
             end
-            text(col,row,str,'HorizontalAlignment','center','FontSize',18);
+            text(col,row,str,'HorizontalAlignment','center','FontSize',fsize);
         end
     end
 end
