@@ -107,13 +107,13 @@ if parflag
     filter = sources.avg.filter;
     parfor c = 1:size(sources.pos,1)
         tmp = filter{c}*datacat;
-        u = svd(tmp,'econ');
+        [u,s,v] = svd(tmp,'econ');
         source_datacat(c,:) = u(:,1)'*filter{c}*datacat;
     end
 else
     for c = 1:size(sources.pos,1)
         tmp = sources.avg.filter{c}*datacat;
-        u = svd(tmp,'econ');
+        [u,s,v] = svd(tmp,'econ');
         source_datacat(c,:) = u(:,1)'*sources.avg.filter{c}*datacat;
     end
 end
