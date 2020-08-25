@@ -1,4 +1,4 @@
-function cluster_topoplot(data,chanlocs,sig,sigmask,size)
+function cluster_topoplot(data,chanlocs,sig,sigmask,size,varargin)
 % 
 % if size(sig,1) == 1
 %    sig = sig';
@@ -15,11 +15,19 @@ sig = sig < 0.05;
 sig = sig - sigmask;
 sig(sig < 0) = 0;
 
-if nargin < 5
+if ~exist('size','var') || isempty(size)
    size = 3; 
 end
+
+argsin = varargin;
+
+if ~isempty(argsin)
 topoplot(data,chanlocs,'emarker2',{find(sig),'o','k',size,1},'emarker3',{find(sigmask),'o','w',1.5*size,1},...
-    'electrodes','off','maplimits','maxmin')
+    'electrodes','off','maplimits','maxmin',argsin{:})
+else
+   topoplot(data,chanlocs,'emarker2',{find(sig),'o','k',size,1},'emarker3',{find(sigmask),'o','w',1.5*size,1},...
+    'electrodes','off','maplimits','maxmin') 
+end
 
 
 % topoplot() - plot a topographic map of a scalp data field in a 2-D circular view

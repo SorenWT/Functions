@@ -152,7 +152,9 @@ if CheckInput(varargin,'CLim')
 end
 
 if CheckInput(varargin,'colormap')
-   colormap(EasyParse(varargin,'colormap')) 
+    for i = 1:length(ax)
+   colormap(ax(i),EasyParse(varargin,'colormap')) 
+    end
 end
 
 if CheckInput(varargin,'frame')

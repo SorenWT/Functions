@@ -47,7 +47,7 @@ blueWhiteRed = [createColorGradient([0 0 1],[1 1 1],32);...
 
 % create image
 imagesc(R)
-colormap(blueWhiteRed)
+colormap(gca,blueWhiteRed)
 c = colorbar('eastoutside');
 clim = get(gca,'CLim');
 maxlim = max(abs(clim));
