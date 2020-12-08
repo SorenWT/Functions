@@ -1,4 +1,4 @@
-function stats = isc_mixedeff(datamats,type,covars,mdl)
+function stats = isc_mixedeff(datamats,type,covars,mdl,varargin)
 
 currdir = pwd;
 
@@ -49,6 +49,7 @@ if ~isempty(covars)
     end
 end
 
+if ~isempty(covars)
 allcovars = cat(1,covars{:}); % assume covariates are in table format
 n = fieldnames(allcovars);
 % center quantitative variables
@@ -56,6 +57,7 @@ for i = 1:size(allcovars,2)
     if length(unique(allcovars.(n{i}))) > 3
         allcovars.(n{i}) = allcovars.(n{i})-nanmean(allcovars.(n{i}));
     end
+end
 end
 covars = [];
 
@@ -97,6 +99,9 @@ for i = 1:length(mdlcovars)
 end
 
 
+if CheckInput(varargin,'input') && EasyParse(varargin,'input','isc')
+    allisc = rtoz(alldata);
+else
 switch type
     case {'spearman','pearson','kendall'}
         allisc = rtoz(corr(alldata,'Type',type));
@@ -107,6 +112,7 @@ switch type
         %         allisc = bdiagtomat(alliscvals,size(allisc,1));
         %         allisc = allisc+allisc';
         
+end
 end
 
 InfoDelOut.BRICK_LABS = 'Correlation';

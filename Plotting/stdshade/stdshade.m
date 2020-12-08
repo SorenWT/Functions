@@ -1,8 +1,8 @@
-function [ylim] = stdshade(F,amatrix,acolor,alpha,dimn,method,smth)
-% usage: stdshading(amatrix,alpha,acolor,F,smth)
+function [ylim] = stdshade(F,amatrix,acolor,alpha,tsdimn,method,smth)
+% usage: stdshade(F,amatrix,acolor,alpha,tsdimn,method,smth)
 % plot mean and sem/std coming from a matrix of data.
 %sem/std is shown as shading.
-% - dimn specifies the dimension over which to plot the data (default = 2 -
+% - tsdimn specifies the dimension over which to plot the data (default = 2 -
 % rows are observations)
 % - acolor defines the used color (default is red)
 % - F assignes the used x axis (default is steps of 1).
@@ -14,7 +14,7 @@ function [ylim] = stdshade(F,amatrix,acolor,alpha,dimn,method,smth)
 
 %modified by SWT on 27/06/2019
 
-if dimn == 1
+if tsdimn == 1
     amatrix = amatrix';
 end
 
@@ -46,26 +46,36 @@ end
 
 switch method
     case 'std'
-        astd=nanstd(amatrix); % to get std shading
+        astd = nanstd(amatrix); % to get std shading
     case 'sem'
-        astd=nanstd(amatrix)/sqrt(size(amatrix,1)-1); % to get sem shading
+        astd = nanstd(amatrix)/sqrt(size(amatrix,1)-1); % to get sem shading
     case 'mad'
         astd = mad(amatrix);
     case 'logstd' % std shading when log-scaling data
         astd = nanstd(log10(amatrix));
+    case 'paramci'
+        astd = 1.96*nanstd(amatrix)/sqrt(size(amatrix,1)-1);
+    case 'prctileci'
+        astd(1,:) = prctile(amatrix,2.5,1);
+        astd(2,:) = prctile(amatrix,97.5,1);
 end
 
 if exist('alpha','var')==0 || isempty(alpha)
-    if ~strcmpi(method,'logstd')
+    if strcmpi(method,'prctileci')
+        fill([F fliplr(F)],[astd(2,:) fliplr(astd(1,:))],acolor,'linestyle','none','HandleVisibility','off');
+        acolor='k';
+    elseif ~strcmpi(method,'logstd')
         fill([F fliplr(F)],[amean+astd fliplr(amean-astd)],acolor,'linestyle','none','HandleVisibility','off');
         acolor='k';
     else
-                fill([F fliplr(F)],[amean.*astd fliplr(amean./astd)],acolor,'linestyle','none','HandleVisibility','off');
+        fill([F fliplr(F)],[amean.*astd fliplr(amean./astd)],acolor,'linestyle','none','HandleVisibility','off');
         acolor='k';
     end
 else
-    if ~strcmpi(method,'logstd')
-    fill([F fliplr(F)],[amean+astd fliplr(amean-astd)],acolor, 'FaceAlpha', alpha,'linestyle','none','HandleVisibility','off');
+    if strcmpi(method,'prctileci')
+        fill([F fliplr(F)],[astd(2,:) fliplr(astd(1,:))],acolor,'FaceAlpha',alpha,'linestyle','none','HandleVisibility','off');
+    elseif ~strcmpi(method,'logstd')
+        fill([F fliplr(F)],[amean+astd fliplr(amean-astd)],acolor, 'FaceAlpha', alpha,'linestyle','none','HandleVisibility','off');
     else
             fill([F fliplr(F)],[amean.*astd fliplr(amean./astd)],acolor, 'FaceAlpha', alpha,'linestyle','none','HandleVisibility','off');
     end

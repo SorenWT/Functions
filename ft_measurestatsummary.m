@@ -29,6 +29,7 @@ end
 
 pfact = 2-isfield(stats{1}.cluster,'message');
 
+
 cfg = setdefault(cfg,'thresh',0.1);
 cfg = setdefault(cfg,'cond',{'Condition1','Condition2'});
 if ~isfield(cfg,'test')

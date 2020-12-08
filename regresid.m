@@ -7,4 +7,4 @@ end
 
 y = vert(y);
 
-[~,~,r] = regress(y,[ones(size(x,1)) x]);
+[~,~,r] = regress(y,x);

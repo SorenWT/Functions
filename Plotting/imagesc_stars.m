@@ -69,7 +69,7 @@ axis square; box off
 for row = 1 : nVar
     for col = 1 : nVar
         if row>col % below diagonal
-            str = num2str(R(row,col),2);
+            %str = num2str(R(row,col),2);
             if P(row,col)<0.001
                 str = ['***'];
             elseif P(row,col)<0.01
