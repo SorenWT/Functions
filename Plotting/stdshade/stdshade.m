@@ -50,7 +50,7 @@ switch method
     case 'sem'
         astd = nanstd(amatrix)/sqrt(size(amatrix,1)-1); % to get sem shading
     case 'mad'
-        astd = mad(amatrix);
+        astd = mad(amatrix,1);
     case 'logstd' % std shading when log-scaling data
         astd = nanstd(log10(amatrix));
     case 'paramci'

@@ -26,6 +26,8 @@ if size(b,1) == 1
     b = b';
 end
 
+a(isnan(a)) = []; b(isnan(b)) = [];
+
 if nargin < 3
    labels = {'A','B'}; 
 end
