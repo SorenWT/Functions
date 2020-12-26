@@ -4,6 +4,8 @@ fid = fopen(filename);
 raw = fread(fid,inf);
 str = char(raw');
 
+str = erase(str,'myid'); 
+
 if any(str==newline)
     allstr = tokenize(str,newline);
     allstr(cellfun(@isempty,allstr,'uniformoutput',true)) = [];

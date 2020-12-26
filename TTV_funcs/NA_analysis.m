@@ -169,7 +169,7 @@ settings.tfparams = setdefault(settings.tfparams,'naddple','no');
 settings = setdefault(settings,'steps',{'all'});
 
 if strcmpi(settings.steps{1},'all')
-    settings.steps = {'tf_filter','results','restcorr','FDR','figures'};
+    settings.steps = {'tf_filter','results'};
 end
 
 settings = setdefault(settings,'srate',200);
@@ -196,8 +196,11 @@ end
 
 settings.nfreqs = length(settings.tfparams.fbandnames);
 
-
 settings = setdefault(settings,'pool',8);
+
+if length(settings.pool) < length(settings.steps)
+   settings.pool = repmat(settings.pool,1,length(settings.steps)); 
+end
 
 if isfield(settings.datasetinfo,'label')
     settings.nbchan = length(settings.datasetinfo.label);

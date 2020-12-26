@@ -1,4 +1,4 @@
-function embody_json2map(res)
+function pbody = embody_json2map(res)
 
 for i = 1:length(res)
     xd = res{i}.arrXD; yd = res{i}.arrYD; 
@@ -8,9 +8,19 @@ for i = 1:length(res)
     
     for q = 1:length(xd)
        if xd(q) < pbox2l 
-           pbox1(yd(q)-pboxt,xd(q)-pbox1l) = 1;
+           ycoord = round(yd(q)-pboxt); xcoord = round(xd(q)-pbox1l);
+           if ycoord < 1 || ycoord > size(pbox1,1) || xcoord < 1 || xcoord > size(pbox1,2)
+               warning(['Data point omitted - coordinates y=' num2str(ycoord) ' x=' num2str(xcoord)])
+           else
+               pbox1(ycoord,xcoord) = 1;
+           end
        else
-           pbox2(yd(q)-pboxt,xd(q)-pbox2l) = 1;
+           ycoord = round(yd(q)-pboxt); xcoord = round(xd(q)-pbox2l);
+           if ycoord < 1 || ycoord > size(pbox2,1) || xcoord < 1 || xcoord > size(pbox2,2)
+               warning(['Data point omitted - coordinates y=' num2str(ycoord) ' x=' num2str(xcoord)])
+           else
+               pbox2(ycoord,xcoord) = 1;
+           end
        end
     end
     

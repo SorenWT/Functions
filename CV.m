@@ -5,7 +5,7 @@ if nargin < 2
 end
 
 if any(data < 0)
-    %warning('Using geometric CV with base 10 exponentiation')
+    warning('Using geometric CV with base 10 exponentiation')
     cvout = geocv(10.^data,dim);
 else
     cvout = nanstd(data,[],dim)./nanmean(data,dim);
