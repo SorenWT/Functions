@@ -62,7 +62,7 @@ elseif strcmpi(type,'cmapline') % for plotting the number of significant channel
     y = repmat([yl(2)-ysize*0.04],size(xax));
     z = zeros(size(xax));
     col = sum(sigmask,find(size(sigmask) ~= length(xax)));
-    cindex = linspace(size(sigmask,1),0,64);
+    cindex = linspace(size(sigmask,1),0,size(cmap,1));
     col = cmap(FindClosest(cindex,col,1),:);
     col = permute(col,[3 1 2]);
     

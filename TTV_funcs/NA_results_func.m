@@ -1,20 +1,16 @@
 function NA_results_func(settings)
 
+
 numbands = length(settings.tfparams.fbandnames);
+
+fbands = settings.tfparams.fbandnames;
 
 alloutputs = struct;
 
-if strcmpi(settings.tfparams.method,'hilbert')
-    nerp = numbands;
-else
-    nerp = 1;
+if strcmpi(settings.tfparams.pf_adjust,'yes')
+  alloutputs.alpha_pf = settings.alpha_pf;
+  alloutputs.fbands_adjusted = settings.tfparams.fbands;
 end
-
-%if strcmpi(settings.tfparams.pf_adjust,'yes')
-%  alloutputs.alpha_pf = settings.alpha_pf;
-%  alloutputs.fbands_adjusted = settings.tfparams.fbands;
-%end
-%alloutputs.settings = settings;
 
 save(fullfile(settings.outputdir,[settings.datasetname '_results.mat']),'alloutputs','-v7.3')
 
@@ -104,10 +100,10 @@ if ~strcmpi(settings.datatype,'ECoG') || strcmpi(settings.ecog.method,'roi')
     ersp_ttv_stats = cell(1,numbands);
     ersp_corrstats = cell(1,numbands);
     
-    erp_pt_stats = cell(1,nerp);
-    erp_corrstats = cell(1,nerp);
-    erp_ttv_stats = cell(1,nerp);
-    
+    erp_pt_stats = cell(1,numbands);
+    erp_corrstats = cell(1,numbands);
+    erp_ttv_stats = cell(1,numbands);
+
     opts = struct;
     opts.nrand = 1000;
     
@@ -128,35 +124,31 @@ if ~strcmpi(settings.datatype,'ECoG') || strcmpi(settings.ecog.method,'roi')
         zeromat = zeros(size(allmeas{q}.ttv.real));
         zeromat(find(isnan(allmeas{q}.ttv.real))) = NaN;
         
-        %        ttv_diststats{q} = EasyClusterCorrect({alloutputs.itc.distrealreal(:,:,q),alloutputs.ersp.distrealreal(:,:,q)},settings.datasetinfo,'ft_statfun_fast_signrank',opts);
+        ttv_diststats{q} = EasyClusterCorrect({alloutputs.itc.distrealreal(:,:,q),alloutputs.ersp.distrealreal(:,:,q)},settings.datasetinfo,'ft_statfun_fast_signrank',opts);
         
         ersp_pt_stats{q} = EasyClusterCorrect({permute(squeeze(allmeas{q}.naddersp.diff(:,:,1,:)),[1 3 2]),permute(squeeze(allmeas{q}.naddersp.diff(:,:,2,:)),[1 3 2])},...
             settings.datasetinfo,'ft_statfun_fast_signrank',opts);
         
         ersp_ttv_stats{q} = EasyClusterCorrect({permute(allmeas{q}.ttversp.real,[1 3 2]) permute(zeromat,[1 3 2])},settings.datasetinfo,'ft_statfun_fast_signrank',opts);
         %ersp_corrstats{q} = EasyClusterCorrect({allmeas{q}.naerspindex,allmeas{q}.ttverspindex},settings.datasetinfo,'ft_statfun_correlationT',opts);
-        try
-        if q <= nerp
-            erp_pt_stats{q} = EasyClusterCorrect({permute(squeeze(allmeas{q}.nadderp.diff(:,:,1,:)),[1 3 2]),permute(squeeze(allmeas{q}.nadderp.diff(:,:,2,:)),[1 3 2])},...
-                settings.datasetinfo,'ft_statfun_fast_signrank',opts);
-            erp_ttv_stats{q} = EasyClusterCorrect({permute(allmeas{q}.ttv.real,[1 3 2]) permute(zeromat,[1 3 2])},settings.datasetinfo,'ft_statfun_fast_signrank',opts);
-            %erp_corrstats{q} = EasyClusterCorrect({allmeas{q}.naerpindex,allmeas{q}.ttvindex},settings.datasetinfo,'ft_statfun_correlationT',opts);
-        end
-        catch
-	end
-
+        
+        erp_pt_stats{q} = EasyClusterCorrect({permute(squeeze(allmeas{q}.nadderp.diff(:,:,1,:)),[1 3 2]),permute(squeeze(allmeas{q}.nadderp.diff(:,:,2,:)),[1 3 2])},...
+            settings.datasetinfo,'ft_statfun_fast_signrank',opts);
+        erp_ttv_stats{q} = EasyClusterCorrect({permute(allmeas{q}.ttv.real,[1 3 2]) permute(zeromat,[1 3 2])},settings.datasetinfo,'ft_statfun_fast_signrank',opts);
+        %erp_corrstats{q} = EasyClusterCorrect({allmeas{q}.naerpindex,allmeas{q}.ttvindex},settings.datasetinfo,'ft_statfun_correlationT',opts);
+        
         if strcmpi(settings.comparefreqs,'yes')
-            for c = (q+1):numbands
-                ersp_pt_tcoursestats{q,c} = EasyClusterCorrect({permute(squeeze(allmeas{q}.naddersp.diff(:,:,2,:)-allmeas{q}.naddersp.diff(:,:,1,:)),[1 3 2]),...
-                    permute(squeeze(allmeas{c}.naddersp.diff(:,:,2,:)-allmeas{c}.naddersp.diff(:,:,1,:)),[1 3 2])},...
-                    settings.datasetinfo,'ft_statfun_fast_signrank',opts);
-                ttv_pt_tcoursestats{q,c} = EasyClusterCorrect({permute(allmeas{q}.ttversp.real,[1 3 2]),permute(allmeas{c}.ttversp.real,[1 3 2])},...
-                    settings.datasetinfo,'ft_statfun_fast_signrank',opts);
-            end
+        for c = (q+1):numbands
+            ersp_pt_tcoursestats{q,c} = EasyClusterCorrect({permute(squeeze(allmeas{q}.naddersp.diff(:,:,2,:)-allmeas{q}.naddersp.diff(:,:,1,:)),[1 3 2]),...
+                permute(squeeze(allmeas{c}.naddersp.diff(:,:,2,:)-allmeas{c}.naddersp.diff(:,:,1,:)),[1 3 2])},...
+            settings.datasetinfo,'ft_statfun_fast_signrank',opts);
+            ttv_pt_tcoursestats{q,c} = EasyClusterCorrect({permute(allmeas{q}.ttversp.real,[1 3 2]),permute(allmeas{c}.ttversp.real,[1 3 2])},...
+                settings.datasetinfo,'ft_statfun_fast_signrank',opts);
+        end
         end
     end
     
-    
+
     alloutputs.dist.stats = ttv_diststats;
     alloutputs.ersp.pt.stats = ersp_pt_stats;
     alloutputs.ersp.pt.tcoursestats = ersp_pt_tcoursestats;
@@ -178,29 +170,19 @@ save([settings.outputdir '/' settings.datasetname '_results.mat'],'alloutputs','
 %% Recalculate NA indices based on cluster inclusion and do correlations for cluster stats
 
 for q = 1:numbands
-    tmp = allmeas{q}.naddersp.diff.*alloutputs.ersp.pt.stats{q}.mask;
-    allmeas{q}.naerspindex = squeeze(trapz(tmp(:,:,2,:),2)-trapz(tmp(:,:,1,:),2));
-    if q <= nerp
-try
-        tmp = allmeas{q}.nadderp.diff.*alloutputs.erp.pt.stats{q}.mask;
-        allmeas{q}.naerpindex = squeeze(trapz(tmp(:,:,2,:),2)-trapz(tmp(:,:,1,:),2));
-        tmp = allmeas{q}.ttv.real.*alloutputs.erp.ttv.stats{q}.mask;
-        allmeas{q}.ttvindex = squeeze(trapz(tmp,2));
-catch
-end   
- end
-    tmp = allmeas{q}.ttversp.real.*alloutputs.ersp.ttv.stats{q}.mask;
-    allmeas{q}.ttverspindex = squeeze(trapz(tmp,2));
+   tmp = allmeas{q}.naddersp.diff.*alloutputs.ersp.pt.stats{q}.mask;
+   allmeas{q}.naerspindex = squeeze(trapz(tmp(:,:,2,:),2)-trapz(tmp(:,:,1,:),2));
+   tmp = allmeas{q}.nadderp.diff.*alloutputs.erp.pt.stats{q}.mask;
+   allmeas{q}.naerpindex = squeeze(trapz(tmp(:,:,2,:),2)-trapz(tmp(:,:,1,:),2));
+   tmp = allmeas{q}.ttv.real.*alloutputs.erp.ttv.stats{q}.mask;
+   allmeas{q}.ttvindex = squeeze(trapz(tmp,2));
+   tmp = allmeas{q}.ttversp.real.*alloutputs.ersp.ttv.stats{q}.mask;
+   allmeas{q}.ttverspindex = squeeze(trapz(tmp,2));
 end
 
 for q = 1:numbands
-    try
-        ersp_corrstats{q} = EasyClusterCorrect({allmeas{q}.naerspindex,allmeas{q}.ttverspindex},settings.datasetinfo,'ft_statfun_spearman',opts);
-        if q <= nerp
-            erp_corrstats{q} = EasyClusterCorrect({allmeas{q}.naerpindex,allmeas{q}.ttvindex},settings.datasetinfo,'ft_statfun_spearman',opts);
-        end
-    catch
-    end
+    ersp_corrstats{q} = EasyClusterCorrect({allmeas{q}.naerspindex,allmeas{q}.ttverspindex},settings.datasetinfo,'ft_statfun_spearman',opts);
+    erp_corrstats{q} = EasyClusterCorrect({allmeas{q}.naerpindex,allmeas{q}.ttvindex},settings.datasetinfo,'ft_statfun_spearman',opts);
 end
 
 alloutputs.ersp.corr.stats = ersp_corrstats;
@@ -227,7 +209,7 @@ for q = 1:numbands
             alloutputs.ersp.pt.effsize.vals(c,q) = NaN;
         end
         try
-            alloutputs.ersp.ttv.effsize.stats{c,q} = mes(allmeas{q}.ttverspindex(c,:),squeeze(trapz(allmeas{q}.ttversp.pseudo(c,:,:),2)),'auroc');
+            alloutputs.ersp.ttv.effsize.stats{c,q} = mes(allmeas{q}.ttverspindex(c,:),squeeze(trapz(allmeas{q}.ttversp.pseudo(c,aucindex,:),2)),'auroc');
             alloutputs.ersp.ttv.effsize.vals(c,q) = alloutputs.ersp.ttv.effsize.stats{c,q}.auroc;
         catch
             alloutputs.ersp.ttv.effsize.stats{c,q} = NaN;
@@ -237,8 +219,8 @@ for q = 1:numbands
 end
 
 %% Calculation of ERP nonadditivity
-try
-for q = 1:nerp
+
+for q = 1:numbands
     alloutputs.erp.pt.sig(q,:) = signrank_mat(allmeas{q}.naerpindex,zeros(size(allmeas{q}.naerpindex)),2);
     alloutputs.erp.ttv.sig(q,:) = signrank_mat(allmeas{q}.ttvindex,zeros(size(allmeas{q}.ttvindex)),2);
     [r p] = nancorr(allmeas{q}.naerpindex',allmeas{q}.ttvindex','Type','Spearman');
@@ -256,15 +238,13 @@ for q = 1:nerp
             alloutputs.erp.pt.effsize.vals(c,q) = NaN;
         end
         try
-            alloutputs.erp.ttv.effsize.stats{c,q} = mes(allmeas{q}.ttvindex(c,:),squeeze(trapz(allmeas{q}.ttv.pseudo(c,:,:),2)),'auroc');
+            alloutputs.erp.ttv.effsize.stats{c,q} = mes(allmeas{q}.ttvindex(c,:),squeeze(trapz(allmeas{q}.ttv.pseudo(c,aucindex,:),2)),'auroc');
             alloutputs.erp.ttv.effsize.vals(c,q) = alloutputs.erp.ttv.effsize.stats{c,q}.auroc;
         catch
             alloutputs.erp.ttv.effsize.stats{c,q} = NaN;
             alloutputs.erp.ttv.effsize.vals(c,q) = NaN;
         end
     end
-end
-catch
 end
 
 alloutputs.filesorder = allmeas{1}.filesorder;

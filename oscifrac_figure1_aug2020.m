@@ -34,6 +34,7 @@ for i = 1:length(files)
     catch
     end
 end
+save('oscifrac_data_apr2021.mat','-v7.3')
 
 for c = 1:length(fields)
    meandata.(fields{c}).fourierspctrm = permute(meandata.(fields{c}).fourierspctrm,[1 3 2 4]); 
@@ -62,21 +63,25 @@ post = cell(1,size(meanpost.frac.fourierspctrm,1));
 bl = post;
 postint = post;
 blint = bl;
+postindx = find(meandata.(fields{c}).time >= 0);
+    blindx = find(meandata.mixd.time < 0);
+    blindx = blindx((end-length(postindx)+1):end);
 
 
+frange = intersect(find(meanpost.frac.freq > settings.tfparams.fbands{2}(1)),find(meanpost.frac.freq < settings.tfparams.fbands{end}(2)));
 parfor i = 1:size(meanpost.frac.fourierspctrm,1)
     for ii = 1:size(meanpost.frac.fourierspctrm,2)
         for iii = 1:size(meanpost.frac.fourierspctrm,4)
-            tmp = log10(meanpost.frac.freq);
-            pow = log10(squeeze(meanpost.frac.fourierspctrm(i,ii,:,iii)));
+            tmp = log10(meanpost.frac.freq(frange));
+            pow = log10(squeeze(meanpost.frac.fourierspctrm(i,ii,frange,iii)));
             lintmp = vert(linspace(tmp(1),tmp(end),length(tmp)));
             pow = interp1(tmp,pow,lintmp);
             p = polyfit(lintmp,pow,1);
             post{i}(1,ii,iii) = -p(1);
             postint{i}(1,ii,iii) = p(2);
             
-            tmp = log10(meanbl.frac.freq);
-            pow = log10(squeeze(meanbl.frac.fourierspctrm(i,ii,:,iii)));
+            tmp = log10(meanbl.frac.freq(frange));
+            pow = log10(squeeze(meanbl.frac.fourierspctrm(i,ii,frange,iii)));
             lintmp = vert(linspace(tmp(1),tmp(end),length(tmp)));
             pow = interp1(tmp,pow,lintmp);
             p = polyfit(lintmp,pow,1);
@@ -94,7 +99,7 @@ intdata.bl = cat(1,blint{:});
 
 for c = 1:3
     cfg = []; cfg.channel = {'MEG'}; cfg.avgoverchan = 'yes'; cfg.latency = [0 0.75];
-    cfg.frequency = 'all'; cfg.method = 'montecarlo'; cfg.statistic = 'ft_statfun_actvsblT';
+    cfg.frequency = [2 85]; cfg.method = 'montecarlo'; cfg.statistic = 'ft_statfun_actvsblT';
     cfg.correctm = 'cluster'; cfg.clusteralpha = 0.05; cfg.clusterstatistic = 'maxsum';
     cfg.tail = 0; cfg.clustertail = 0; cfg.alpha = 0.025; cfg.numrandomization = 2000;
     cfg.parameter = 'fourierspctrm';
@@ -206,7 +211,7 @@ stats_int = EasyClusterCorrect({permute(intdata.post,[2 1 3]) repmat(mean(intdat
 %     meanple(:,newindx) = mean(squeeze((mean(pledata.post,2)-mean(mean(pledata.bl,2),3))./(gc1+gc2.*mean(mean(pledata.bl,2),3))).*statmask_time,2);
 % end
 
-settings = NA_alpha_pf(settings);
+%settings = NA_alpha_pf(settings);
 settings.nfreqs = 6;
 settings.tfparams.fbands = repmat({[] [2 4] [4 8] [8 13] [13 30] [30 85]},49,1);
 
@@ -250,7 +255,9 @@ for c = 1:3
     end
     
     plotdata = meandata.(fields{c});
+    plotdata.freq = plotdata.freq([frange(1)-1; frange]);
     %plotdata.fourierspctrm(find(plotdata.fourierspctrm < 0)) = min(min(min(min(plotdata.fourierspctrm(find(plotdata.fourierspctrm > 0))))));
+    plotdata.fourierspctrm = plotdata.fourierspctrm(:,:,[frange(1)-1; frange],:);
     plotdata.fourierspctrm(find(plotdata.fourierspctrm < 0)) = NaN;
     plotdata.fourierspctrm(:,1,:,:) = nanmean(plotdata.fourierspctrm,2); % make the first channel the mean so you can use plotting mask
     plotdata.mask = logical(cat(3,zeros(1,size(stats{c}.mask,2),length(plotdata.time)-size(stats{c}.mask,3)),stats{c}.mask));
@@ -262,9 +269,24 @@ for c = 1:3
     cfg.layout = 'neuromag306mag.lay'; cfg.channel = 1; cfg.latency = [0 0.75];
     cfg.interactive = 'no';  cfg.masknans = 'no';
     ft_singleplotTFR(cfg,plotdata);
+    hold on
+    delete(findobj('parent',gca,'type','image'))
+    
+    db_plot = 10*log10(plotdata.fourierspctrm(:,1,:,plotdata.time>-0.22)./nanmean(plotdata.fourierspctrm(:,1,:,plotdata.time<0),4));
+    db_plot(imag(db_plot)~=0) = NaN;
+    db_plot = squeeze(nanmean(db_plot,1));
+    s=pcolor(plotdata.time(plotdata.time>-0.22),plotdata.freq,db_plot);
+    s.EdgeAlpha = 0;
+    colorbar
+    hold on
+    
+    uistack(findobj('parent',gca,'type','contour'),'top')
+    
+    
+    
     xlabel('Time (s)')
     ylabel('Frequency (Hz)')
-    set(gca,'XLim',[-0.2 0.75])
+    set(gca,'XLim',[-0.2 0.75],'YLim',[2 85],'YScale','log')
     hold on
     line([0 0],get(gca,'YLim'),'Color',[0 0 0],'LineWidth',2)
     title(fields{c},'FontSize',14)
@@ -283,11 +305,13 @@ p(2,2).marginleft = 40;
 p(1).marginbottom = 40;
 p.margintop = 8;
 cbars = findall(gcf,'type','colorbar');
-cbars(2).Label.String = 'ERSP (dB)';
-cbars(2).Label.FontSize = 14;
+for i = 1:length(cbars)
+cbars(i).Label.String = 'ERSP (dB)';
+cbars(i).FontSize = 14;
+end
 set(gcf,'color','w')
 
-savefig('Fig1a_erspplot.fig'); export_fig('Fig1a_erspplot.png','-m4')
+savefig('Fig4a_erspplot.fig'); export_fig('Fig4a_erspplot.png','-m5')
 
 %part 2
 
@@ -308,6 +332,7 @@ set(gcf,'units','normalized','position',[0 0 1 1])
 
 plotdata = effsizetc.ple;
 %plotdata = 100*(pledata.post-nanmean(pledata.bl,3))./nanmean(pledata.bl,3);
+%plotdata = permute(plotdata,[2 3 1]);
 %pleindx = nansum(nansum(plotdata.*repmat(permute(stats_ple.mask,[3 1 2]),49,1,1),2),3);
 
 plot_tc_topo(meanpost.mixd.time*1000,plotdata+rand(102,38,49)*0.001,settings,p,{1 2},'color',{'r'})
@@ -321,11 +346,13 @@ ylabel('Percent change from baseline (%)')
 title('Fractal PLE')
 FixAxes(gca,16)
 set(gca,'XLim',[min(meanpost.mixd.time) max(meanpost.mixd.time)]*1000)
-H = sigstar({[min(meanpost.mixd.time) max(meanpost.mixd.time)]*1000},stats_ple.negclusters.prob,0,18);
-delete(H(1));
+clust_sigmasks(gca,stats_ple,1)
+%H = sigstar({[min(meanpost.mixd.time) max(meanpost.mixd.time)]*1000},stats_ple.negclusters.prob,0,18);
+%delete(H(1));
 
 
 %plotdata = 100*(10.^intdata.post-nanmean(10.^intdata.bl,3))./nanmean(10.^intdata.bl,3);
+%plotdata = permute(plotdata,[2 3 1]);
 plotdata = effsizetc.int;
 %intindx = nansum(nansum(plotdata.*repmat(permute(stats_int.mask,[3 1 2]),49,1,1),2),3);
 
@@ -339,8 +366,9 @@ title('Fractal intercept')
 ylabel('Percent change from baseline (%)')
 %ylabel('Pseudo effect size')
 set(gca,'XLim',[min(meanpost.mixd.time) max(meanpost.mixd.time)]*1000)
-H = sigstar({[min(meanpost.mixd.time) max(meanpost.mixd.time)]*1000},stats_int.negclusters.prob,0,18);
-delete(H(1));
+clust_sigmasks(gca,stats_int,1)
+%H = sigstar({[min(meanpost.mixd.time) max(meanpost.mixd.time)]*1000},stats_int.negclusters.prob,0,18);
+%delete(H(1));
 
 %yl=Normalize_Ylim([p(1,1,1).axis,p(1,2,1).axis],0);
 %Set_Ylim([p(1,1,1).axis,p(1,2,1).axis],[0 yl(2)]);
@@ -351,6 +379,7 @@ tmpindx = [0 1 2 3 1 2 3];
 for i = 2:settings.nfreqs
    plotdata = effsizetc.(fields{i+1});
    %plotdata = 100*(fbands{i}.post-nanmean(fbands{i}.bl(:,:,end-4:end),3))./nanmean(fbands{i}.bl(:,:,end-4:end),3);
+   %plotdata = permute(plotdata,[2 3 1]);
    %fbandindx(:,i) = nansum(nansum(plotdata.*repmat(permute(stats_fbands{i}.mask,[3 1 2]),49,1,1),2),3);
    plot_tc_topo(meanpost.mixd.time*1000,plotdata+rand(102,38,49)*0.001,settings,p,{2,ceil((i-1)/3),tmpindx(i)},'avgfunc',@nanmedian);
    p(2,ceil((i-1)/3),tmpindx(i),1).select()
@@ -363,20 +392,21 @@ for i = 2:settings.nfreqs
    title(settings.tfparams.fbandnames{i})
    set(gca,'XLim',[min(meanpost.mixd.time) max(meanpost.mixd.time)]*1000)
    ax = gca;
-   H = sigstar({[min(meanpost.mixd.time) max(meanpost.mixd.time)]*1000},stats_int.negclusters.prob,0,18);
-   delete(H(1));
+   clust_sigmasks(gca,stats_fbands{i},1)
+   %H = sigstar({[min(meanpost.mixd.time) max(meanpost.mixd.time)]*1000},stats_int.negclusters.prob,0,18);
+   %delete(H(1));
 end
 
 colormap(lkcmap2)
 
 
-savefig('Fig1b_param_tc_cohen.fig'); export_fig('Fig1b_param_tc_cohen.png','-m4')
+savefig('Fig4b_param_tc_cohen.fig'); export_fig('Fig4b_param_tc_cohen.png','-m5')
 
 fbandnames = {'delta','theta','alpha','beta','gamma'};
 
 %effsizefun = @(post,bl,mask) nansum(nansum((nanmean(post-nanmean(bl,3),1)./nanstd(post-nanmean(bl,3),[],1)).*mean(mask,1)));
 %effsizefun = @(post,bl,mask) nansum(nansum((post-nanmean(bl,3))./nanstd(bl,[],3)));
-effsizefun = @(post,bl,mask) nansum(nansum(abs(nanmedian(100*(post-nanmean(bl,3))./nanmean(bl,3),1)).*mean(mask,1),3),2);
+%effsizefun = @(post,bl,mask) nansum(nansum(abs(nanmedian(100*(post-nanmean(bl,3))./nanmean(bl,3),1)).*mean(mask,1),3),2);
 effsizefun = @(post,bl,mask) nansum(nansum(abs(nanmean(post-nanmean(bl,3),1)./((repmat(nanstd(nanmean(bl,3),[],1),1,1,size(post,3))+nanstd(post,[],1))/2)).*mean(mask,1),3),2);
 
 effsizedifffun = @(effsizefun,post1,bl1,mask1,post2,bl2,mask2) effsizefun(post1,bl1,mask1)-effsizefun(post2,bl2,mask2);
@@ -420,7 +450,7 @@ for i = 1:length(fields)
    end
    mask1 = repmat(permute(allstats{i}.mask,[3 1 2]),size(pledata.post,1),1,1);
    effsizesum(i) = effsizefun(post1,bl1,mask1);
-   effsizesum_ci(i,:) = bootci(10000,effsizefun,post1,bl1,mask1);
+   effsizesum_ci(i,:) = bootci(10000,{effsizefun,post1,bl1,mask1},'Options',struct('UseParallel',true));
    for ii = 1:(i-1)
        if ii == 1
            post2 = 10.^intdata.post;
@@ -433,21 +463,21 @@ for i = 1:length(fields)
            bl2 = repmat(nanmean(fbands{ii-1}.bl,3),1,1,size(fbands{ii-1}.bl,3));
        end
        mask2 = repmat(permute(allstats{ii}.mask,[3 1 2]),size(pledata.post,1),1,1);
-       [~,bootstat,S] = bootci_swt(10000,@(p1,b1,m1,p2,b2,m2)effsizedifffun(effsizefun,p1,b1,m1,p2,b2,m2),...
-            post1,bl1,mask1,post2,bl2,mask2);
+       [~,bootstat,S] = bootci_swt(10000,{@(p1,b1,m1,p2,b2,m2)effsizedifffun(effsizefun,p1,b1,m1,p2,b2,m2),...
+            post1,bl1,mask1,post2,bl2,mask2},'Options',struct('UseParallel',true));
         effsizediff(i,ii) = ibootp(0,bootstat,S);
    end
 end
 
 
 
-indxmat = abs([intindx pleindx fbandindx(:,2:end)]);
-anovap = friedman(indxmat);
-for i = 1:size(indxmat,2)
-    for ii = 1:i
-        mcp(i,ii) = signrank(indxmat(:,i),indxmat(:,ii)); 
-    end
-end
+% indxmat = abs([intindx pleindx fbandindx(:,2:end)]);
+% anovap = friedman(indxmat);
+% for i = 1:size(indxmat,2)
+%     for ii = 1:i
+%         mcp(i,ii) = signrank(indxmat(:,i),indxmat(:,ii)); 
+%     end
+% end
 
 
 % panel c : effect size
@@ -473,7 +503,7 @@ FixAxes(gca,14)
 set(gca,'XLim',[0 8.75])
 %sigstar_frommat(1:size(depeffsize_sum,2),pdif_boot(:,:,i));
 p(2).select()
-[~,~,cbar]=imagesc_stars(horz(effsizesum)-vert(effsizesum),effsizediff,measnames_short)
+[~,~,cbar]=imagesc_stars(vert(effsizesum)-horz(effsizesum),effsizediff,measnames_short)
 FixAxes(gca,14)
 cbar.Label.String = 'Summed absolute percent change difference';
 cbar.Label.FontSize = 14;
@@ -483,7 +513,7 @@ Normalize_Clim(gcf,1)
 p.marginbottom = 20;
 p.marginright = 30;
 
-savefig('Fig1c_effsize_sum_cohend.fig'); export_fig('Fig1c_effsize_sum_cohend.png','-m5')
+savefig('Fig4c_effsize_sum.fig'); export_fig('Fig4c_effsize_sum.png','-m5')
 
 figure
 
