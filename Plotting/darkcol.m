@@ -1,4 +1,4 @@
-function c = palecol(c,palefact)
+function c = darkcol(c,palefact)
 
 if nargin < 2
    palefact = 0.5; 

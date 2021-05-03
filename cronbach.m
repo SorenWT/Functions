@@ -58,6 +58,10 @@ if nanflag
 else
     k=size(X,2);
     
+    rmnan = any(isnan(X),2);
+    X(rmnan,:) = [];
+    
+    
     % Calculate the variance of the items' sum
     tmp = nansum(X'); tmp(tmp==0) = [];
     VarTotal=var(sum(X'));

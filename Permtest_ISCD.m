@@ -1,4 +1,4 @@
-function [p,orig_stat] = Permtest_ISCD(data,nperm,type,varargin)
+function res = Permtest_ISCD(data,nperm,type,varargin)
 % Permtest_ISCD uses a permutation test to test for difference in means
 % between two intersubject correlation or intersubject distance matrices
 %
@@ -36,12 +36,16 @@ end
 for i = 1:length(data)
     switch type
         case {'spearman','pearson','kendall'}
-            corrmat{i} = corr(data{i},'Type',type);
+            corrmat{i} = corr(data{i},'Type',type,'rows','complete');
             corrvals{i} = vert(rtoz(belowDiag(corrmat{i})));
         case 'eucdist'
             corrmat{i} = eucdist(data{i});
             corrvals{i} = vert(belowDiag(corrmat{i}));
             %corrvals{i} = log(corrvals{i});
+    end
+    
+    if any(any(isnan(data{i})))
+       warning(['Data matrix ' num2str(i) ' contains NaNs - these observations will be ignored. Ignore these at your own risk!']) 
     end
 end
 
@@ -50,9 +54,9 @@ switch stattype
         [~,~,~,stat] = ttest2(corrvals{1},corrvals{2});
         orig_stat = stat.tstat;
     case 'meandiff'
-        orig_stat = mean(corrvals{1}) - mean(corrvals{2});
+        orig_stat = nanmean(corrvals{1}) - nanmean(corrvals{2});
     case 'mediandiff'
-        orig_stat = median(corrvals{1}) - median(corrvals{2});
+        orig_stat = nanmedian(corrvals{1}) - nanmedian(corrvals{2});
     case 'ranksum'
         [~,~,stat] = ranksum(corrvals{1},corrvals{2});
         orig_stat = stat.zval;
@@ -76,7 +80,7 @@ for i = 1:nperm
     for ii = 1:length(data)
         switch type
             case {'spearman','pearson','kendall'}
-                newcorrmat{ii} = corr(alldata(:,design == ii),'Type',type);
+                newcorrmat{ii} = corr(alldata(:,design == ii),'Type',type,'rows','complete');
                 newcorrvals{ii} = rtoz(belowDiag(newcorrmat{ii}));
             case 'eucdist'
                 newcorrmat{ii} = eucdist(alldata(:,design==ii));
@@ -90,9 +94,9 @@ for i = 1:nperm
             [~,~,~,stat] = ttest2(newcorrvals{1},newcorrvals{2});
             perm_stat(i) = stat.tstat;
         case 'meandiff'
-            perm_stat(i) = mean(newcorrvals{1}) - mean(newcorrvals{2});
+            perm_stat(i) = nanmean(newcorrvals{1}) - nanmean(newcorrvals{2});
         case 'mediandiff'
-            perm_stat(i) = median(newcorrvals{1}) - median(newcorrvals{2});
+            perm_stat(i) = nanmedian(newcorrvals{1}) - nanmedian(newcorrvals{2});
         case 'ranksum'
             [~,~,stat] = ranksum(newcorrvals{1},newcorrvals{2});
             perm_stat(i) = stat.zval;
@@ -114,3 +118,6 @@ if p > 0.5
 end
 
 p = 2*p; %two-sided test
+
+res.pperm = p; res.statobs = orig_stat; res.stattype = stattype; res.type = type; 
+res.permstat = perm_stat; res.corrmats = corrmat; res.corrvals = corrvals;

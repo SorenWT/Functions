@@ -8,6 +8,12 @@ if CheckInput(varargin,'mask')
     roimask = EasyParse(varargin,'mask');
 end
 
+if ~CheckInput(varargin,'material')
+    mtrl = [0.45 0.55 0 20 1];
+else
+    mtrl = EasyParse(varargin,'material');
+end
+
 if ~isempty(atlas)
     for c = 1:length(sourcemodel.pos)
         if isfield(atlas,'parcellation')
@@ -45,6 +51,7 @@ end
 
 cort_size = length(find(sourcemodel.brainstructure == 1));
 
+%clr = [0.87 0.87 0.87];
 clr = [0.7804 0.7609 0.6627].*1.1;
 
 
@@ -62,9 +69,10 @@ bnd.pnt = sourcemodel.pos(find(sourcemodel.brainstructure == 1),:);
 trindx = find(max(sourcemodel.tri,[],2) <= cort_size);
 bnd.tri = sourcemodel.tri(trindx,:);
 
-ft_plot_mesh(bnd,'facealpha',vert(1-plotmask(sourcemodel.brainstructure==1)),'edgealpha',0,'vertexcolor',repmat(clr,sum(sourcemodel.brainstructure==1),1));
+ft_plot_mesh(bnd,'edgealpha',0,'vertexcolor',repmat(clr,sum(sourcemodel.brainstructure==1),1));
 hold on
 ft_plot_mesh(bnd, 'vertexcolor', vert(plotdata(sourcemodel.brainstructure==1)), 'facealpha', double(vert(plotmask(sourcemodel.brainstructure==1))), 'maskstyle', 'opacity','edgealpha',0);
+material(mtrl)
 try
     set(gca,'CLim',[min(vert(plotdata(sourcemodel.brainstructure==1)).*vert(plotmask(sourcemodel.brainstructure==1))) max(vert(plotdata(sourcemodel.brainstructure==1)).*vert(plotmask(sourcemodel.brainstructure==1)))]);
 catch
@@ -89,9 +97,10 @@ trindx = find(min(sourcemodel.tri,[],2) >= cort_size);
 bnd.tri = sourcemodel.tri(trindx,:);
 bnd.tri = bnd.tri - cort_size;
 view(90,0)
-ft_plot_mesh(bnd,'facealpha',vert(1-plotmask(sourcemodel.brainstructure==2)),'edgealpha',0,'vertexcolor',repmat(clr,sum(sourcemodel.brainstructure==2),1));
+ft_plot_mesh(bnd,'edgealpha',0,'vertexcolor',repmat(clr,sum(sourcemodel.brainstructure==2),1));
 hold on
 ft_plot_mesh(bnd, 'vertexcolor', vert(plotdata(sourcemodel.brainstructure==2)), 'facealpha', double(vert(plotmask(sourcemodel.brainstructure==2))), 'maskstyle', 'opacity','edgealpha',0);
+material(mtrl)
 try
     set(gca,'CLim',[min(vert(plotdata(sourcemodel.brainstructure==2)).*vert(plotmask(sourcemodel.brainstructure==2))) max(vert(plotdata(sourcemodel.brainstructure==2)).*vert(plotmask(sourcemodel.brainstructure==2)))]);
 catch
@@ -111,9 +120,10 @@ bnd.pnt = sourcemodel.pos(find(sourcemodel.brainstructure == 1),:);
 trindx = find(max(sourcemodel.tri,[],2) <= cort_size);
 bnd.tri = sourcemodel.tri(trindx,:);
 
-ft_plot_mesh(bnd,'facealpha',vert(1-plotmask(sourcemodel.brainstructure==1)),'edgealpha',0,'vertexcolor',repmat(clr,sum(sourcemodel.brainstructure==1),1));
+ft_plot_mesh(bnd,'edgealpha',0,'vertexcolor',repmat(clr,sum(sourcemodel.brainstructure==1),1));
 hold on
 ft_plot_mesh(bnd, 'vertexcolor', vert(plotdata(sourcemodel.brainstructure==1)), 'facealpha', double(vert(plotmask(sourcemodel.brainstructure==1))), 'maskstyle', 'opacity','edgealpha',0);
+material(mtrl)
 try
     set(gca,'CLim',[min(vert(plotdata(sourcemodel.brainstructure==1)).*vert(plotmask(sourcemodel.brainstructure==1))) max(vert(plotdata(sourcemodel.brainstructure==1)).*vert(plotmask(sourcemodel.brainstructure==1)))]);
 catch
@@ -136,9 +146,10 @@ trindx = find(min(sourcemodel.tri,[],2) >= cort_size);
 bnd.tri = sourcemodel.tri(trindx,:);
 bnd.tri = bnd.tri - cort_size;
 
-ft_plot_mesh(bnd,'facealpha',vert(1-plotmask(sourcemodel.brainstructure==2)),'edgealpha',0,'vertexcolor',repmat(clr,sum(sourcemodel.brainstructure==2),1));
+ft_plot_mesh(bnd,'edgealpha',0,'vertexcolor',repmat(clr,sum(sourcemodel.brainstructure==2),1));
 hold on
 ft_plot_mesh(bnd, 'vertexcolor', vert(plotdata(sourcemodel.brainstructure==2)), 'facealpha', double(vert(plotmask(sourcemodel.brainstructure==2))), 'maskstyle', 'opacity','edgealpha',0);
+material(mtrl)
 try
     set(gca,'CLim',[min(vert(plotdata(sourcemodel.brainstructure==2)).*vert(plotmask(sourcemodel.brainstructure==2))) max(vert(plotdata(sourcemodel.brainstructure==2)).*vert(plotmask(sourcemodel.brainstructure==2)))]);
 catch

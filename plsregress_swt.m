@@ -236,6 +236,7 @@ else
     end
 end
 
+end
 
 %------------------------------------------------------------------------------
 %SIMPLS Basic SIMPLS.  Performs no error checking.
@@ -321,6 +322,7 @@ if nargout > 2
         Yscores(:,i) = ui;
     end
 end
+end
 
 
 %------------------------------------------------------------------------------
@@ -357,7 +359,7 @@ CVfun = @(Xtr,Ytr,Xtst,Ytst) sseCV(Xtr,Ytr,Xtst,Ytst,ncomp);
 sumsqerr = crossval(CVfun,X,Y,cvpType,cvp,'mcreps',mcreps,'options',ParOptions);
 mse(:,1:ncomp+1) = reshape(sum(sumsqerr,1)/(nTest*mcreps), [2,ncomp+1]);
 
-
+end
 %------------------------------------------------------------------------------
 %SSECV Sum of squared errors for cross-validation
 function sumsqerr = sseCV(Xtrain,Ytrain,Xtest,Ytest,ncomp)
@@ -390,5 +392,39 @@ for i = 1:ncomp
 
     Y0reconstructed = XscoresTest(:,1:i) * Yloadings(:,1:i)';
     sumsqerr(2,i+1) = sum(sum(abs(Y0test - Y0reconstructed).^2, 2));
+end
+end
+
+function rout = rCV(Xtrain,Ytrain,Xtest,Ytest,ncomp)
+
+XmeanTrain = mean(Xtrain);
+YmeanTrain = mean(Ytrain);
+X0train = bsxfun(@minus, Xtrain, XmeanTrain);
+Y0train = bsxfun(@minus, Ytrain, YmeanTrain);
+
+% Get and center the test data
+X0test = bsxfun(@minus, Xtest, XmeanTrain);
+Y0test = bsxfun(@minus, Ytest, YmeanTrain);
+
+% Fit the full model, models with 1:(ncomp-1) components are nested within
+[Xloadings,Yloadings,~,~,Weights] = simpls(X0train,Y0train,ncomp);
+XscoresTest = X0test * Weights;
+
+% Return error for as many components as the asked for.
+outClass = superiorfloat(Xtrain,Ytrain);
+sumsqerr = zeros(2,ncomp+1,outClass); % this will get reshaped to a row by CROSSVAL
+
+% Sum of squared errors for the null model
+sumsqerr(1,1) = sum(sum(abs(X0test).^2, 2));
+sumsqerr(2,1) = sum(sum(abs(Y0test).^2, 2));
+
+% Compute sum of squared errors for models with 1:ncomp components
+for i = 1:ncomp
+    X0reconstructed = XscoresTest(:,1:i) * Xloadings(:,1:i)';
+    sumsqerr(1,i+1) = sum(sum(abs(X0test - X0reconstructed).^2, 2));
+
+    Y0reconstructed = XscoresTest(:,1:i) * Yloadings(:,1:i)';
+    sumsqerr(2,i+1) = sum(sum(abs(Y0test - Y0reconstructed).^2, 2));
+end
 end
 

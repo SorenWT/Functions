@@ -5,7 +5,13 @@ if ~exist('mask','var') || isempty(mask)
     mask = imread('~/Desktop/masters/embody-test/embody/matlab/mask.png');
     mask = [zeros(522,2) mask zeros(522,2)];
     mask = [zeros(1,175); mask; zeros(1,175)];
-    %inmask = find(mask > 128);
+    inmask = find(mask > 128);
+end
+
+if isvector(mapmat)
+    tmp = zeros(size(mask));
+    tmp(inmask) = mapmat;
+    mapmat = tmp; clear tmp
 end
 
 if ~exist('base','var') || isempty(base)

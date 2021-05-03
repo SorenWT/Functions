@@ -59,6 +59,7 @@ cfg.headmodel = vol;
 sources = ft_sourceanalysis(cfg,eegdata);
 
 % Get voxel time courses
+roidata = struct;
 voxeldata = struct;
 datacat = cat(2,eegdata.trial{:});
 source_datacat = zeros(size(sources.pos,1),size(datacat,2));

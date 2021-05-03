@@ -66,8 +66,8 @@ if cbOrder == 1
  end;
  else
      %SWT edit: supply custom adjacency matrix
-     nTuplen = 1:numConds;
-     adjacencyMatrix = adjmatrix;
+     nTuples = 1:numConds;
+     adjacencyMatrix = adjmatrix*reps;
  end
 else
  %%%CONSTRUCT N-TUPLE CORRESPONDING TO EACH NODE WHEN cbOrder > 1

@@ -37,6 +37,11 @@ else
     sclfact = 1;
 end
 
+anan = isnan(a); bnan = isnan(b);
+allnan = (anan+bnan)>0;
+a(allnan) = []; b(allnan) = [];
+
+
 B = regress(b,horzcat(ones(length(a),1),a));
 B(2) = B(2)./sclfact;
 a = a.*sclfact;
@@ -48,9 +53,13 @@ else
 end
 
 if CheckInput(varargin,'Cov')
-    [corrrho,corrp] = partialcorr(a,b,EasyParse(varargin,'Cov'),'Type',type);
+    [corrrho,corrp] = partialcorr(a,b,indexme(EasyParse(varargin,'Cov'),~allnan,1:size(EasyParse(varargin,'Cov'),2)),'Type',type);
 else
     [corrrho,corrp] = corr(a,b,'Type',type);
+end
+
+if CheckInput(varargin,'externalp')
+   corrp = EasyParse(varargin,'externalp'); 
 end
 
 l = lines;
@@ -81,13 +90,19 @@ set(gca, ...
 set(xl,'FontSize',20)
 set(yl,'FontSize',20)
 
+if strcmpi(type,'spearman')
+    rstring = '\rho';
+else
+    rstring = 'r';
+end
+
 if CheckInput(varargin,'Plot') && EasyParse(varargin,'Plot','r')
-    tb = annotation('textbox','String',{['\rho = ' num2str(round(corrrho,3))]},'FitBoxToText','on','LineStyle','none','FontSize',14);
+    tb = annotation('textbox','String',{[rstring ' = ' num2str(round(corrrho,3))]},'FitBoxToText','on','LineStyle','none','FontSize',14);
     tbsize = get(tb,'Position');
     delete(tb)
     edges = [pos(1) pos(2) pos(1)+pos(3) pos(2)+pos(4)]; %left bottom right top
     tb = annotation('textbox','Position',[edges(3)-tbsize(3)-pos(3)*0.05 edges(4)-tbsize(4)-pos(4)*0.05 tbsize(3) tbsize(4)],...
-        'String',{['\rho = ' num2str(round(corrrho,3))]},'FitBoxToText','on','LineStyle','none','FontSize',14);
+        'String',{[rstring ' = ' num2str(round(corrrho,3))]},'FitBoxToText','on','LineStyle','none','FontSize',14);
 elseif CheckInput(varargin,'Plot') && EasyParse(varargin,'Plot','Beta')
     tb = annotation('textbox','String',{['\beta = ' num2str(round(B(2),3))]},'FitBoxToText','on','LineStyle','none','FontSize',14);
     tbsize = get(tb,'Position');
@@ -95,14 +110,15 @@ elseif CheckInput(varargin,'Plot') && EasyParse(varargin,'Plot','Beta')
     edges = [pos(1) pos(2) pos(1)+pos(3) pos(2)+pos(4)]; %left bottom right top
     tb = annotation('textbox','Position',[edges(3)-tbsize(3)-pos(3)*0.05 edges(4)-tbsize(4)-pos(4)*0.05 tbsize(3) tbsize(4)],...
         'String',{['\beta = ' num2str(round(B(2),3))]},'FitBoxToText','on','LineStyle','none','FontSize',14);
+elseif CheckInput(varargin,'Plot') && EasyParse(varargin,'Plot','off')
 elseif ~CheckInput(varargin,'Plot')
-    tb = annotation('textbox','String',{['rho = ' num2str(round(corrrho,3))];['p = ' num2str(round(corrp,3,'significant'))]},...
+    tb = annotation('textbox','String',{[rstring ' = ' num2str(round(corrrho,3))];['p = ' num2str(round(corrp,3,'significant'))]},...
         'FitBoxToText','on','LineStyle','none','FontSize',14);
     tbsize = get(tb,'Position');
     delete(tb)
     edges = [pos(1) pos(2) pos(1)+pos(3) pos(2)+pos(4)]; %left bottom right top
     tb = annotation('textbox','Position',[edges(3)-tbsize(3)-pos(3)*0.05 edges(4)-tbsize(4)-0.05*pos(4) tbsize(3) tbsize(4)],...
-        'String',{['\rho = ' num2str(round(corrrho,3))];['p = ' num2str(round(corrp,3,'significant'))]},'FitBoxToText','on','LineStyle','none','FontSize',14);
+        'String',{[rstring ' = ' num2str(round(corrrho,3))];['p = ' num2str(round(corrp,3,'significant'))]},'FitBoxToText','on','LineStyle','none','FontSize',14);
 end
 
 if isnan(corrrho) && isnan(corrp)
