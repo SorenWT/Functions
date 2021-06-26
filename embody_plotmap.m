@@ -24,7 +24,9 @@ base2=base(10:531,33:203,:); % single image base
 load('hotcoldmap');
 
 M=max(abs(mapmat(:))); % max range for colorbar
-
+if M==0
+    M = eps;
+end
 
 imagesc(base2);
 axis('off');

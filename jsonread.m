@@ -24,3 +24,5 @@ if any(str==newline) && multiline
 else
     obj = jsondecode(str);
 end
+
+fclose(fid);

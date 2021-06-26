@@ -105,9 +105,9 @@ elseif not(hascategories) && isvector(data)
 elseif ismatrix(data)
     for n=1:size(data, 2)
         thisData = data(:, n);
-        violins(n) = Violin(thisData, n, varargin{:});
+        violins(n) = Violin(thisData, n+offset, varargin{:});
     end
-    set(gca, 'xtick', 1:size(data, 2));
+    set(gca, 'xtick', [1:size(data, 2)]+offset);
     if hascategories && length(cats) == size(data, 2)
         set(gca, 'xticklabels', cats);
     end

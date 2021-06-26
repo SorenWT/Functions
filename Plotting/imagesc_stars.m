@@ -1,4 +1,4 @@
-function [R,P,c] = imagesc_stars(R,P,labels,fsize)
+function [R,P,c,t] = imagesc_stars(R,P,labels,fsize,dobelowdiag)
 % plotCorrelationMatrix
 % Plot correlation matrix
 %
@@ -32,21 +32,33 @@ if nargin < 4
    fsize = 18; %swt edit for changing font size 
 end
 
+if nargin < 5
+   dobelowdiag = 1; 
+end
+
+if size(R,1) ~= size(R,2)
+   dobelowdiag = 0; 
+end
+
 % compute correlations
 %[R,P] = corrcoef(X,'rows','pairwise');
 
 % hide above-diagonal values by making r values above the diagonal 0 and
 % p values above the diagonal 1
 [rowIndex,colIndex] = find(~isnan(R));
+if dobelowdiag
 R(colIndex>rowIndex) = 0;
 P(colIndex>rowIndex) = 1;
+end
 
 % create colormap
 blueWhiteRed = [createColorGradient([0 0 1],[1 1 1],32);...
     createColorGradient([1 1 1],[1 0 0],32)];
 
 % create image
-imagesc(R)
+Rmask = zeros(size(R));
+Rmask(~isnan(R)) = R(~isnan(R));
+imagesc(Rmask)
 colormap(gca,blueWhiteRed)
 c = colorbar('eastoutside');
 clim = get(gca,'CLim');
@@ -54,21 +66,25 @@ maxlim = max(abs(clim));
 caxis([-maxlim maxlim])
 set(gcf,'color','w')
 set(gca,'TickLabelInterpreter','none')
-set(gca,'XTick',1:nVar)
+set(gca,'XTick',1:size(R,2))
+if dobelowdiag
 set(gca,'XTickLabels',labels)
+end
 nChar = cellfun(@length,labels);
 if any(nChar>1)
     set(gca,'XTickLabelRotation',45)
 end
-set(gca,'YTick',1:nVar)
+set(gca,'YTick',1:size(R,1))
+if dobelowdiag
 set(gca,'YTicklabels',labels)
+end
 set(gca,'TickLength',[0 0])
 axis square; box off
 
 % add text displaying r-values with asterisks for significance
-for row = 1 : nVar
-    for col = 1 : nVar
-        if row>col % below diagonal
+for row = 1 : size(R,1)
+    for col = 1 : size(R,2)
+        if ~dobelowdiag || row>col % below diagonal
             %str = num2str(R(row,col),2);
             if P(row,col)<0.001
                 str = ['***'];
@@ -76,6 +92,8 @@ for row = 1 : nVar
                 str = ['**'];
             elseif P(row,col)<0.05
                 str = ['*'];
+            elseif P(row,col)<0.1
+                str = ['\diamondsuit'];
             else
                 str = [' '];
             end
@@ -85,8 +103,14 @@ for row = 1 : nVar
 end
 
 % add legend for significance
-text(nVar*0.8,1,{'*   p<0.05','**  p<0.01','*** p<0.001'},...
-    'HorizontalAlignment','Left')
+if dobelowdiag
+t = text(nVar*0.8,1,{'\diamondsuit   p<0.1','*   p<0.05','**  p<0.01','*** p<0.001'},...
+    'HorizontalAlignment','Left');
+else
+   t = text(nVar+0.5,0.5,{'\diamondsuit   p<0.1','*   p<0.05','**  p<0.01','*** p<0.001'},...
+    'HorizontalAlignment','Left');
+end
+uistack(t,'top')
 
 end
 

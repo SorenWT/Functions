@@ -36,7 +36,7 @@ setenv('PATH','/usr/local/fsl/bin:/anaconda3/bin:/Library/Frameworks/Python.fram
 system(['R -e ''source("' fullfile(path,funcname) '"); cvtest_matlab("'...
     fullfile(currdir,filein) '","' fullfile(currdir,fileout) '")'''])
 
-output = jsonread(fullfile(currdir,fileout));
+output = jsonread(fullfile(currdir,fileout),0);
 
 p = output.p_value;
 teststat = output.D_AD;

@@ -9,9 +9,13 @@ end
 
 [xi,yi,zi] = sphere(nfaces);
 
+if length(X) > 1
 stretchfact(1) = (max(X)-min(X)); 
 stretchfact(2) = (max(Y)-min(Y));
 stretchfact(3) = (max(Z)-min(Z));
+else
+    stretchfact = [1 1 1];
+end
 
 for i = 1:length(X)
     xplot{i} = xi.*siz(i)*stretchfact(1)+X(i);

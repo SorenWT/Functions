@@ -1,10 +1,10 @@
 function p = pls_plot(plsmdl,ncomps,plotlabels,xlabels,ylabels,varargin)
 % this function makes a standard plot for a pls model defined by plsregress_perm
-% 
-% Inputs: 
+%
+% Inputs:
 %     plsmdl: a model from the plsregress_perm function
 %     ncomps: number of components to plot
-%     plotlabels: labels for the X and Y datasets 
+%     plotlabels: labels for the X and Y datasets
 %     xlabels: labels for the x variables
 %     ylabels: labels for the y variables
 % Optional inputs:
@@ -46,11 +46,15 @@ if ~exist('ylabels','var') || isempty(ylabels)
 end
 
 for i = 1:length(coeffplots)
-   if strcmpi(coeffplots{i}{2},'posture') || strcmpi(coeffplots{i}{2},'embody')
-      plotwidth(i) = 0.5;
-   else
-       plotwidth(i) = 1;
-   end
+    if strcmpi(coeffplots{i}{2},'posture')
+        plotwidth(i) = 0.5;
+    elseif strcmpi(coeffplots{i}{2},'embody') & size(plsmdl.(coeffplots{i}{1}),1) > length(unique(EasyParse(argsin,'embodyatlas')))
+        plotwidth(i) = 2;
+    elseif strcmpi(coeffplots{i}{2},'embody')
+        plotwidth(i) = 0.5;
+    else
+        plotwidth(i) = 1;
+    end
 end
 plotwidth = (100./sum(plotwidth))*plotwidth;
 plotwidth = mat2cell(plotwidth,1,ones(1,length(plotwidth)));
@@ -98,13 +102,13 @@ for q = 1:ncomps
             case 'barh'
                 p(pindx{:},q,2,i).select()
                 l = lines;
-                b = barh(plsmdl.(coeffplots{i}{1}),'facecolor',palecol(l(i,:)));
+                b = barh(plsmdl.(coeffplots{i}{1})(:,q),'facecolor',palecol(l(i,:)));
                 hold on
                 if isfield(plsmdl,[coeffplots{i}{1} '_boot'])
                     e = errorbar(plsmdl.(coeffplots{i}{1})(:,q),1:length(plsmdl.(coeffplots{i}{1})(:,q)),1.96*std(plsmdl.([coeffplots{i}{1} '_boot'])(:,q,:),[],3),...
                         'horizontal','LineStyle','none','LineWidth',2,'Color','k');
                 end
-                set(gca,'XTick',[1:size(plsmdl.(coeffplots{i}{1}),1)],'XTickLabel',labs)
+                set(gca,'YTick',[1:size(plsmdl.(coeffplots{i}{1}),1)],'YTickLabel',labs)
                 ylabel('Loading');
                 FixAxes(gca,14)
             case 'wordcloud'
@@ -115,26 +119,55 @@ for q = 1:ncomps
                 close(f)
             case 'embody'
                 atlas = EasyParse(argsin,'embodyatlas');
-                p(pindx{:},q,2,i).select()
                 
-                map = vect2vol(plsmdl.(coeffplots{i}{1})(:,q),atlas);
-                embody_plotmap(map)
-                set(gca,'YDir','reverse')
-                cbar = colorbar;
-                cbar.Label.String = 'Loading'; cbar.FontSize = 14;
+                emos = [{'ANGER'}    {'CONTEMPT'}    {'DISGUST'}    {'ENVY'}    {'FEAR'}    {'HAPPINESS'}    {'PRIDE'}    {'SADNESS'}    {'SHAME'}    {'SURPRISE'}];
+                
+                if length(plsmdl.(coeffplots{i}{1})(:,q)) == length(unique(atlas))
+                    p(pindx{:},q,2,i).select()
+                    map = vect2vol(plsmdl.(coeffplots{i}{1})(:,q),atlas);
+                    embody_plotmap(map)
+                    set(gca,'YDir','reverse')
+                    cbar = colorbar;
+                    cbar.Label.String = 'Loading'; cbar.FontSize = 14;
+                else
+                    theseloads = reshape(plsmdl.(coeffplots{i}{1})(:,q),sum(unique(atlas)>0),[]);
+                    if ncomps ==1
+                        dims = numSubplots(size(theseloads,2),1.5); dims = fliplr(dims);
+                    else
+                        dims = numSubplots(size(theseloads,2),2.5); %dims = fliplr(dims);
+                    end
+                    
+                    emos = repmat(emos,1,size(theseloads,2)/10);
+                    p(pindx{:},q,2,i).pack(dims(1),dims(2))
+                    for qq = 1:size(theseloads,2)
+                        [i1,i2] = ind2sub(dims,qq);
+                        p(pindx{:},q,2,i,i1,i2).select()
+                        axs(qq) = gca;
+                        map = vect2vol(theseloads(:,qq),atlas);
+                        embody_plotmap(map)
+                        set(gca,'YDir','reverse')
+                        title(emos{qq});
+                    end
+                    Normalize_Clim(axs,1);
+                    set(gca,'YDir','reverse')
+                    cbar = colorbar;
+                    cbar.Label.String = 'Loading'; cbar.FontSize = 14;
+                end
                 
             case 'posture'
                 %if CheckInput(argsin,'postureweights') % translate back to posture feature space in case the model was done on components
                 %    posweights = EasyParse(varargin,'postureweights'); % this should be a table
                 %else
-                    posweights = array2table(horz(plsmdl.(coeffplots{i}{1})(:,q)),'VariableNames',labs); % otherwise, it's assumed that the model weights are the full posture dataset
+                posweights = array2table(horz(plsmdl.(coeffplots{i}{1})(:,q)),'VariableNames',labs); % otherwise, it's assumed that the model weights are the full posture dataset
                 %end
                 if CheckInput(argsin,'postureweights')
-                   posweights = ttimes(posweights,EasyParse(varargin,'postureweights')); 
+                    posweights = ttimes(posweights,EasyParse(varargin,'postureweights'));
+                else
+                    posweights = ttimes(posweights,25);
                 end
                 
                 p(pindx{:},q,2,i).select()
-                posturescreen_plot_ang(posweights)
+                postureplot(posweights)
         end
     end
     

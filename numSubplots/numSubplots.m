@@ -1,4 +1,4 @@
-function [p,n]=numSubplots(n)
+function [p,n]=numSubplots(n,colrowrat)
 % function [p,n]=numSubplots(n)
 %
 % Purpose
@@ -24,7 +24,11 @@ function [p,n]=numSubplots(n)
 %
 %
 % Rob Campbell - January 2010
-   
+% Modified by SWT to fit different display sizes   
+
+if nargin < 2
+   colrowrat = 2.5; 
+end
     
 while isprime(n) & n>4, 
     n=n+1;
@@ -53,7 +57,7 @@ end
 
 %Reformat if the column/row ratio is too large: we want a roughly
 %square design 
-while p(2)/p(1)>2.5
+while p(2)/p(1)>colrowrat
     N=n+1;
     [p,n]=numSubplots(N); %Recursive!
 end

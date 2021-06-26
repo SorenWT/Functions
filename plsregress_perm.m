@@ -29,78 +29,78 @@ stats.r = r;
 
 plsmdl = struct;
 
-if strcmpi(permmethod,'cv')    
-    for q = 1:nboot
-        cvp = cvpartition(strat,'Holdout',0.25);
-        Xtrain = X(training(cvp),:); Ytrain = Y(training(cvp),:);
-        Xtest = X(except(1:size(X,1),find(training(cvp))),:); Ytest = Y(except(1:size(Y,1),find(training(cvp))),:); 
-        [XLhold(:,:,q),YLhold(:,:,q)] = plsregress_swt(Xtrain,Ytrain,ncomp);
-        
-        [~,~,trans_x] = procrustes(XL,XLhold(:,:,q),'Scaling',false);
-         [~,~,trans_y] = procrustes(YL,YLhold(:,:,q),'Scaling',false);
-%         for i = 1:size(trans_x.T,2)
-%            trans_x.T(find(abs(trans_x.T(:,i)) == max(abs(trans_x.T(:,i)))),i) = 1;
-%            trans_x.T(find(trans_x.T(:,i) ~= 1),i) = 0;
-%         end
-%         for i = 1:size(trans_y.T,2)
-%            trans_y.T(find(abs(trans_y.T(:,i)) == max(abs(trans_y.T(:,i)))),i) = 1;
-%            trans_y.T(find(trans_y.T(:,i) ~= 1),i) = 0;
-%         end
-%         XLhold_rot(:,:,q) = XLhold(:,:,q)*trans_x.T; % reorder components, but don't change them otherwise
-%         YLhold_rot(:,:,q) = YLhold(:,:,q)*trans_x.T; % reorder components, but don't change them otherwise
-%         
-        
-        T = (abs(trans_x.T)+abs(trans_y.T))./2;
-        for i = 1:size(T,2)
-           T(find(abs(T(:,i)) == max(abs(T(:,i)))),i) = 1;
-           T(find(T(:,i) ~= 1),i) = 0;
+switch permmethod
+    case 'cv'
+        for q = 1:nboot
+            cvp = cvpartition(strat,'Holdout',0.33);
+            Xtrain = X(training(cvp),:); Ytrain = Y(training(cvp),:);
+            Xtest = X(except(1:size(X,1),find(training(cvp))),:); Ytest = Y(except(1:size(Y,1),find(training(cvp))),:);
+            [XLhold(:,:,q),YLhold(:,:,q)] = plsregress_swt(Xtrain,Ytrain,ncomp);
+            
+            [~,~,trans_x] = procrustes(XL,XLhold(:,:,q),'Scaling',false);
+            [~,~,trans_y] = procrustes(YL,YLhold(:,:,q),'Scaling',false);
+            %         for i = 1:size(trans_x.T,2)
+            %            trans_x.T(find(abs(trans_x.T(:,i)) == max(abs(trans_x.T(:,i)))),i) = 1;
+            %            trans_x.T(find(trans_x.T(:,i) ~= 1),i) = 0;
+            %         end
+            %         for i = 1:size(trans_y.T,2)
+            %            trans_y.T(find(abs(trans_y.T(:,i)) == max(abs(trans_y.T(:,i)))),i) = 1;
+            %            trans_y.T(find(trans_y.T(:,i) ~= 1),i) = 0;
+            %         end
+            %         XLhold_rot(:,:,q) = XLhold(:,:,q)*trans_x.T; % reorder components, but don't change them otherwise
+            %         YLhold_rot(:,:,q) = YLhold(:,:,q)*trans_x.T; % reorder components, but don't change them otherwise
+            %
+            
+            T = (abs(trans_x.T)+abs(trans_y.T))./2;
+            for i = 1:size(T,2)
+                T(find(abs(T(:,i)) == max(abs(T(:,i)))),i) = 1;
+                T(find(T(:,i) ~= 1),i) = 0;
+            end
+            
+            XLhold_rot(:,:,q) = XLhold(:,:,q)*T; % reorder components, but don't change them otherwise
+            YLhold_rot(:,:,q) = YLhold(:,:,q)*T;
+            allT(:,:,q) = T;
+            
+            
+            %[~,XLhold_rot(:,:,q)] = procrustes(XLhold,XLhold,'Scaling',false);
+            %[~,YLhold_rot(:,:,q)] = procrustes(YLhold,YLhold,'Scaling',false);
+            
+            %tmp = corr(Xtest*XLhold_rot(:,:,q),Ytest*YLhold_rot(:,:,q));
+            tmp = corr(Xtest*XLhold(:,:,q),Ytest*YLhold(:,:,q));
+            perf(:,q) = tmp(find(eye(size(tmp))));
+            %cvres(:,q) = crossval(@(xtr,ytr,xts,yts)plspredict(xtr,ytr,xts,yts,ncomp),X,Y,'Holdout',0.25);
+            
+            %         for i = 1:nperm
+            %             permX = X(randperm(size(X,1)),:);
+            %             permY = Y(randperm(size(Y,1)),:);
+            %             cvperm(:,q,i) = crossval(@(xtr,ytr,xts,yts)plspredict(xtr,ytr,xts,yts,ncomp),permX,permY,'Holdout',0.25);
+            %         end
         end
         
-        XLhold_rot(:,:,q) = XLhold(:,:,q)*T; % reorder components, but don't change them otherwise
-        YLhold_rot(:,:,q) = YLhold(:,:,q)*T;
-        allT(:,:,q) = T;
-
+        stats.pperm = (1-nanmean(perf>0,2))';
+        stats.allholdperf = perf;
+        stats.meanholdperf = mean(perf,2)';
         
-        %[~,XLhold_rot(:,:,q)] = procrustes(XLhold,XLhold,'Scaling',false);
-        %[~,YLhold_rot(:,:,q)] = procrustes(YLhold,YLhold,'Scaling',false);
+        plsmdl.holdperf = mean(perf,2)';
         
-        %tmp = corr(Xtest*XLhold_rot(:,:,q),Ytest*YLhold_rot(:,:,q));
-        tmp = corr(Xtest*XLhold(:,:,q),Ytest*YLhold(:,:,q));
-        perf(:,q) = tmp(find(eye(size(tmp))));
-        %cvres(:,q) = crossval(@(xtr,ytr,xts,yts)plspredict(xtr,ytr,xts,yts,ncomp),X,Y,'Holdout',0.25);
+        %     meancvres = mean(cvres,2);
+        %     meancvperm = squeeze(mean(cvperm,2));
+        %
+        %     stats.cvres = cvres; stats.cvperm = cvperm;
+        %
+        %     stats.pperm = 1-nanmean(meancvres>meancvperm');
         
-%         for i = 1:nperm
-%             permX = X(randperm(size(X,1)),:);
-%             permY = Y(randperm(size(Y,1)),:);
-%             cvperm(:,q,i) = crossval(@(xtr,ytr,xts,yts)plspredict(xtr,ytr,xts,yts,ncomp),permX,permY,'Holdout',0.25);
-%         end
-    end
-    
-    stats.pperm = (1-nanmean(perf>0,2))';
-    stats.allholdperf = perf;
-    stats.meanholdperf = mean(perf,2)';
-    
-    plsmdl.holdperf = mean(perf,2)';
-    
-%     meancvres = mean(cvres,2);
-%     meancvperm = squeeze(mean(cvperm,2));
-%     
-%     stats.cvres = cvres; stats.cvperm = cvperm;
-%     
-%     stats.pperm = 1-nanmean(meancvres>meancvperm');
-    
-elseif strcmpi(permmethod,'orig') | strcmpi(permmethod,'resub')
-    
-    for i = 1:nperm
-        permX = X(randperm(size(X,1)),:);
-        permY = Y(randperm(size(Y,1)),:);
-        
-        [~,~,XSperm,YSperm,~,~,mseperm(:,:,i),permstat] = plsregress_swt(permX,permY,ncomp);
-        sings_perm(i,:) = permstat.sings;
-        tmp = corr(XSperm,YSperm); rperm(i,:) = tmp(find(eye(size(tmp))));
-    end
-    stats.sings_perm = sings_perm; stats.rperm = rperm; 
-    stats.pperm = 1-nanmean(stats.sings>sings_perm); % one-tailed test
+    case {'orig','resub'}
+        for i = 1:nperm
+            permX = X(randperm(size(X,1)),:);
+            permY = Y(randperm(size(Y,1)),:);
+            
+            [~,~,XSperm,YSperm,~,~,mseperm(:,:,i),permstat] = plsregress_swt(permX,permY,ncomp);
+            sings_perm(i,:) = permstat.sings;
+            tmp = corr(XSperm,YSperm); rperm(i,:) = tmp(find(eye(size(tmp))));
+        end
+        stats.sings_perm = sings_perm; stats.rperm = rperm;
+        stats.pperm = 1-nanmean(stats.sings>sings_perm); % one-tailed test
 end
 
 plsmdl.XL = XL; plsmdl.YL = YL;

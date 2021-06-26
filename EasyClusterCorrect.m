@@ -53,7 +53,8 @@ if ~isfield(opts,'designtype')
    switch statfun
        case {'ft_statfun_signrank','ft_statfun_fast_signrank','ft_statfun_spearman',...
                'ft_statfun_depsamplesT','ft_statfun_friedman','ft_statfun_partspearman',...
-               'ft_statfun_depsamplesregrT','ft_statfun_actvsblT'}
+               'ft_statfun_depsamplesregrT','ft_statfun_actvsblT','ft_statfun_depsamplesFunivariate',...
+               'ft_statfun_depsamplesFmultivariate'}
             opts.designtype = 'dep';
        otherwise
            opts.designtype = 'indep';
@@ -203,7 +204,7 @@ if length(datasetinfo.label) > 1
     cfg.neighbours = neighbs;
 end
 
-if strcmpi(statfun,'ft_statfun_indepsamplesF') || strcmpi(statfun,'ft_statfun_reverse_indepsamplesF')
+if contains(statfun,'depsamplesF') %strcmpi(statfun,'ft_statfun_indepsamplesF') || strcmpi(statfun,'ft_statfun_reverse_indepsamplesF')
     cfg.tail = 1; cfg.clustertail = 1; cfg.alpha = 0.025; cfg.clusteralpha = 0.05;
 else
     cfg.tail = 0; cfg.clustertail = 0; cfg.alpha = 0.025; cfg.clusteralpha = 0.05;
