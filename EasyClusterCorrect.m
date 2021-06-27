@@ -220,11 +220,13 @@ end
 if ~isfield(opts,'external')
     design = zeros(1,size(cat(2,data{:}),2));
     currindx = 1;
-    for c = 1:length(data)
-        design(1,currindx:size(data{c},2)) = 1;
-        currindx = currindx+size(data{c},2);
-    end
-    design = design+1;
+%     for c = 1:length(data)
+%         design(1,currindx:size(data{c},2)) = 1;
+%         currindx = currindx+size(data{c},2);
+%     end
+%     design = design+1;
+    design = Make_designVect(cellfun(@(d)size(d,2),data));
+    design = max(design)+1-design; % flip the order just to keep things consistent with before
 else
     design = opts.external;
 end
