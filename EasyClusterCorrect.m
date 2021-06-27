@@ -45,7 +45,7 @@ opts = setdefault(opts,'channel',{'all'});
 
 if length(datasetinfo.label) >= 32
     opts = setdefault(opts,'distmethod','distance');
-elseif length(datasetinfo.label) > 1
+else
     opts = setdefault(opts,'distmethod','triangulation');
 end
 
