@@ -1,6 +1,4 @@
 function [p,result] = corrplot_hist(X,Y,varargin)
-% pretty much same as proc_moder_grpdif but only taking one input and
-% plotting it
 
 argsin = varargin;
 

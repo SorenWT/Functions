@@ -171,6 +171,12 @@ tmp = tblcommand.Properties.VariableNames;
 indx = find(strcmpi(tmp,'InputFile'));
 % put inputfile at the end
 tblcommand = tblcommand(:,[except(1:size(tblcommand,2),indx) indx]);
+if CheckInput(varargin,'nocrossrelations') && EasyParse(varargin,'nocrossrelations','true')
+   %tblcommand(tblcommand.grp==0,:) = []; 
+   tblcommand{:,3:end-1} = tblcommand{:,3:end-1}.*(tblcommand.grp~=0); % make all the cross-relations zero, but keep them in
+end
+
+
 writetable(tblcommand,fullfile(pwd,'filestbl.txt'),'Delimiter',' ')
 !awk 'NR > 1{print line" \\"}{line=$0;}END{print $0" "}' filestbl.txt > filestbl2.txt
 

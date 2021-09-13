@@ -5,6 +5,8 @@ argsin = varargin;
 argsin = setdefault(argsin,'rows','pairwise');
 argsin = setdefault(argsin,'type','spearman');
 
+x = x.*nanmask(~isinf(x)); y = y.*nanmask(~isinf(y));
+
 [r,p] = corr(x,y,argsin{:});
 
 for i = 1:size(x,2)

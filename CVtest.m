@@ -6,29 +6,29 @@ function [p,teststat] = CVtest(data)
 if iscell(data)
     vertdata = cellfun(@vert,data,'UniformOutput',false);
     newdat = cat(1,vertdata{:});
-    grp = Make_designVect(cellfun(@length,data,'UniformOutput',true))';
+    grp = Make_designVect(cellfun(@(d)size(d,1),vertdata,'UniformOutput',true))';
 else
     newdat = reshape(data,[],1);
     grp = Make_designVect([size(data,1) size(data,1)])';
 end
 
-datatbl = array2table([newdat grp],'VariableNames',{'X','G'});
-
-nanindx = find(isnan(newdat));
-if ~isempty(nanindx)
-    datatbl(nanindx,:) = [];
-end
-
 currdir = pwd;
 
-writetable(datatbl,fullfile(currdir,'datatbl.csv'))
+for i = 1:size(newdat,2)
+    datatbl{i} = array2table([newdat(:,i) grp],'VariableNames',{'X','G'});
+    nanindx = find(isnan(newdat(:,i)));
+    if ~isempty(nanindx)
+        datatbl{i}(nanindx,:) = [];
+    end
+    writetable(datatbl{i},fullfile(currdir,'datatbl.xlsx'),'Sheet',i)
+end
 
 path = which('CVtest');
 
 path = erase(path,'CVtest.m');
 
 funcname = 'cvtest_matlab.R';
-filein = 'datatbl.csv';
+filein = 'datatbl.xlsx';
 fileout = 'output.json';
 
 setenv('PATH','/usr/local/fsl/bin:/anaconda3/bin:/Library/Frameworks/Python.framework/Versions/3.6/bin:/Library/Frameworks/Python.framework/Versions/3.5/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/opt/X11/bin')
@@ -38,8 +38,8 @@ system(['R -e ''source("' fullfile(path,funcname) '"); cvtest_matlab("'...
 
 output = jsonread(fullfile(currdir,fileout),0);
 
-p = output.p_value;
-teststat = output.D_AD;
+p = extractfield(output,'p_value');
+teststat = extractfield(output,'D_AD');
 
 system(['rm ' filein])
 system(['rm ' fileout])

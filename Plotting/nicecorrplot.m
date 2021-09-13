@@ -18,6 +18,14 @@ if EasyParse(varargin,'RemoveOutliers','on')
     b(rmoutliers) = [];
 end
 
+l = lines;
+argsin = varargin;
+argsin = setdefault(argsin,'scatterclr',palecol(l(1,:),0.33));
+scatterclr = EasyParse(argsin,'scatterclr');
+
+argsin = setdefault(argsin,'lineclr','r');
+lineclr = EasyParse(argsin,'lineclr');
+
 if size(a,1) == 1
     a = a';
 end
@@ -27,7 +35,7 @@ if size(b,1) == 1
 end
 
 if nargin < 3
-   labels = {'A','B'}; 
+    labels = {'A','B'};
 end
 
 if mean(abs(a)) < 1e-6
@@ -40,6 +48,10 @@ end
 anan = isnan(a); bnan = isnan(b);
 allnan = (anan+bnan)>0;
 a(allnan) = []; b(allnan) = [];
+
+ainf = isinf(a); binf = isinf(b);
+allinf = (ainf+binf)>0;
+a(allinf) = []; b(allinf) = [];
 
 
 B = regress(b,horzcat(ones(length(a),1),a));
@@ -55,20 +67,20 @@ end
 if CheckInput(varargin,'Cov')
     [corrrho,corrp] = partialcorr(a,b,indexme(EasyParse(varargin,'Cov'),~allnan,1:size(EasyParse(varargin,'Cov'),2)),'Type',type);
 else
-    [corrrho,corrp] = corr(a,b,'Type',type);
+    [corrrho,corrp] = corr(a,b,'rows','pairwise','Type',type);
 end
 
 if CheckInput(varargin,'externalp')
-   corrp = EasyParse(varargin,'externalp'); 
+    corrp = EasyParse(varargin,'externalp');
 end
 
 l = lines;
 
-h = scatter(a,b,96,palecol(l(1,:),0.33),'filled');
+h = scatter(a,b,96,scatterclr,'filled');
 xl = xlabel(labels{1},'FontSize',16);
 yl = ylabel(labels{2},'FontSize',16);
 hold on;
-f = plot(linspace(min(a),max(a),1000),B(1)+B(2)*linspace(min(a),max(a),1000),'r');
+f = plot(linspace(min(a),max(a),1000),B(1)+B(2)*linspace(min(a),max(a),1000),'color',lineclr);
 ax = gca;
 pos = ax.Position;
 
@@ -97,7 +109,7 @@ else
 end
 
 if CheckInput(varargin,'Plot') && EasyParse(varargin,'Plot','r')
-p
+    p
 elseif CheckInput(varargin,'Plot') && EasyParse(varargin,'Plot','Beta')
     tb = annotation('textbox','String',{['\beta = ' num2str(round(B(2),3))]},'FitBoxToText','on','LineStyle','none','FontSize',14);
     tbsize = get(tb,'Position');
@@ -117,7 +129,7 @@ elseif ~CheckInput(varargin,'Plot')
 end
 
 if isnan(corrrho) && isnan(corrp)
-   delete(tb) 
+    delete(tb)
 end
 
 FixAxes(gca,14)

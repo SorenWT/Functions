@@ -10,7 +10,7 @@ loc = EasyParse(argsin,'loc');
 argsin = removeargs(argsin,{'loc'});
 
 
-f = figure;
+fig = figure;
 s = scatterhist(X,Y,argsin{:});
 
 switch loc
@@ -19,9 +19,32 @@ switch loc
         p(pindx{:},1).pack('h',{80 20})
         p(pindx{:},2).pack('h',{80 20})
         
-        p(pindx{:},1,1).select(s(2));
         p(pindx{:},2,1).select(s(1));
-        p(pindx{:},2,2).select(s(3));
+        xl = get(p(pindx{:},2,1).axis,'XLim');
+        yl = get(p(pindx{:},2,1).axis,'YLim');
+
+        % do the histograms manually because the plotting function keeps
+        % messing it up
+        p(pindx{:},1,1).select();
+        [f,xi] = ksdensity(X);
+        plot(xi,f)
+        ax = gca;
+        set(gca,'XLim',xl,'XTick',[])
+        axis off
+        ax.XAxis.Visible = 'on';
+        
+                p(pindx{:},2,2).select();
+        [f,yi] = ksdensity(Y);
+        plot(f,yi)
+        ax = gca;
+        set(gca,'YLim',yl,'YTick',[])
+        axis off
+        ax.YAxis.Visible = 'on';
+
+        
+        %p(pindx{:},2,1).select(s(1));
+        %p(pindx{:},2,2).select(s(3));
 end
 
-close(f)
+
+close(fig)

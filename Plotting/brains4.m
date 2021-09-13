@@ -26,6 +26,8 @@ if ~isempty(atlas)
             else
                 plotdata(c) = NaN;
             end
+        elseif isfield(atlas,'BA')
+            plotdata(c) = datain(atlas.BA(c));
         end
         
         

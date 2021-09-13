@@ -1,6 +1,8 @@
-function ft_topoplot_vec(layout,vect,label)
+function ft_topoplot_vec(layout,vect,label,varargin)
 
 vect = vert(vect);
+
+argsin = varargin;
 
 tlock = [];
 tlock.avg = vect;
@@ -21,5 +23,9 @@ cfg.comment = 'no'; cfg.interactive = 'no';
 cfg.marker = 'no';
 %cfg.markersymbol = '.';
 %cfg.markersize = 3;
+
+for i = 1:2:length(argsin)
+    cfg.(argsin{i}) = argsin{i+1}; 
+end
 
 ft_topoplotER(cfg,tlock);
