@@ -34,6 +34,8 @@ if ~isempty(atlas)
         if CheckInput(varargin,'mask')
             if isfield(atlas,'parcellation')
                 plotmask(c) = roimask(atlas.parcellation(c));
+            elseif isfield(atlas,'BA')
+                plotmask(c) = roimask(atlas.BA(c));
             else
                 plotmask(c) = roimask(atlas.parcels(c));
             end

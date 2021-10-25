@@ -1,8 +1,13 @@
 function plot_tc_topo(time,datamat,settings,p,pindx,varargin)
+% time should be in ms
 % datamat should be in the form channels x time points x subjects x
 % conditions
-% time should be in ms
-%settings only needs to have a layout and the field 'datatype' (EEG or MEG)
+% settings is a struct with fields 'layout' (a Fieldtrip layout) and 'datatype' (EEG or MEG)
+% p is a panel object
+% pindx is the index of the subpanel you want to plot into, supplied as a
+% cell array (i.e. if you want to plot into p(1,2), supply {1 2}). If you
+% don't want to plot into a subpanel, put {}
+
 
 if CheckInput(varargin,'avgfunc')
     avgfunc = EasyParse(varargin,'avgfunc');

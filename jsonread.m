@@ -10,6 +10,7 @@ str = char(raw');
 
 str = erase(str,'myid'); 
 
+try
 % fix this later
 if any(str==newline) && multiline
     allstr = tokenize(str,newline);
@@ -23,6 +24,9 @@ if any(str==newline) && multiline
     end
 else
     obj = jsondecode(str);
+end
+catch
+   obj = jsonread(filename,~multiline); % if it doesn't work, try it with the other value of multiline
 end
 
 fclose(fid);

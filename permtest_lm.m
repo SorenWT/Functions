@@ -33,6 +33,7 @@ end
 system(['R -e ''source("' fullfile(path,funcname) '"); permtest_lm("'...
     fullfile(currdir,filein) '",' frmla ')'''])
 
+
 mdl = jsonread(fullfile(currdir,[filein '_results.json']));
 %multcompare = jsonread(fullfile(currdir,[fileout '_multcompare.json']));
 

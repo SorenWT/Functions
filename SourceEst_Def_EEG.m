@@ -4,7 +4,7 @@ function [roidata,voxeldata,sources,sourcemodel] = SourceEst_Def_EEG(EEG,sourcem
 %ftpath = '/group/northoff/share/fieldtrip-master';
 
 % Convert the data to Fieldtrip format
-data = eeglab2fieldtrip(EEG,'preprocessing','none');
+data = eeglab2fieldtrip_swt(EEG,'preprocessing','none');
 
 % Load templates
 load('standard_bem.mat') %variable is "vol"
@@ -13,7 +13,7 @@ if ~exist('sourcemodel','var') || isempty(sourcemodel)
 %    sourcemodel = ft_read_headshape('conte69_fs_LR_8k.mat');
 end
 if ~exist('atlas','var') || isempty(atlas)
-    load('brod_balsa_fs_LR_8k.mat');
+    load('brod_balsa_fs_LR_8k_hemispheres.mat');
     atlas = brod;
 end
 %sourcemodel = ft_read_headshape('cortex_5124.surf.gii');
@@ -34,13 +34,13 @@ elec = ft_electroderealign(cfg,data.elec);
 data.elec = elec;
 
 % Create forward model
-cfg = []; cfg.elec = data.elec; cfg.channel = {'EEG'};
+cfg = []; cfg.elec = data.elec; cfg.channel = {'eeg'};
 cfg.grid.pos = sourcemodel.pos; cfg.grid.inside = 1:size(sourcemodel.pos,1);
 cfg.headmodel = vol;
 leadfield = ft_prepare_leadfield(cfg);
 
 % Select only the EEG channels
-cfg = []; cfg.channel = {'EEG'};
+cfg = []; cfg.channel = {'eeg'};
 eegdata = ft_selectdata(cfg,data);
 clear data
 

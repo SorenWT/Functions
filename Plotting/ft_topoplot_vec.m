@@ -20,7 +20,7 @@ cfg.interpolateovernan = 'yes';
 cfg.lay = layout;
 cfg.channel = label;
 cfg.comment = 'no'; cfg.interactive = 'no';
-cfg.marker = 'no';
+cfg.marker = 'labels';
 %cfg.markersymbol = '.';
 %cfg.markersize = 3;
 

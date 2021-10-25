@@ -260,10 +260,10 @@ function H=makeSignificanceBar(x,y,p,fsize)
 
     %Increase offset between line and text if we will print "n.s."
     %instead of a star. 
-    if ~isnan(p)
+    if ~isnan(p) && p <= 0.05
         offset=0.005;
     else
-        offset=0.02;
+        offset=0.15;
     end
 
     starY=mean(y)+myRange(ylim)*offset;

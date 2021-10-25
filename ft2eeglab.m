@@ -11,6 +11,8 @@ function [EEG] = ft2eeglab(data)
 
 % load chanlocs.mat
 % EEG.chanlocs = chanlocs;
+
+EEG = eeg_emptyset();
 EEG.chanlocs = [];
 
 for i=1:size(data.trial,2)
@@ -41,6 +43,9 @@ EEG.icaweights = [];
 EEG.icaact     = [];
 EEG.saved      = 'no';
 EEG.etc = [];
+for i = 1:length(data.label)
+    EEG.chanlocs(i).labels = data.label{i};
+end
 
 %[ALLEEG EEG CURRENTSET] = eeg_store(ALLEEG, EEG);
 %eeglab redraw
