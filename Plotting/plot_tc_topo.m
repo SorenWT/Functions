@@ -15,6 +15,11 @@ else
     avgfunc = @nanmean;
 end
 
+if nargin < 4
+    p = panel('no-manage-font');
+    pindx = {};
+end
+
 p(pindx{:}).pack();
 for cc = 1:4
     p(pindx{:}).pack({[0.25*(cc-1) 0 0.25 0.15]})
