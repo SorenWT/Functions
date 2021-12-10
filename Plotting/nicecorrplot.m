@@ -76,7 +76,7 @@ end
 
 l = lines;
 
-h = scatter(a,b,96,scatterclr,'filled');
+h = scatter(a,b,384./round(log(length(a))),scatterclr,'filled');
 xl = xlabel(labels{1},'FontSize',16);
 yl = ylabel(labels{2},'FontSize',16);
 hold on;

@@ -60,7 +60,7 @@ xlabel(varnames{1})
 ylabel(varnames{2})
 
 if ~CheckInput(argsin,'Type')
-    rstring = 'r';
+    rstring = '\rho';
 else
     typ = EasyParse(argsin,'Type');
     

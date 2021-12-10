@@ -5,8 +5,6 @@ argsin = varargin;
 argsin = setdefault(argsin,'nboot',nperm);
 argsin = setdefault(argsin,'stratify',ones(size(X,1),1));
 
-
-
 xnan = any(isnan(X),2); ynan = any(isnan(Y),2);
 allnan = (xnan+ynan)>0; goodindx = find(~allnan);
 X(allnan,:) = []; Y(allnan,:) = [];

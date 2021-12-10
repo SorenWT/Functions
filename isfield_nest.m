@@ -16,7 +16,11 @@ for c = 1:length(newfield)
     else
         newstruct = structin;
     end
+    if isstruct(newstruct)
     fieldtrue(c) = isfield(newstruct,newfield{c});
+    elseif istable(newstruct)
+        fieldtrue(c) = ismember(newfield{c},newstruct.Properties.VariableNames); 
+    end
     %newstruct = getfield_nest([streval '.(''' newfield{c} ''')'];
 end
 

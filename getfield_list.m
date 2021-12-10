@@ -1,5 +1,10 @@
 function [fieldarr] = getfield_list(listin,field)
 
+if ~iscell(listin)
+    listin = vert(listin);
+    listin = mat2cell(listin,ones(length(listin),1));
+end
+
 fieldarr = {};
 for i = 1:length(listin)
     if isfield_nest(listin{i},field)

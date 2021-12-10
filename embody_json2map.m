@@ -1,4 +1,8 @@
-function pbody = embody_json2map(res)
+function [pbody,ppoint] = embody_json2map(res,smoothing)
+
+if nargin < 2
+   smoothing = [15 5]; 
+end
 
 for i = 1:length(res)
     xd = res{i}.arrXD; yd = res{i}.arrYD; 
@@ -24,8 +28,10 @@ for i = 1:length(res)
        end
     end
     
-    h=fspecial('gaussian',[15 15],5); % should maybe replace this with a disk?
-    pbox1=imfilter(pbox1,h); pbox2 = imfilter(pbox2,h);
+    h=fspecial('gaussian',[smoothing(1) smoothing(1)],smoothing(2)); % should maybe replace this with a disk?
     
+    
+    ppoint(:,:,i) = pbox1-pbox2;
+    pbox1=imfilter(pbox1,h); pbox2 = imfilter(pbox2,h);
     pbody(:,:,i) = pbox1-pbox2;
 end
