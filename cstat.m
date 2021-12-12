@@ -1,33 +1,80 @@
-function result = cstat(T,statfield,statfun,condvalue,subj)
+function [result,logvect] = cstat(T,statfield,statfun,condvalue,subj,catdim)
 % assumes conditions are found in a table variable called overcond
 
 if nargin < 5
-   subj = []; 
+    subj = [];
 end
+
+if nargin < 6
+    catdim = 1;
+end
+
+if isempty(statfun)
+    statfun = @doNothing;
+end
+
+
 
 if iscell(condvalue)
     for i = 1:length(condvalue)
-        result(i,:) = cstat(T,statfield,statfun,condvalue{i},subj);
+        result{i} = cstat(T,statfield,statfun,condvalue{i},subj);
+        result{i} = horz(result{i});
     end
+    result = cat(catdim,result{:});
 else
     
-    siz_cond = length(condvalue);
-    
-    for i = 1:siz_cond
-        logvect(:,i) = strcmpi(cellfun(@(d)indexme(d,i),T.overcond,'UniformOutput',false),condvalue(i)) | strcmpi(condvalue(i),'*');
-    end
-    
-    logvect = all(logvect,2);
-    
-    T = T(logvect,:);
+    if contains(condvalue,'-') || contains(condvalue,'+')
+        if isempty(subj)
+            error('Cannot take a sum/difference of conditions if a grouping variable is not supplied!')
+        end
+        
+        [tmpcond,operations] = strsplit(condvalue,{'-','+'});
+        for i = 1:length(tmpcond)
+            tmpres{i} = cstat(T,statfield,@doNothing,tmpcond{i},subj,catdim);
+        end
+        tmpresstring = cellcat('tmpres{',cellstr(num2str([1:length(tmpres)]')),'',0);
+        tmpresstring = cellcat('}',tmpresstring,'',1);
+        
+        dif = eval(strjoin(tmpresstring,operations));
+        result = statfun(dif);
+    elseif contains(condvalue,'(')
+        tmpcond = extractBetween(condvalue,'(',')');
+        result = cstat(T,statfield,@doNothing,tmpcond,subj,catdim);
+        
+    elseif contains(condvalue,'|')
+        tmpcond = strsplit(condvalue,'|');
+        for i = 1:length(tmpcond)
+            [~,logvect(:,i)] = cstat(T,statfield,@doNothing,tmpcond{i},subj,catdim);
+        end
+        
+        logvect = any(logvect,2);
 
-    
-    if nargin > 4 && ~isempty(subj)
-        % if a grouping variable is supplied, do the requested function on
-        % the group means
-        result = statfun(grpstats(T.(statfield),T.(subj))); 
+        T = T(logvect,:);
+        
+        if ~isempty(subj)
+            result = statfun(grpstats(T.(statfield),T.(subj)));
+        else
+            result = statfun(T.(statfield));
+        end
     else
-        result = statfun(T.(statfield));
+        
+        siz_cond = length(condvalue);
+        
+        for i = 1:siz_cond
+            logvect(:,i) = strcmpi(cellfun(@(d)indexme(d,i),T.overcond,'UniformOutput',false),condvalue(i)) | strcmpi(condvalue(i),'*');
+        end
+        
+        logvect = all(logvect,2);
+        
+        T = T(logvect,:);
+        
+        
+        if nargin > 4 && ~isempty(subj)
+            % if a grouping variable is supplied, do the requested function on
+            % the group means
+            result = statfun(grpstats(T.(statfield),T.(subj)));
+        else
+            result = statfun(T.(statfield));
+        end
     end
-    
 end
