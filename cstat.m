@@ -1,4 +1,4 @@
-function [result,logvect] = cstat(T,statfield,statfun,condvalue,subj,catdim)
+function [result,logvect,T] = cstat(T,statfield,statfun,condvalue,subj,catdim)
 % assumes conditions are found in a table variable called overcond
 
 if nargin < 5
@@ -30,8 +30,18 @@ else
         
         [tmpcond,operations] = strsplit(condvalue,{'-','+'});
         for i = 1:length(tmpcond)
-            tmpres{i} = cstat(T,statfield,@doNothing,tmpcond{i},subj,catdim);
+            [tmpres{i},~,Tcond{i}] = cstat(T,statfield,@doNothing,tmpcond{i},subj,catdim);
         end
+
+        subs = getfield_list(Tcond,subj);
+
+        common = intersect(subs{:});
+
+        for i = 1:length(tmpcond)
+            m = match_str(unique(Tcond{i}.(subj)),common);
+            tmpres{i} = tmpres{i}(m); 
+        end
+
         tmpresstring = cellcat('tmpres{',cellstr(num2str([1:length(tmpres)]')),'',0);
         tmpresstring = cellcat('}',tmpresstring,'',1);
         

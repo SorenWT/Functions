@@ -10,5 +10,5 @@ y = vert(y);
 end
 
 for i = 1:size(y,2)
-[~,~,r(:,i)] = regress(y(:,i),x);
+[~,~,r(:,i)] = regress(y(:,i),[ones(size(x,1),1) x]);
 end
