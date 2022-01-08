@@ -3,7 +3,7 @@ function [roidata,voxeldata,sources] = SourceEst(data,headmodel,sourcemodel,atla
 % a time-series of source-level activity for each point in the sourcemodel
 % input, or for each region in the atlas input
 %
-% Inputs: 
+% Inputs:
 %    data: the data for source estimation, in Fieldtrip format
 %    headmodel: the headmodel for the subject
 %    sourcemodel: the sourcemodel for the subject
@@ -14,7 +14,7 @@ function [roidata,voxeldata,sources] = SourceEst(data,headmodel,sourcemodel,atla
 %       atlaslabel: the field of the atlas containing the labels for each
 %         region (default = 'parcellationlabel')
 %       interp: interpolate the sourcemodel onto the atlas ('yes' or 'no' -
-%         default = 'no', meaning it is assumed the atlas and sourcemodel 
+%         default = 'no', meaning it is assumed the atlas and sourcemodel
 %         are already aligned)
 %       datatype: 'EEG' or 'MEG' - for channel selection (default = 'MEG')
 %       noisecov: noise covariance matrix, if desired
@@ -24,19 +24,19 @@ function [roidata,voxeldata,sources] = SourceEst(data,headmodel,sourcemodel,atla
 %         parallel processing). Parallel pool must be set up prior to
 %         calling the function
 %
-% Outputs: 
+% Outputs:
 %    roidata: a Fieldtrip-format data structure containing the source-level
 %       time series of each region in atlas
 %    voxeldata: a Fieldtrip-format data structure containing the
 %       source-level time series of each voxel or vertex in sourcemodel
 %    sources: the original Fieldtrip source-estimation structure. This
-%       contains the spatial filter used to compute the source-level time 
-%       series 
-% 
-% Created by Soren Wainio-Theberge 
+%       contains the spatial filter used to compute the source-level time
+%       series
+%
+% Created by Soren Wainio-Theberge
 
 if ~exist('atlas','var')
-   atlas = []; 
+    atlas = [];
 end
 
 if ~exist('opts','var')
@@ -143,8 +143,15 @@ else
         source_datacat(c,:) = u(:,1)'*sources.avg.filter{c}*datacat;
     end
 end
-voxeldata.trial{1} = source_datacat;
-voxeldata.time{1} = linspace(0,length(voxeldata.trial{1})/data.fsample-1/data.fsample,size(voxeldata.trial{1},2));
+
+if length(data.trial) ==1
+    voxeldata.trial{1} = source_datacat;
+    voxeldata.time{1} = linspace(0,length(voxeldata.trial{1})/data.fsample-1/data.fsample,size(voxeldata.trial{1},2));
+else
+    voxeldata.time = data.time;
+    voxeldata.trial = mat2cell(reshape(source_datacat,size(source_datacat,1),size(data.trial{1},2),length(data.trial)),...
+        size(source_datacat,1),size(data.trial{1},2),ones(length(data.trial),1));
+end
 voxeldata.label = cellstr(num2str([1:size(sources.pos,1)]'));
 voxeldata.fsample = data.fsample;
 source_datacat = []; %saving memory
@@ -153,9 +160,11 @@ source_datacat = []; %saving memory
 roidata = voxeldata;
 roidata.label = atlas.(opts.atlaslabel);
 roidata.trial = [];
-roidata.trial{1} = NaN(length(roidata.label),length(voxeldata.trial{1}));
+%roidata.trial{1} = NaN(length(roidata.label),length(voxeldata.trial{1}));
 for cc = 1:length(roidata.label)
-    roidata.trial{1}(cc,:) = mean(voxeldata.trial{1}(find(atlas.(opts.atlasparam) == cc),:),1);
+    for i = 1:length(voxeldata.trial)
+        roidata.trial{i}(cc,:) = mean(voxeldata.trial{i}(find(atlas.(opts.atlasparam) == cc),:),1);
+    end
 end
 %roidata.trial{1}(find(isnan(roidata.trial{1}(:,1))),:) = [];
 

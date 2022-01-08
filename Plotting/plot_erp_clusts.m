@@ -18,7 +18,7 @@ function plot_erp_clusts(clust,datamat,settings,p,pindx,varargin)
 
 
 set(gcf,'color','w')
-settings = setdefault(settings,'nclusts',1); 
+settings = setdefault(settings,'nclusts',1);
 settings = setdefault(settings,'condnames',{'Condition 1','Condition 2'});
 
 nclusts = settings.nclusts;
@@ -51,7 +51,7 @@ end
 % end
 % p(pindx{:},1).select()
 
-hold on
+%hold on
 
 if CheckInput(varargin,'color')
     clr = EasyParse(varargin,'color');
@@ -81,6 +81,11 @@ for i = 1:nclusts
         end
         
         xlabel('Time (s)')
+        if strcmpi(settings.datatype,'EEG')
+            ylabel('Voltage (\muV)')
+        elseif strcmpi(settings.datatype,'MEG')
+            ylabel('Field strength (T)');
+        end
         
         FixAxes(gca)
         set(gca,'FontSize',11,'TitleFontSizeMultiplier',1.1)
@@ -105,15 +110,29 @@ for i = 1:nclusts
         else
             plotdata = avgfunc(squeeze(datamat(:,plotindx(cc),:)),2);
         end
+        
+        topochans = ones(size(clust.mask,1),1);
+        if isfield(clust,'posclusterslabelmat')
+            topochans(clust.posclusterslabelmat(:,plotindx(cc))==i) = 0;
+        end
+        if isfield(clust,'negclusterslabelmat')
+            topochans(clust.negclusterslabelmat(:,plotindx(cc))==i) = 0;
+        end
+        
         if strcmpi(settings.datatype,'MEG')
             ft_cluster_topoplot(settings.layout,plotdata,settings.datasetinfo.label,...
-                abs(clust.stat)>abs(clust.cfg.clustercritval(1)),clust.mask(:,plotindx(cc)));
+                topochans,clust.mask(:,plotindx(cc)).*topochans);
         else
             cluster_topoplot(plotdata,settings.layout,...
-                abs(clust.stat)>abs(clust.cfg.clustercritval(1)),clust.mask(:,plotindx(cc)));
+                topochans,clust.mask(:,plotindx(cc)).*topochans);
         end
         if cc == 4
             cbar = colorbar('EastOutside');
+            if strcmpi(settings.datatype,'EEG')
+                cbar.Label.String = 'Voltage (\muV)';
+            elseif strcmpi(settings.datatype,'MEG')
+                cbar.Label.String = 'Field strength (T)';
+            end
         end
         title([num2str(clust.time(plotindx(cc))) ' ms'],'FontSize',10)
         ax(cc) = gca;
@@ -133,6 +152,11 @@ for i = 1:nclusts
         end
         
         xlabel('Time (s)')
+        if strcmpi(settings.datatype,'EEG')
+            ylabel('Voltage (\muV)')
+        elseif strcmpi(settings.datatype,'MEG')
+            ylabel('Field strength (T)');
+        end
         
         FixAxes(gca)
         set(gca,'FontSize',11,'TitleFontSizeMultiplier',1.1)

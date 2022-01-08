@@ -68,7 +68,7 @@ if strcmpi(cfg.parflag,'yes')
         for c = 1:length(datawindows)
 	   
             if calcspecs
-                specs{i}(c) = amri_sig_fractal(datawindows{c}',fsample,'hset',cfg.hset);
+                specs{i}(c) = amri_sig_fractal_fast(datawindows{c}',fsample,'hset',cfg.hset);
             end
             
             if ~isfield(cfg,'foi')
@@ -90,7 +90,7 @@ else
         datawindows = getWindows(data.time{i},cfg.winsize,cfg.toi,data.trial{i});
         for c = 1:length(datawindows)
             if calcspecs
-                specs{i}(c) = amri_sig_fractal(datawindows{c}',data.fsample,'hset',cfg.hset);
+                specs{i}(c) = amri_sig_fractal_fast(datawindows{c}',data.fsample,'hset',cfg.hset);
             end
             
             if ~isfield(cfg,'foi')

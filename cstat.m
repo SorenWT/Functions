@@ -1,5 +1,30 @@
 function [result,logvect,T] = cstat(T,statfield,statfun,condvalue,subj,catdim)
-% assumes conditions are found in a table variable called overcond
+% cstat calculates summary statistics by condition for the table T
+%   it assumes conditions are found in a table variable called overcond
+% Inputs:
+%   T is the table containing all the behavioural data 
+%   statfield is the field that you want to do statistics on (e.g. 'accuracy')
+%   statfun is a function handle for the function you want to calculate (e.g. @nanmean)
+%   condvalue is the value of overcond that you want to calculate
+%   statistics for. You can use the following operators in condvalue: 
+%      | (or)
+%      ( ) (for order of operations)
+%      - (for a difference of conditions. In this case, a subject grouping
+%      must be supplied - see below).
+%   subj is the table variable containing the subject information (e.g.
+%   'subject'). If you input something here, cstat uses the grpstats 
+%   function first to get the subject means of statfield, and then applies 
+%   the given statfun to the subject means
+%   catdim is mostly used internally, don't bother unless you have a
+%   specific reason
+%
+% Outputs: 
+%   result: the result of applying statfun to the specified conditions
+%   logvect: a vector containing the table indices where the specified
+%   condition is found
+%   T: the input table, indexed by logvect
+
+
 
 if nargin < 5
     subj = [];
