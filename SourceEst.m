@@ -149,8 +149,8 @@ if length(data.trial) ==1
     voxeldata.time{1} = linspace(0,length(voxeldata.trial{1})/data.fsample-1/data.fsample,size(voxeldata.trial{1},2));
 else
     voxeldata.time = data.time;
-    voxeldata.trial = mat2cell(reshape(source_datacat,size(source_datacat,1),size(data.trial{1},2),length(data.trial)),...
-        size(source_datacat,1),size(data.trial{1},2),ones(length(data.trial),1));
+    voxeldata.trial = squeeze(mat2cell(reshape(source_datacat,size(source_datacat,1),size(data.trial{1},2),length(data.trial)),...
+        size(source_datacat,1),size(data.trial{1},2),ones(length(data.trial),1)))';
 end
 voxeldata.label = cellstr(num2str([1:size(sources.pos,1)]'));
 voxeldata.fsample = data.fsample;
