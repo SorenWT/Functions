@@ -44,9 +44,13 @@ for i = indx
             
             roidata = SourceEst(data,headmodel,sourcemodel,atlas,struct('parflag',1));
             
+            roidata.sampleinfo = data.sampleinfo; roidata.trialinfo = data.trialinfo;
+            
             save(['/home/soren/Documents/camcan/source/task/epoched/' files(i).name(1:end-4) '_roidata_mmp.mat'],'roidata')
             
             roidata = mmp_reassign(roidata,mmpgroup);
+            roidata.sampleinfo = data.sampleinfo; roidata.trialinfo = data.trialinfo;
+
             
             save(['/home/soren/Documents/camcan/source/task/epoched/' files(i).name(1:end-4) '_roidata_mmpreduced.mat'],'roidata')
             
@@ -66,11 +70,11 @@ for i = indx
             goodevents = find(itis >=2000); % keep trials where the preceeding iti was 4 seconds or longer
             %ntrl(i) = length(goodevents);
             
-            data = ft_selectdata(struct('trial',goodevents),data);
+            data = ft_selectdata(struct('trials',goodevents),data);
             
             tic;
             [osci,specs] = IRASA_tf(cfg,data);
-            toc;
+            eltime(i) = toc;
             cfg.oscifrac = 'frac';
             frac = IRASA_tf(cfg,data,specs);
             cfg.oscifrac = 'mixd';
