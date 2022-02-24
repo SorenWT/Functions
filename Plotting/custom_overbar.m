@@ -1,4 +1,4 @@
-function H=sigstar(groups,stats,nosort,fsize)
+function H=sigstar(groups,stats,nosort,varargin)
     % sigstar - Add significance stars to bar charts, boxplots, line charts, etc,
     %
     % H = sigstar(groups,stats,nsort)
@@ -88,9 +88,12 @@ function H=sigstar(groups,stats,nosort,fsize)
         nosort=0;
     end
     
-    if nargin<4
-       fsize = 16; 
-    end
+    argsin = varargin;
+    argsin = setdefault(argsin,'fontsize',16);
+    argsin = setdefault(argsin,'color',repmat({'k'},1,length(groups)));
+    
+    fsize = EasyParse(argsin,'fontsize');
+    clrs = EasyParse(argsin,'color');
 
 
 
@@ -109,8 +112,8 @@ function H=sigstar(groups,stats,nosort,fsize)
 
     
     %SWT edit Apr. 27 2020 - remove non-significant values
-    groups = groups(find(stats <= 0.1));
-    stats = stats(find(stats <= 0.1));
+    %groups = groups(find(stats <= 0.1));
+    %stats = stats(find(stats <= 0.1));
 
 
 
@@ -185,11 +188,11 @@ function H=sigstar(groups,stats,nosort,fsize)
     %H=ones(length(groups),2); %The handles will be stored here
 
     y=ylim;
-    yd=myRange(y)*0.06; %separate sig bars vertically by 5% 
+    yd=myRange(y)*0.08*(fsize/16); %separate sig bars vertically by 5%, scale by text size
 
     for ii=1:length(groups)
         thisY=findMinY(xlocs(ii,:))+yd;
-        H(ii,:)=makeSignificanceBar(xlocs(ii,:),thisY,stats(ii),fsize);
+        H(ii,:)=makeSignificanceBar(xlocs(ii,:),thisY,stats(ii),fsize,clrs(ii));
     end
     %-----------------------------------------------------
 
@@ -234,37 +237,37 @@ end %close sigstar
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %Internal functions
 
-function H=makeSignificanceBar(x,y,p,fsize)
+function H=makeSignificanceBar(x,y,p,fsize,clr)
     %makeSignificanceBar produces the bar and defines how many asterisks we get for a 
     %given p-value
 
-
-    if p<=1E-3
-        stars='***'; 
-    elseif p<=1E-2
-        stars='**';
-    elseif p<=0.05
-        stars='*';
-    elseif p <= 0.1 
-        stars = '(*)';
-    elseif isnan(p)
-        stars='n.s.';
-    else
-        stars='';
-    end
+    stars = p{1};
+%     if p<=1E-3
+%         stars='***'; 
+%     elseif p<=1E-2
+%         stars='**';
+%     elseif p<=0.05
+%         stars='*';
+%     elseif p <= 0.1 
+%         stars = '(*)';
+%     elseif isnan(p)
+%         stars='n.s.';
+%     else
+%         stars='';
+%     end
             
     x=repmat(x,2,1);
     y=repmat(y,4,1);
 
-    H(1)=plot(x(:),y,'-k','LineWidth',1.5,'Tag','sigstar_bar');
+    H(1)=plot(x(:),y,'color',clr{1},'LineWidth',1.5,'Tag','sigstar_bar');
 
     %Increase offset between line and text if we will print "n.s."
     %instead of a star. 
-    if ~isnan(p) && p <= 0.05
-        offset=0.005;
-    else
-        offset=0.03;
-    end
+    %if ~isnan(p) && p <= 0.05
+        offset=0.035;
+    %else
+    %    offset=0.15;%*fsize/16;
+    %end
 
     starY=mean(y)+myRange(ylim)*offset;
     H(2)=text(mean(x(:)),starY,stars,...
@@ -274,7 +277,7 @@ function H=makeSignificanceBar(x,y,p,fsize)
 
     Y=ylim;
     if Y(2)<starY
-        ylim([Y(1),starY+myRange(Y)*0.06])
+        ylim([Y(1),starY+myRange(Y)*0.09*fsize/16])
     end
 
 

@@ -1,4 +1,4 @@
-function p = pls_plot(plsmdl,ncomps,plotlabels,xlabels,ylabels,varargin)
+function p = pls_plot(plsmdl,whichcomps,plotlabels,xlabels,ylabels,varargin)
 % this function makes a standard plot for a pls model defined by plsregress_perm
 %
 % Inputs:
@@ -59,6 +59,8 @@ end
 plotwidth = (100./sum(plotwidth))*plotwidth;
 plotwidth = mat2cell(plotwidth,1,ones(1,length(plotwidth)));
 
+ncomps = length(whichcomps);
+
 if isempty(pindx)
     p.pack('v',repmat({1/ncomps},1,ncomps))
     for i = 1:ncomps
@@ -72,12 +74,12 @@ else
 end
 
 
-for q = 1:ncomps
-    p(pindx{:},q,1).select()
+for q = whichcomps
+    p(pindx{:},find(whichcomps==q),1).select()
     nicecorrplot(plsmdl.XS(:,q),plsmdl.YS(:,q),{['Latent component ' num2str(q) ' - ' plotlabels{1}],...
         ['Latent component ' num2str(q) ' - ' plotlabels{2}]},'type','pearson','externalp',plsmdl.pperm(q));
     
-    p(pindx{:},q,2).pack('h',plotwidth);
+    p(pindx{:},find(whichcomps==q),2).pack('h',plotwidth);
     
     for i = 1:length(coeffplots)
         if contains(coeffplots{i}{1},'X')
@@ -87,7 +89,7 @@ for q = 1:ncomps
         end
         switch coeffplots{i}{2}
             case 'bar'
-                p(pindx{:},q,2,i).select()
+                p(pindx{:},find(whichcomps==q),2,i).select()
                 l = lines;
                 b = bar(plsmdl.(coeffplots{i}{1})(:,q),'facecolor',palecol(l(i,:)));
                 hold on
@@ -100,7 +102,7 @@ for q = 1:ncomps
                 xtickangle(90)
                 FixAxes(gca,14)
             case 'barh'
-                p(pindx{:},q,2,i).select()
+                p(pindx{:},find(whichcomps==q),2,i).select()
                 l = lines;
                 b = barh(plsmdl.(coeffplots{i}{1})(:,q),'facecolor',palecol(l(i,:)));
                 hold on
@@ -115,7 +117,7 @@ for q = 1:ncomps
                 f = figure;
                 wordcloud(labs,abs(plsmdl.(coeffplots{i}{1})))
                 ax = findobj('parent','f','type','axes');
-                p(pindx{:},q,2,i).select(ax)
+                p(pindx{:},find(whichcomps==q),2,i).select(ax)
                 close(f)
             case 'embody'
                 atlas = EasyParse(argsin,'embodyatlas');
@@ -123,7 +125,7 @@ for q = 1:ncomps
                 emos = [{'ANGER'}    {'CONTEMPT'}    {'DISGUST'}    {'ENVY'}    {'FEAR'}    {'HAPPINESS'}    {'PRIDE'}    {'SADNESS'}    {'SHAME'}    {'SURPRISE'}];
                 
                 if length(plsmdl.(coeffplots{i}{1})(:,q)) == length(unique(atlas))
-                    p(pindx{:},q,2,i).select()
+                    p(pindx{:},find(whichcomps==q),2,i).select()
                     map = vect2vol(plsmdl.(coeffplots{i}{1})(:,q),atlas);
                     embody_plotmap(map)
                     set(gca,'YDir','reverse')
@@ -138,10 +140,10 @@ for q = 1:ncomps
                     end
                     
                     emos = repmat(emos,1,size(theseloads,2)/10);
-                    p(pindx{:},q,2,i).pack(dims(1),dims(2))
+                    p(pindx{:},find(whichcomps==q),2,i).pack(dims(1),dims(2))
                     for qq = 1:size(theseloads,2)
                         [i1,i2] = ind2sub(dims,qq);
-                        p(pindx{:},q,2,i,i1,i2).select()
+                        p(pindx{:},find(whichcomps==q),2,i,i1,i2).select()
                         axs(qq) = gca;
                         map = vect2vol(theseloads(:,qq),atlas);
                         embody_plotmap(map)
@@ -166,7 +168,7 @@ for q = 1:ncomps
                     posweights = ttimes(posweights,25);
                 end
                 
-                p(pindx{:},q,2,i).select()
+                p(pindx{:},find(whichcomps==q),2,i).select()
                 postureplot(posweights)
         end
     end

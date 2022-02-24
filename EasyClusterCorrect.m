@@ -50,16 +50,16 @@ else
 end
 
 if ~isfield(opts,'designtype')
-   switch statfun
-       case {'ft_statfun_signrank','ft_statfun_fast_signrank','ft_statfun_spearman',...
-               'ft_statfun_depsamplesT','ft_statfun_friedman','ft_statfun_partspearman',...
-               'ft_statfun_depsamplesregrT','ft_statfun_actvsblT','ft_statfun_depsamplesFunivariate',...
-               'ft_statfun_depsamplesFmultivariate'}
+    switch statfun
+        case {'ft_statfun_signrank','ft_statfun_fast_signrank','ft_statfun_spearman',...
+                'ft_statfun_depsamplesT','ft_statfun_friedman','ft_statfun_partspearman',...
+                'ft_statfun_depsamplesregrT','ft_statfun_actvsblT','ft_statfun_depsamplesFunivariate',...
+                'ft_statfun_depsamplesFmultivariate'}
             opts.designtype = 'dep';
-       otherwise
-           opts.designtype = 'indep';
-   end
-               
+        otherwise
+            opts.designtype = 'indep';
+    end
+    
 end
 
 fields = fieldnames(datasetinfo);
@@ -91,95 +91,100 @@ for c = 1:length(data)
                 tlock{c}.label = datasetinfo.atlas.parcellationlabel;
         end
     end
-    for cc = 1:length(tlock{c}.label)
-        if isempty(find(~isnan(tlock{c}.trial(:,cc,1))))
-            badlabels = [badlabels {tlock{c}.label{cc}}];
-        end
-    end
+    %     for cc = 1:length(tlock{c}.label)
+    %         if isempty(find(~isnan(tlock{c}.trial(:,cc,1))))
+    %             badlabels = [badlabels {tlock{c}.label{cc}}];
+    %         end
+    %     end
     %tlock{c}.label = datasetinfo.label;
     %tlock{c}.grad = datasetinfo.grad;
     tlock{c}.fsample = 1;
     tlock{c}.sampleinfo = [[1:size(tlock{c}.trial,1)]' [1:size(tlock{c}.trial,1)]'+3];
 end
 
-if isfield(datasetinfo,'grad') || isfield(datasetinfo,'elec')
-    cfg = []; cfg.method = opts.distmethod;
-    if length(datasetinfo.label) > 1
-        neighbs = ft_prepare_neighbours(cfg,datasetinfo);
+if ~isfield(datasetinfo,'neighbs')
+    
+    if isfield(datasetinfo,'grad') || isfield(datasetinfo,'elec')
+        cfg = []; cfg.method = opts.distmethod;
+        if length(datasetinfo.label) > 1
+            neighbs = ft_prepare_neighbours(cfg,datasetinfo);
+        end
+    else
+        switch datasetinfo.atlasname
+            case 'aal'
+                tissue = datasetinfo.atlas.tissue;
+                tissue(find(tissue == 0)) = NaN;
+                
+                neighbs = struct;
+                for c = 1:length(datasetinfo.atlas.tissuelabel)
+                    neighbs(c).label = datasetinfo.atlas.tissuelabel{c};
+                    neighbs(c).neighblabel = cell(1,1);
+                end
+                
+                for c = 1:3
+                    edges{c} = diff(tissue,1,c);
+                    edges{c} = edges{c} > 0;
+                    boundaryindx = find(edges{c});
+                    for cc = 1:length(boundaryindx)
+                        [i1,i2,i3] = ind2sub(size(edges{c}),boundaryindx(cc));
+                        indx = {i1 i2 i3};
+                        indx{c} = indx{c}+1;
+                        roi1val = tissue(i1,i2,i3);
+                        roi2val = tissue(indx{:});
+                        neighbs(roi1val).neighblabel = [neighbs(roi1val).neighblabel neighbs(roi2val).label];
+                        neighbs(roi2val).neighblabel = [neighbs(roi2val).neighblabel neighbs(roi1val).label];
+                    end
+                end
+                
+                for c = 1:length(neighbs)
+                    neighbs(c).neighblabel(1) = [];
+                    neighbs(c).neighblabel = unique(neighbs(c).neighblabel);
+                end
+            case {'mmp','yeo'}
+                
+                if strcmpi(datasetinfo.atlasname,'yeo')
+                    datasetinfo.atlas.parcellationlabel = cellstr(num2str([1:8004]'));
+                    datasetinfo.atlas.parcellation = datasetinfo.atlas.parcels;
+                end
+                
+                pos = datasetinfo.atlas.pos;
+                tri = datasetinfo.atlas.tri;
+                
+                vox_neighbs = cell(1,length(pos));
+                
+                for c = 1:length(pos)
+                    inds = find(tri == c);
+                    for cc = 1:length(inds)
+                        [i1,i2] = ind2sub(size(tri),inds(cc));
+                        vox_neighbs{c} = [vox_neighbs{c} datasetinfo.atlas.tri(i1,except(1:3,i2))];
+                    end
+                    vox_neighbs{c} = unique(vox_neighbs{c});
+                end
+                
+                reg_neighbs = cell(1,length(datasetinfo.atlas.parcellationlabel));
+                for c = 1:length(datasetinfo.atlas.parcellationlabel)
+                    reg_neighbs{c} = cat(2,vox_neighbs{find(datasetinfo.atlas.parcellation == c)});
+                    for cc = 1:length(reg_neighbs{c})
+                        reg_neighbs{c}(cc) = datasetinfo.atlas.parcellation(reg_neighbs{c}(cc));
+                    end
+                    reg_neighbs{c} = unique(reg_neighbs{c});
+                    reg_neighbs{c}(find(reg_neighbs{c} == c)) = [];
+                end
+                
+                neighbs = struct;
+                for c = 1:length(reg_neighbs)
+                    neighbs(c).label = datasetinfo.atlas.parcellationlabel{c};
+                    neighbs(c).neighblabel = {datasetinfo.atlas.parcellationlabel{reg_neighbs{c}}};
+                end
+                
+                vox_neighbs = [];
+                reg_neighbs = [];
+                pos = [];
+                tri = [];
+        end
     end
 else
-    switch datasetinfo.atlasname
-        case 'aal'
-            tissue = datasetinfo.atlas.tissue;
-            tissue(find(tissue == 0)) = NaN;
-            
-            neighbs = struct;
-            for c = 1:length(datasetinfo.atlas.tissuelabel)
-                neighbs(c).label = datasetinfo.atlas.tissuelabel{c};
-                neighbs(c).neighblabel = cell(1,1);
-            end
-            
-            for c = 1:3
-                edges{c} = diff(tissue,1,c);
-                edges{c} = edges{c} > 0;
-                boundaryindx = find(edges{c});
-                for cc = 1:length(boundaryindx)
-                    [i1,i2,i3] = ind2sub(size(edges{c}),boundaryindx(cc));
-                    indx = {i1 i2 i3};
-                    indx{c} = indx{c}+1;
-                    roi1val = tissue(i1,i2,i3);
-                    roi2val = tissue(indx{:});
-                    neighbs(roi1val).neighblabel = [neighbs(roi1val).neighblabel neighbs(roi2val).label];
-                    neighbs(roi2val).neighblabel = [neighbs(roi2val).neighblabel neighbs(roi1val).label];
-                end
-            end
-            
-            for c = 1:length(neighbs)
-                neighbs(c).neighblabel(1) = [];
-                neighbs(c).neighblabel = unique(neighbs(c).neighblabel);
-            end
-        case {'mmp','yeo'}
-            
-            if strcmpi(datasetinfo.atlasname,'yeo')
-                datasetinfo.atlas.parcellationlabel = cellstr(num2str([1:8004]'));
-                datasetinfo.atlas.parcellation = datasetinfo.atlas.parcels;
-            end
-            
-            pos = datasetinfo.atlas.pos;
-            tri = datasetinfo.atlas.tri;
-            
-            vox_neighbs = cell(1,length(pos));
-            
-            for c = 1:length(pos)
-                inds = find(tri == c);
-                for cc = 1:length(inds)
-                    [i1,i2] = ind2sub(size(tri),inds(cc));
-                    vox_neighbs{c} = [vox_neighbs{c} datasetinfo.atlas.tri(i1,except(1:3,i2))];
-                end
-                vox_neighbs{c} = unique(vox_neighbs{c});
-            end
-            
-            reg_neighbs = cell(1,length(datasetinfo.atlas.parcellationlabel));
-            for c = 1:length(datasetinfo.atlas.parcellationlabel)
-                reg_neighbs{c} = cat(2,vox_neighbs{find(datasetinfo.atlas.parcellation == c)});
-                for cc = 1:length(reg_neighbs{c})
-                    reg_neighbs{c}(cc) = datasetinfo.atlas.parcellation(reg_neighbs{c}(cc));
-                end
-                reg_neighbs{c} = unique(reg_neighbs{c});
-                reg_neighbs{c}(find(reg_neighbs{c} == c)) = [];
-            end
-            
-            neighbs = struct;
-            for c = 1:length(reg_neighbs)
-                neighbs(c).label = datasetinfo.atlas.parcellationlabel{c};
-                neighbs(c).neighblabel = {datasetinfo.atlas.parcellationlabel{reg_neighbs{c}}};
-            end
-            
-            vox_neighbs = [];
-            reg_neighbs = [];
-            pos = [];
-            tri = [];
-    end
+    neighbs = datasetinfo.neighbs;
 end
 
 badlabels = unique(badlabels);
@@ -220,11 +225,11 @@ end
 if ~isfield(opts,'external')
     design = zeros(1,size(cat(2,data{:}),2));
     currindx = 1;
-%     for c = 1:length(data)
-%         design(1,currindx:size(data{c},2)) = 1;
-%         currindx = currindx+size(data{c},2);
-%     end
-%     design = design+1;
+    %     for c = 1:length(data)
+    %         design(1,currindx:size(data{c},2)) = 1;
+    %         currindx = currindx+size(data{c},2);
+    %     end
+    %     design = design+1;
     design = Make_designVect(cellfun(@(d)size(d,2),data));
     design = max(design)+1-design; % flip the order just to keep things consistent with before
 else
@@ -237,10 +242,10 @@ else
     siz = cellfun(@(dat)size(dat,2),data,'UniformOutput',true);
     des = [];
     for i = 1:length(siz)
-       des = cat(2,des,1:siz(i)); 
+        des = cat(2,des,1:siz(i));
     end
     cfg.design(1,:) = des;
-    cfg.design(2,:) = design; 
+    cfg.design(2,:) = design;
     cfg.uvar = 1; cfg.ivar = 2;
 end
 
@@ -249,7 +254,7 @@ for c = 1:length(tlock)
 end
 
 if isfield(opts,'partial')
-   cfg.partial = opts.partial; 
+    cfg.partial = opts.partial;
 end
 
 %if any(cell2mat(cellfun(@any,cellfun(@isnan,newdata,'UniformOutput',false),'UniformOutput',false)))
@@ -257,7 +262,7 @@ end
 %end
 
 if isfield(opts,'eqinterval')
-   cfg.eqinterval = opts.eqinterval; 
+    cfg.eqinterval = opts.eqinterval;
 end
 
 %if isfield(datasetinfo,'grad')
@@ -278,7 +283,7 @@ if isfield(stats,'posclusters')
     for i = 1:length(stats.posclusters)
         stats.posclusters(i).prob = 2*stats.posclusters(i).prob;
         if stats.posclusters(i).prob > 1
-           stats.posclusters(i).prob = 1; 
+            stats.posclusters(i).prob = 1;
         end
     end
 end
@@ -287,7 +292,7 @@ if isfield(stats,'negclusters')
     for i = 1:length(stats.negclusters)
         stats.negclusters(i).prob = 2*stats.negclusters(i).prob;
         if stats.negclusters(i).prob > 1
-           stats.negclusters(i).prob = 1; 
+            stats.negclusters(i).prob = 1;
         end
     end
 end

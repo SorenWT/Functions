@@ -15,7 +15,7 @@ if reverse
    monored = tmp;
    offsets = [0.08 0.04];
 else
-    offsets = [0.04 0.08]
+    offsets = [0.04 0.08];
 end
 
 if ~isempty(clust.posclusters)

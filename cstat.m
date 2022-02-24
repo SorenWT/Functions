@@ -57,15 +57,16 @@ else
         for i = 1:length(tmpcond)
             [tmpres{i},~,Tcond{i}] = cstat(T,statfield,@doNothing,tmpcond{i},subj,catdim);
         end
-
-        subs = getfield_list(Tcond,subj);
-
-        common = intersect(subs{:});
-
-        for i = 1:length(tmpcond)
-            m = match_str(unique(Tcond{i}.(subj)),common);
-            tmpres{i} = tmpres{i}(m); 
-        end
+        % not needed to match subs now that we're using nanmask below
+% 
+%         subs = getfield_list(Tcond,subj);
+% 
+%         common = intersect(subs{:});
+% 
+%         for i = 1:length(tmpcond)
+%             m = match_str(unique(Tcond{i}.(subj)),common);
+%             tmpres{i} = tmpres{i}(m); 
+%         end
 
         tmpresstring = cellcat('tmpres{',cellstr(num2str([1:length(tmpres)]')),'',0);
         tmpresstring = cellcat('}',tmpresstring,'',1);
@@ -101,14 +102,16 @@ else
         
         logvect = all(logvect,2);
         
-        T = T(logvect,:);
+        %T = T(logvect,:);
         
         
         if nargin > 4 && ~isempty(subj)
             % if a grouping variable is supplied, do the requested function on
             % the group means
+            T.(statfield) = T.(statfield).*nanmask(logvect);
             result = statfun(grpstats(T.(statfield),T.(subj)));
         else
+            T = T(logvect,:);
             result = statfun(T.(statfield));
         end
     end

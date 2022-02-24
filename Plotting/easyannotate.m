@@ -2,6 +2,10 @@ function tb = easyannotate(text,pos,varargin)
 
 argsin = varargin;
 
+if nargin < 2
+   pos = get(gca,'Position'); 
+end
+
 argsin = setdefault(argsin,'LineStyle','none'); argsin = setdefault(argsin,'FontSize',14);
 
 ax = gca;

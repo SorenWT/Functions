@@ -61,7 +61,7 @@ for i = indx
             sourcemodel = parload(fullfile('/home/soren/Documents/camcan/sourcemodels/',subid,'sourcemodel',...
                 [subid '_sourcemodel_8k_nmg.mat']),'sourcemodel');
         catch
-            badsubs(badcount).message = 'No headmodel file found';
+            badsubs(badcount).message = 'No sourcemodel file found';
             badsubs(badcount).indx = i;
             badcount = badcount+1;
             continue
@@ -86,7 +86,7 @@ for i = indx
     end
     
     
-    if ~exist([files(i).name '_IRASAtf_source.mat'],'file')
+    if ~exist(['/home/soren/Documents/camcan/source/task/epoched/' files(i).name '_IRASAtf_source.mat'],'file')
         %load(files(i).name)
         
         latencies = data.sampleinfo(:,1)'+1000;
@@ -109,7 +109,6 @@ for i = indx
         save(['/home/soren/Documents/camcan/source/task/epoched/' files(i).name '_IRASAtf_source.mat'],'osci','frac','mixd','specs')
     end
     
-    count = count+1;
     %catch
     %   badsubs(i) = 1;
     %end

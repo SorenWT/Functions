@@ -1,16 +1,16 @@
-function wordcloudhist(data,reorder)
+function counts = wordcloudhist(data,reorder)
 
-tmp = wordCloudCounts(data);
+counts = wordCloudCounts(data);
 
 if nargin < 2
-   reorder = tmp.Word;
+   reorder = counts.Word;
 end
 
-[~,m1] = match_str(tmp.Word,reorder);
-tmp = tmp(m1,:);
+[~,m1] = match_str(counts.Word,reorder);
+counts = counts(m1,:);
 
-bar(tmp.Count)
-set(gca,'XTick',1:length(tmp.Count),'XTickLabel',tmp.Word)
+bar(counts.Count)
+set(gca,'XTick',1:length(counts.Count),'XTickLabel',counts.Word)
 FixAxes(gca,16)
 xtickangle(90)
 ylabel('Count')

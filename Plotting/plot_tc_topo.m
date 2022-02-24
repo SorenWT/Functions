@@ -15,17 +15,47 @@ else
     avgfunc = @nanmean;
 end
 
+if CheckInput(varargin,'topolocation')
+    topoloc = EasyParse(varargin,'topolocation');
+else
+    topoloc = 'bot_outside';
+end
+
+% doesn't do anything right now, but later should add the ability to choose
+% how many topoplots to use
+if CheckInput(varargin,'ntopos')
+    ntopos = EasyParse(varargin,'ntopos');
+else
+    ntopos = 4;
+end
+
 if nargin < 4
     p = panel('no-manage-font');
     pindx = {};
 end
 
-p(pindx{:}).pack();
-for cc = 1:4
-    p(pindx{:}).pack({[0.25*(cc-1) 0 0.25 0.15]})
+switch topoloc
+    case 'bot_inside'
+        p(pindx{:}).pack();
+        for cc = 1:4
+            p(pindx{:}).pack({[0.25*(cc-1) 0 0.25 0.15]})
+        end
+        mainindx = {1};
+        topoindx = {{2} {3} {4} {5}};
+    case 'bot_outside'
+        p(pindx{:}).pack('v',{50 50})
+        p(pindx{:},2).pack(2,2)
+        mainindx = {1};
+        topoindx = {{2 1 1},{2 1 2},{2 2 1},{2 2 2}};
+    case 'right_outside'
+        p(pindx{:}).pack('h',{60 40})
+        p(pindx{:},2).pack('v',repmat({1/ntopos},1,ntopos))
+        mainindx = {1};
+        topoindx = {{2 1} {2 2} {2 3} {2 4}};
 end
-p(pindx{:},1).select()
 
+
+p(pindx{:},mainindx{:}).select()
 hold on
 
 if CheckInput(varargin,'color')
@@ -53,7 +83,6 @@ plotindx = round(plotindx);
 
 %tindx =
 for cc = 1:4
-    p(pindx{:},cc+1).select()
     %axes(p(2,c,cc+1).axis)
     if size(datamat,4) > 1
         plotdata = avgfunc(squeeze(datamat(:,plotindx(cc),:,2))...
@@ -62,17 +91,32 @@ for cc = 1:4
         plotdata = avgfunc(squeeze(datamat(:,plotindx(cc),:)),2);
     end
     if strcmpi(settings.datatype,'MEG')
+        p(pindx{:},topoindx{cc}{:}).select()
+        
         ft_cluster_topoplot(settings.layout,plotdata,settings.datasetinfo.label,...
             ones(size(datamat,1)),zeros(size(datamat,1)));
-    else
+        p(pindx{:},topoindx{cc}{:}).title([num2str(time(plotindx(cc))) ' ms']);
+        ax(cc) = gca;
+    elseif strcmpi(settings.datatype,'EEG')
+        p(pindx{:},topoindx{cc}{:}).select()
+        
         cluster_topoplot(plotdata,settings.layout,...
             ones(size(datamat,1)),zeros(size(datamat,1)));
+        t = p(pindx{:},topoindx{cc}{:}).title([num2str(time(plotindx(cc))) ' ms']);
+        ax(cc) = gca;
+    elseif strcmpi(settings.datatype,'source')
+        p = ft_cluster_sourceplot(plotdata,settings.layout,settings.layout,ones(size(plotdata)),'method','wholebrain','panel',p,'panelindx',{pindx{:} topoindx{cc}{:}});
+        t = p(pindx{:},topoindx{cc}{:},1,2).title([num2str(time(plotindx(cc))) ' ms']);
+        ax(cc) = p(pindx{:},topoindx{cc}{:},1,1).axis;
+                axis(ax(cc),'tight')
+        set(findall(p(pindx{:},topoindx{cc}{:},1,2).axis,'type','text'),'visible','on')
+        
     end
     if cc == 4
-        cbar = colorbar('EastOutside');
+        cbar = colorbar(ax(cc),'EastOutside');
     end
-    title([num2str(time(plotindx(cc))) ' ms'],'FontSize',10)
-    ax(cc) = gca;
+    t.FontSize = 10; t.FontWeight = 'bold';
+    %ax(cc) = gca;
     %Set_Clim(ax(cc),[prctile(plotdata,20) prctile(plotdata,80)]);
 end
 Normalize_Clim(ax,1);

@@ -43,11 +43,13 @@ else
 end
 varargin = setdefault(varargin,'cmap',gray);
 varargin = setdefault(varargin,'linewidth',2);
+varargin = setdefault(varargin,'yoffset',0.04);
 
 color = EasyParse(varargin,'color');
 cmap = EasyParse(varargin,'cmap');
 alpha = EasyParse(varargin,'alpha');
 linewidth = EasyParse(varargin,'linewidth');
+yoffset = EasyParse(varargin,'yoffset');
 
 xlim = get(gca,'XLim');
 xax = linspace(xlim(1),xlim(2),size(sigmask,2)); %time points must be the second dimension of sigmask
@@ -77,8 +79,10 @@ elseif strcmpi(type,'bar')
     end
 elseif strcmpi(type,'cmapline') % for plotting the number of significant channels as the colour of the line
     yl = get(ax,'YLim');
+    ymin = findMinY(get(ax,'XLim'));
     ysize = yl(2)-yl(1);
-    y = repmat([yl(2)-ysize*0.04],size(xax));
+    y = repmat([ymin+ysize*yoffset],size(xax));
+    %y = repmat([yl(2)-ysize*0.04],size(xax));
     z = zeros(size(xax));
     col = sum(sigmask,find(size(sigmask) ~= length(xax)));
     cindex = linspace(size(sigmask,1),0,size(cmap,1));
@@ -87,5 +91,35 @@ elseif strcmpi(type,'cmapline') % for plotting the number of significant channel
     
     surface([xax;xax],[y;y],[z;z],[col;col],...
         'facecolor','no','edgecolor','interp','linewidth',linewidth)
+    set(gca,'YLim',[yl(1) y(1)+ysize*yoffset])
     %colormap(cmap)
 end
+
+end
+
+
+function Y=findMinY(x)
+    % The significance bar needs to be plotted a reasonable distance above all the data points
+    % found over a particular range of X values. So we need to find these data and calculat the 
+    % the minimum y value needed to clear all the plotted data present over this given range of 
+    % x values. 
+    %
+    % This version of the function is a fix from Evan Remington
+    oldXLim = get(gca,'XLim');
+    oldYLim = get(gca,'YLim');
+
+    axis(gca,'tight')
+    
+    %increase range of x values by 0.1 to ensure correct y max is used
+    x(1)=x(1)-0.1;
+    x(2)=x(2)+0.1;
+    
+    set(gca,'xlim',x) %Matlab automatically re-tightens y-axis
+
+    yLim = get(gca,'YLim'); %Now have max y value of all elements within range.
+    Y = max(yLim);
+
+    axis(gca,'normal')
+    set(gca,'XLim',oldXLim,'YLim',oldYLim)
+
+end %close findMinY

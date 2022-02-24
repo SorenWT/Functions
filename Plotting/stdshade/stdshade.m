@@ -14,6 +14,10 @@ function [ylim] = stdshade(F,amatrix,acolor,alpha,tsdimn,method,smth)
 
 %modified by SWT on 27/06/2019
 
+if ~exist('tsdimn','var')
+   tsdimn = 2; 
+end
+
 if tsdimn == 1
     amatrix = amatrix';
 end
@@ -38,26 +42,31 @@ if ne(size(F,1),1)
     F=F';
 end
 
-if strcmpi(method,'mad')
-    amean = smooth(nanmedian(amatrix),smth)';
+if any(size(amatrix)==2)
+    amean = amatrix(1,:);
+    astd = amatrix(2,:);
 else
-    amean=smooth(nanmean(amatrix),smth)';
-end
-
-switch method
-    case 'std'
-        astd = nanstd(amatrix); % to get std shading
-    case 'sem'
-        astd = nanstd(amatrix)/sqrt(size(amatrix,1)-1); % to get sem shading
-    case 'mad'
-        astd = mad(amatrix,1);
-    case 'logstd' % std shading when log-scaling data
-        astd = nanstd(log10(amatrix));
-    case 'paramci'
-        astd = 1.96*nanstd(amatrix)/sqrt(size(amatrix,1)-1);
-    case 'prctileci'
-        astd(1,:) = prctile(amatrix,2.5,1);
-        astd(2,:) = prctile(amatrix,97.5,1);
+    if strcmpi(method,'mad')
+        amean = smooth(nanmedian(amatrix),smth)';
+    else
+        amean=smooth(nanmean(amatrix),smth)';
+    end
+    
+    switch method
+        case 'std'
+            astd = nanstd(amatrix); % to get std shading
+        case 'sem'
+            astd = nanstd(amatrix)/sqrt(size(amatrix,1)-1); % to get sem shading
+        case 'mad'
+            astd = mad(amatrix,1);
+        case 'logstd' % std shading when log-scaling data
+            astd = nanstd(log10(amatrix));
+        case 'paramci'
+            astd = 1.96*nanstd(amatrix)/sqrt(size(amatrix,1)-1);
+        case 'prctileci'
+            astd(1,:) = prctile(amatrix,2.5,1);
+            astd(2,:) = prctile(amatrix,97.5,1);
+    end
 end
 
 if exist('alpha','var')==0 || isempty(alpha)
@@ -77,7 +86,7 @@ else
     elseif ~strcmpi(method,'logstd')
         fill([F fliplr(F)],[amean+astd fliplr(amean-astd)],acolor, 'FaceAlpha', alpha,'linestyle','none','HandleVisibility','off');
     else
-            fill([F fliplr(F)],[amean.*astd fliplr(amean./astd)],acolor, 'FaceAlpha', alpha,'linestyle','none','HandleVisibility','off');
+        fill([F fliplr(F)],[amean.*astd fliplr(amean./astd)],acolor, 'FaceAlpha', alpha,'linestyle','none','HandleVisibility','off');
     end
 end
 

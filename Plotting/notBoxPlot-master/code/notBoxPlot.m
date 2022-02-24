@@ -57,6 +57,9 @@ function varargout=notBoxPlot(y,x,varargin)
 %                The median is highlighted as a dotted line or an open square 
 %                (if "line" style was used).
 %
+% 'colorscheme' (SWT edit) - a colour to make the colour scheme around.
+%               Defaults to the standard NBP colour scheme
+%
 %
 % Outputs (all area optional)
 % H - structure of handles for plot objects.
@@ -105,8 +108,6 @@ function varargout=notBoxPlot(y,x,varargin)
 % Rob Campbell - August 2016
 %
 % Also see: boxplot
-
-
 
 
 % Check input arguments
@@ -216,10 +217,14 @@ params.addParameter('jitter', 0.3, @(x) isnumeric(x) && isscalar(x));
 params.addParameter('style','patch', @(x) ischar(x) && any(strncmpi(x,{'patch','line','sdline'},4)) );
 params.addParameter('interval','SEM', @(x) ischar(x) && any(strncmpi(x,{'sem','tinterval'},4)) );
 params.addParameter('markMedian', false, @(x) islogical(x));
+params.addParameter('colorscheme', 'default')
+
+
 
 %Options hidden from the user
 params.addParameter('numSDs',1, @(x) isnumeric(x) && isscalar(x) && x>=0) 
 params.addParameter('manualCI',[], @(x) (isnumeric(x) && isscalar(x)) || isempty(x) )
+
 
 params.parse(varargin{:});
 
@@ -228,6 +233,7 @@ jitter     = params.Results.jitter;
 style      = params.Results.style;
 interval   = params.Results.interval;
 markMedian = params.Results.markMedian;
+colorscheme = params.Results.colorscheme;
 
 %The multiplier for the SD patch. e.g. for 1.96 SDs this value should be 1.96
 numSDs = params.Results.numSDs;
@@ -325,8 +331,21 @@ if length(x)>1
     xlim([min(x)-1,max(x)+1])
 end
 
+if ~ischar(colorscheme) || ~strcmpi(colorscheme,'default')
+    clrsem = colorscheme;
+    clrsd = palecol(clrsem,0.5);
+    q = linspace(1,length(H),length(H));
+    for q = q
+    H(q).semPtch.FaceColor = clrsem;
+    H(q).semPtch.EdgeColor = clrsem;
+    H(q).sdPtch.FaceColor = clrsd;
+    H(q).sdPtch.EdgeColor = clrsd;
+    end
+end
+
 
 %handle the output arguments
+
 if nargout>0
     varargout{1}=H;
 end
