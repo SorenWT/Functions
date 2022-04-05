@@ -1,5 +1,8 @@
 function hout = plotAdded_swt(mdl,coef)
 
+%[~,~,f] = nicecorrplot(mdl.Variables.(coef),mdl.Variables.(mdl.ResponseName),{'a','b'});
+%f.Color = 'k';
+hold on
 hout = plotAdded(mdl,coef);
 
 hout(1).Color = palecol(hout(1).Color,0.3);

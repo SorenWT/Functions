@@ -21,11 +21,21 @@ end
 
 argsin = varargin;
 
+argsin = setdefault(argsin,'markers',{'o','o'}); 
+argsin = setdefault(argsin,'colors',{'k','w'});
+sizmod = setdefault(argsin,'sizmod',1.5);
+
+mkrs = EasyParse(argsin,'markers');
+clrs = EasyParse(argsin,'colors');
+sizmod = EasyParse(argsin,'sizmod');
+
+argsin = removeargs(argsin,{'markers','colors','sizmod'});
+
 if ~isempty(argsin)
-topoplot(data,chanlocs,'emarker2',{find(sig),'o','k',size,1},'emarker3',{find(sigmask),'o','w',1.5*size,1},...
+topoplot(data,chanlocs,'emarker2',{find(sig),mkrs{1},clrs{1},size,1},'emarker3',{find(sigmask),mkrs{2},clrs{2},sizmod*size,1},...
     'electrodes','off','maplimits','maxmin',argsin{:})
 else
-   topoplot(data,chanlocs,'emarker2',{find(sig),'o','k',size,1},'emarker3',{find(sigmask),'o','w',1.5*size,1},...
+   topoplot(data,chanlocs,'emarker2',{find(sig),mkrs{1},clrs{1},size,1},'emarker3',{find(sigmask),mkrs{2},clrs{2},sizmod*size,1},...
     'electrodes','off','maplimits','maxmin') 
 end
 

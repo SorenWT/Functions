@@ -65,7 +65,7 @@ else
 end
 
 if CheckInput(varargin,'Cov')
-    [corrrho,corrp] = partialcorr(a,b,indexme(EasyParse(varargin,'Cov'),~allnan,1:size(EasyParse(varargin,'Cov'),2)),'Type',type);
+    [corrrho,corrp] = partialcorr(a,b,indexme(EasyParse(varargin,'Cov'),~allnan,1:size(EasyParse(varargin,'Cov'),2)),'Type',type,'rows','pairwise');
 else
     [corrrho,corrp] = corr(a,b,'rows','pairwise','Type',type);
 end

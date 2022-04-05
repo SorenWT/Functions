@@ -54,12 +54,29 @@ end
 %%% Insert axis labels
 
 % Compute minimum and maximum per axis
-minV = min(P,[],2);
-maxV = max(P,[],2);
+if ~CheckInput(varargin,'limits')
+minV = min(P,[],2); minV = minV-0.2*abs(minV);
+maxV = max(P,[],2); maxV = maxV+0.2*abs(maxV);
+else
+    minmax = EasyParse(varargin,'limits');
+    minV = repmat(minmax(1),size(P,1),1); maxV = repmat(minmax(2),size(P,1),1);
+    varargin = removeargs(varargin,{'limits'});
+end
+
+if CheckInput(varargin,'axlabels')
+    axlabels = EasyParse(varargin,'axlabels');
+    varargin = removeargs(varargin,{'axlabels'});
+else
+    axlabels = strcat('x_',cellstr(num2str([1:M]')));
+end
+
 for j = 1:M
     % Generate the axis label
-    msg = sprintf('x_{%d} = %5.2f ... %5.2f',...
-        j, minV(j), maxV(j));
+
+    
+    msg = axlabels{j};
+    msg = sprintf('%s = %5.2f ... %5.2f',...
+        axlabels{j}, minV(j), maxV(j));
     [mx, my] = pol2cart( th(1, j), 1.1);
     text(mx, my, msg);
 end
@@ -87,4 +104,5 @@ end
 
 if nargout > 0 
     varargout{1} = h;
+    varargout{2} = hLine;
 end

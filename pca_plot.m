@@ -183,9 +183,9 @@ for q = 1:length(plottypes)
                 FixAxes(gca,fsize)
             case 'wordcloud'
                 f = figure;
-                wordcloud(xlabels,abs(plotloads))
-                ax = findobj('parent','f','type','axes');
-                p(pindx{:},2,q,i1,i2).select(ax)
+                wc = wordcloud_bipolar(xlabels,plotloads(:,i));
+                %ax = findobj('parent','f','type','axes');
+                p(pindx{:},2,q,i1,i2).select(wc)
                 close(f)
             case 'posture'
                 p(pindx{:},2,q,i1,i2).select()

@@ -1,4 +1,4 @@
-function [Y,loss] = tsne(X,varargin)
+function [Y,loss] = tsne_swt(X,varargin)
 %TSNE t-Distributed Stochastic Neighbor Embedding.
 %   Y = tsne(X) returns the representation of the N by P matrix X in the
 %   two dimensional space. Each row in X represents an observation. Rows

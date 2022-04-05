@@ -107,6 +107,7 @@ plsmdl.YS = NaN(length(allnan),size(YS,2)); plsmdl.YS(goodindx,:) = YS;
 plsmdl.beta = beta; plsmdl.pctvar = pctvar;
 plsmdl.mse = mse; plsmdl.stats = stats;
 plsmdl.r = r; plsmdl.pperm = stats.pperm;
+plsmdl.fdr = fdr(plsmdl.pperm);
 
 plsmdl.Xloads = corr(X,XS); plsmdl.Yloads = corr(Y,YS);
 

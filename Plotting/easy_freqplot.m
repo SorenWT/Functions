@@ -47,8 +47,12 @@ hold on
 
 maskline = findobj('parent',gca,'type','contour');
 uistack(maskline,'top')
-%maskline.XData = maskline.XData+0.5*mean(diff(freq.time));
-%maskline.YData = maskline.YData+0.5*mean(diff(freq.freq));
+
+ax = gca; 
+
+%if min(ax.YLim)<= min(freq.freq)-diff(freq.freq)
+maskline.XData = maskline.XData+0.5*mean(diff(freq.time));
+maskline.YData = maskline.YData+0.5*mean(diff(freq.freq));
 
 
 

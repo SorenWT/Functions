@@ -35,6 +35,7 @@ end
 
 if length(whichcluster)>1
     figure
+    set(gcf,'units','normalized','position',[0 0 1 1])
     
     p = panel('no-manage-font');
     %p = panel();%'no-manage-font');
@@ -123,8 +124,10 @@ else
     reprtfpoint = {[num2str(round(stats.freq(findx),3,'sig')) ' Hz, ' num2str(stats.time(tindx)) ' seconds']};
     
     if ~contains(ft_datatype(layout),'mesh')
-            p(pindx{:},1).select()
-        ft_cluster_topoplot(layout,reprmap,stats.label,stats.prob,reprmask)
+        %p(pindx{:},1).select()
+        f = figure;
+        ft_cluster_topoplot(layout,reprmap,stats.label,stats.prob,reprmask);
+        p(pindx{:},1).select(gca); close(f);
         ax{1} = gca;
     else
         if strcmpi(sourceplotmethod,'wholebrain')
@@ -141,7 +144,7 @@ else
     
     % find the most representative sensor/region
     
-    p(pindx{:},2).select()
+    %p(pindx{:},2).select()
     ax{2} = gca;
     
     if whichcluster(i) < 0
@@ -160,7 +163,7 @@ else
     
     reprmask = clustlabs;
     %reprmask = clustlabs(any(clustlabs==abs(whichcluster(i))),:);
-
+    
     
     switch selmethod
         case 'representative'
@@ -175,17 +178,25 @@ else
     reprtf = tf(choiceindx,:);
     reprtf = reshape(reprtf,size(stats.stat,2),size(stats.stat,3));
     
-        reprmask = clustlabs(choiceindx,:);
+    reprmask = clustlabs(choiceindx,:);
     reprmask = reprmask==abs(whichcluster(i));
     %reprmask = clustlabs(choiceindx,:) == abs(whichcluster(i));
     reprmask = reshape(reprmask,size(stats.stat,2),size(stats.stat,3));
     
     reprchan = chanlab(choiceindx);
-    
+    f = figure;
     easy_freqplot(struct('toplot',reprtf,'time',stats.time,'freq',stats.freq,'mask',reprmask))
+    p(pindx{:},2).select(gca); close(f)
+    
     FixAxes(gca,16*fsizmult)
     set(gca,'YScale','log')
-    t = p(pindx{:},2).title(reprchan);
+    if whichcluster < 0
+        thisp = stats.negclusters(abs(whichcluster(i))).prob;
+    else
+        thisp = stats.posclusters(abs(whichcluster(i))).prob;
+        
+    end
+    t = p(pindx{:},2).title([reprchan ': p = ' num2str(round(thisp,2,'significant'))]);
     t.FontWeight = 'bold'; t.FontSize = 18*fsizmult;
     
     

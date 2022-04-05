@@ -21,6 +21,7 @@ if CheckInput(argsin,'panel')
     p = EasyParse(argsin,'panel');
 else
     figure
+    set(gcf,'units','normalized','position',[0 0.4-0.4*double(length(whichcomps)>1) 1 0.6+0.4*double(length(whichcomps)>1)]);
     p = panel('no-manage-font');
 end
 
@@ -52,6 +53,8 @@ for i = 1:length(coeffplots)
         plotwidth(i) = 2;
     elseif strcmpi(coeffplots{i}{2},'embody')
         plotwidth(i) = 0.5;
+    elseif strcmpi(coeffplots{i}{2},'embody_top')
+        plotwidth(i) = 1.5;
     else
         plotwidth(i) = 1;
     end
@@ -101,6 +104,9 @@ for q = whichcomps
                 ylabel('Loading');
                 xtickangle(90)
                 FixAxes(gca,14)
+                
+                %t = p(pindx{:},find(whichcomps==q),2,i).title(plotlabels{i});
+                %t.FontWeight = 'Bold'; t.FontSize = 20;
             case 'barh'
                 p(pindx{:},find(whichcomps==q),2,i).select()
                 l = lines;
@@ -113,12 +119,19 @@ for q = whichcomps
                 set(gca,'YTick',[1:size(plsmdl.(coeffplots{i}{1}),1)],'YTickLabel',labs)
                 ylabel('Loading');
                 FixAxes(gca,14)
+                
+                %t = p(pindx{:},find(whichcomps==q),2,i).title(plotlabels{i});
+                %t.FontWeight = 'Bold'; t.FontSize = 20;
             case 'wordcloud'
                 f = figure;
-                wordcloud(labs,abs(plsmdl.(coeffplots{i}{1})))
-                ax = findobj('parent','f','type','axes');
-                p(pindx{:},find(whichcomps==q),2,i).select(ax)
+                bootp = plsmdl.([coeffplots{i}{1} '_bootp'])(:,q);
+                wc = wordcloud_bipolar(labs,plsmdl.(coeffplots{i}{1})(:,q).*(bootp<0.05));
+                %ax = findobj('parent','f','type','axes');
+                p(pindx{:},find(whichcomps==q),2,i).select(wc)
                 close(f)
+                
+                %t = p(pindx{:},find(whichcomps==q),2,i).title(plotlabels{i});
+                %t.FontWeight = 'Bold'; t.FontSize = 20;
             case 'embody'
                 atlas = EasyParse(argsin,'embodyatlas');
                 
@@ -156,6 +169,57 @@ for q = whichcomps
                     cbar.Label.String = 'Loading'; cbar.FontSize = 14;
                 end
                 
+                %t = p(pindx{:},find(whichcomps==q),2,i).title(plotlabels{i});
+                %t.FontWeight = 'Bold'; t.FontSize = 20;
+                
+            case 'embody_top'
+                
+                atlas = EasyParse(argsin,'embodyatlas');
+                
+                theseloads = reshape(plsmdl.(coeffplots{i}{1})(:,q),sum(unique(atlas)>0),[]);
+                theseloads_p = reshape(plsmdl.([coeffplots{i}{1} '_bootp'])(:,q),sum(unique(atlas)>0),[]);
+                theseloads = theseloads.*(theseloads_p<0.05);
+                
+                emos = {'Anger','Contempt','Disgust','Envy','Fear','Happiness','Pride','Sadness','Shame','Surprise'};
+                
+                emolabs = [strcat(emos,' Activation') strcat(emos,' Deactivation')];
+                
+                %loadsbyemo = reshape(theseloads,sum(unique(atlas)>0),length(emos),[]); % activation
+                %loadsbyemo = loadsbyemo.*(reshape(theseloads_p,sum(unique(atlas)>0),length(emos),[])<0.05);
+                
+                bestemos = sum(abs(theseloads),1);
+                
+                [~,sortbest] = sort(bestemos); sortbest = fliplr(sortbest);
+                
+                ntop = 6;
+                
+                if ncomps == 1
+                    dims = numSubplots(ntop,1.5); dims = fliplr(dims);
+                else
+                    dims = numSubplots(ntop,2.5); %dims = fliplr(dims);
+                end
+                dims = fliplr(dims);
+                
+                %emos = repmat(emos,1,size(theseloads,2)/10);
+                p(pindx{:},find(whichcomps==q),2,i).pack(dims(1),dims(2))
+                for qq = 1:ntop
+                    [i1,i2] = ind2sub(dims,qq);
+                    p(pindx{:},find(whichcomps==q),2,i,i1,i2).select()
+                    axs(qq) = gca;
+                    map = vect2vol(theseloads(:,sortbest(qq)),atlas);
+                    embody_plotmap(map)
+                    set(gca,'YDir','reverse')
+                    axis tight
+                    title(emolabs{sortbest(qq)},'FontSize',16);
+                end
+                Normalize_Clim(axs,1);
+                set(gca,'YDir','reverse')
+                cbar = colorbar;
+                cbar.Label.String = 'Loading'; cbar.FontSize = 14;
+                
+                %t = p(pindx{:},find(whichcomps==q),2,i).title(plotlabels{i});
+                %t.FontWeight = 'Bold'; t.FontSize = 20; t.Position = t.Position+[0 0.05 0];
+                
             case 'posture'
                 %if CheckInput(argsin,'postureweights') % translate back to posture feature space in case the model was done on components
                 %    posweights = EasyParse(varargin,'postureweights'); % this should be a table
@@ -176,6 +240,7 @@ for q = whichcomps
 end
 
 p(pindx{:}).margin = [20 30 5 5];
+p.margintop = 10;
 %p(pindx{:},2).marginleft = 22;
 
 
