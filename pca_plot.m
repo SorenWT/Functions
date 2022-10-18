@@ -95,13 +95,25 @@ else
         plot(1:pcamdl.ncomps,pcamdl.explained(1:pcamdl.ncomps),'LineWidth',2,'color',palecol(l(1,:)));
     hold on
     plot(1:length(pcamdl.explained),pcamdl.explained(1:end),'LineWidth',1,'color',palecol(l(1,:)),'linestyle','--','HandleVisibility','off')
+    if isfield(pcamdl,'expl_perm')
     stdshade(1:length(pcamdl.explained),pcamdl.expl_perm','k',0.3,2,'prctileci');
+    end
     plot(1:length(pcamdl.rotated.explained),pcamdl.rotated.explained,'LineWidth',5,'color',l(1,:));
     
+
+    
+    if isfield(pcamdl,'kaiser')
     xl = get(gca,'XLim');
     line(xl,[100/length(xlabels) 100/length(xlabels)],'LineWidth',2,'color','r')
     set(gca,'XLim',xl);
+    end
     legend({'Unrotated eigenvalues','Parallel analysis eigenvalues (95% CI)','Rotated eigenvalues','Kaiser threshold'})
+    
+    if isfield(pcamdl,'cverr')
+       yyaxis right
+       plot(pcamdl.cverr,'LineWidth',3,'Color',l(2,:))
+       ylabel('Cross-validation error')
+    end
 end
 
 FixAxes(gca,fsize*1.2)
@@ -117,13 +129,13 @@ plot(cumsum(pcamdl.explained),'LineWidth',3,'color',l(2,:),'HandleVisibility','o
 hold on
 yl = get(gca,'YLim');
 line([pcamdl.ncomps pcamdl.ncomps],yl,'color',[0.5 0.5 0.5],'LineWidth',2)
-line([pcamdl.kaiser pcamdl.kaiser],yl,'color','k','LineWidth',2)
+%line([pcamdl.kaiser pcamdl.kaiser],yl,'color','k','LineWidth',2)
 set(gca,'YLim',yl)
 FixAxes(gca,fsize*1.2)
 xlabel('Component')
 ylabel('Cumulative explained variance')
 ax1 = gca;
-legend({'Parallel analysis','Kaiser criterion'})
+legend({'Selected number of components'})
 % if pcamdl.ncomps < pcamdl.kaiser
 %     set(gca,'XTick',[pcamdl.ncomps pcamdl.kaiser],...
 %         'XTickLabel',{'Parallel analysis','Kaiser criterion'})

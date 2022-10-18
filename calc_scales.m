@@ -18,6 +18,7 @@ else
     
     for i = 1:length(sclnames)
         info = scaleinfo.(sclnames{i});
+        %fprintf(sclnames{i})
         [i1,i2] = match_str(info.items,varnames);
         rawscale = tbl(:,i2);
         rawresps = [];

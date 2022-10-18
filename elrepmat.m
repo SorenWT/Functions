@@ -10,5 +10,6 @@ end
 newX = [];
 X = horz(X);
 for c = 1:size(X,dim)
-    newX = cat(dim,newX,ones(1,nrep).*X(c));
+    newX = cat(dim,newX,repmat(X(c),1,nrep));
+    %ones(1,nrep).*X(c));
 end

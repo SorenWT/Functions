@@ -20,6 +20,12 @@ end
 
 base2=base(10:531,33:203,:); % single image base
 
+if all(all(isnan(mapmat)))
+    warning('Bodymap contains NaNs - plot omitted')
+    mapmat = zeros(size(mapmat));
+end
+
+
 
 load('hotcoldmap');
 
