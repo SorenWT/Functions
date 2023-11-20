@@ -129,6 +129,7 @@ n = length(diffxy);
 
 if (n == 0)         % degenerate case, all ties
 	p = 1;
+    teststat = 0;
 	if (nargout > 1)
 		h = 0;
 		if (nargout > 2)

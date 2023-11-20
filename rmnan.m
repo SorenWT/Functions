@@ -5,6 +5,7 @@ nandat = sum(dat,2);
 elseif dim == 2
    nandat = sum(dat,1); 
 end
+
 rmindx = find(isnan(nandat));
 if dim == 1
     dat(rmindx,:) = [];

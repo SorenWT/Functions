@@ -86,7 +86,7 @@ else
         pcamdl.rotated.weights = rotatefactors(pcamdl.weights(:,1:ncompsrot),'method',rotate);
         tmpcomps = (X-nanmean(X,1))*pcamdl.rotated.weights;
         pcamdl.rotated.comps = NaN(size(Xorig,1),size(tmpcomps,2)); pcamdl.rotated.comps(~nanindx,:) = tmpcomps;
-        pcamdl.rotated.explained = 100*nanvar(pcamdl.rotated.comps,[],1)./trace(cov(X));
+        pcamdl.rotated.explained = 100*nanvar(pcamdl.rotated.comps,[],1)./sum(var(X));
         pcamdl.rotated.loads = corr(Xorig,pcamdl.rotated.comps,'rows','pairwise');
         if do_boot
             for i = 1:nperms

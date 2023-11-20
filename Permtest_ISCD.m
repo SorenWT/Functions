@@ -119,5 +119,5 @@ end
 
 p = 2*p; %two-sided test
 
-res.pperm = p; res.statobs = orig_stat; res.stattype = stattype; res.type = type; 
+res.p = p; res.statobs = orig_stat; res.stattype = stattype; res.type = type; 
 res.permstat = perm_stat; res.corrmats = corrmat; res.corrvals = corrvals;

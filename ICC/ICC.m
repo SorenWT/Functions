@@ -25,6 +25,8 @@ function out = ICC(cse,typ,dat)
 % Kevin Brownhill, Imaging Sciences, KCL, London kevin.brownhill@kcl.ac.uk
 %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+dat = rmnan(dat,1);
+
 %number of raters/ratings
 k = size(dat,2);
 %number of targets

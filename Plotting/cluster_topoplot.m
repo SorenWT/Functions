@@ -23,7 +23,7 @@ argsin = varargin;
 
 argsin = setdefault(argsin,'markers',{'o','o'}); 
 argsin = setdefault(argsin,'colors',{'k','w'});
-sizmod = setdefault(argsin,'sizmod',1.5);
+argsin = setdefault(argsin,'sizmod',1.5);
 
 mkrs = EasyParse(argsin,'markers');
 clrs = EasyParse(argsin,'colors');
@@ -33,11 +33,16 @@ argsin = removeargs(argsin,{'markers','colors','sizmod'});
 
 if ~isempty(argsin)
 topoplot(data,chanlocs,'emarker2',{find(sig),mkrs{1},clrs{1},size,1},'emarker3',{find(sigmask),mkrs{2},clrs{2},sizmod*size,1},...
-    'electrodes','off','maplimits','maxmin',argsin{:})
+    'electrodes','off','maplimits','maxmin','headrad',max([chanlocs.radius]),argsin{:})
 else
-   topoplot(data,chanlocs,'emarker2',{find(sig),mkrs{1},clrs{1},size,1},'emarker3',{find(sigmask),mkrs{2},clrs{2},sizmod*size,1},...
-    'electrodes','off','maplimits','maxmin') 
+   [h,grid,plotrad,xmesh,ymesh] = topoplot(data,chanlocs,'emarker2',{find(sig),mkrs{1},clrs{1},size,1},'emarker3',{find(sigmask),mkrs{2},clrs{2},sizmod*size,1},...
+    'electrodes','off','maplimits','maxmin','headrad',max([chanlocs.radius]));
 end
+
+xl = get(gca,'XLim'); yl = get(gca,'YLim');
+xl = set(gca,'XLim',[xl(1)+0.05*xl(1) xl(2)+0.05*xl(2)]);
+yl = set(gca,'YLim',[yl(1)+0.1*yl(1) yl(2)+0.1*yl(2)]);
+
 
 
 % topoplot() - plot a topographic map of a scalp data field in a 2-D circular view

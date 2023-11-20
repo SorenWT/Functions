@@ -4,10 +4,9 @@ if nargin < 5
    opts = struct;
 end
 
-opts = setdefault(opts,'critval',0);
+opts = setdefault(opts,'critval',0.1);
 opts = setdefault(opts,'KFold',2);
 opts = setdefault(opts,'perms',1000);
-
 
 clear acc
 for i = 1:round(opts.perms/opts.KFold)

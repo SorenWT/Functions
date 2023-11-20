@@ -1,4 +1,4 @@
-function p = pls_plot(plsmdl,whichcomps,plotlabels,xlabels,ylabels,varargin)
+function p = pls_plot(plsmdl,whichcomps,datasetlabels,xlabels,ylabels,varargin)
 % this function makes a standard plot for a pls model defined by plsregress_perm
 %
 % Inputs:
@@ -67,7 +67,7 @@ ncomps = length(whichcomps);
 if isempty(pindx)
     p.pack('v',repmat({1/ncomps},1,ncomps))
     for i = 1:ncomps
-        p(i).pack('h',{1/3 2/3})
+        p(i).pack('h',{1/5 4/5})
     end
 else
     p(pindx{:}).pack('v',repmat({1/ncomps},1,ncomps))
@@ -79,8 +79,9 @@ end
 
 for q = whichcomps
     p(pindx{:},find(whichcomps==q),1).select()
-    nicecorrplot(plsmdl.XS(:,q),plsmdl.YS(:,q),{['Latent component ' num2str(q) ' - ' plotlabels{1}],...
-        ['Latent component ' num2str(q) ' - ' plotlabels{2}]},'type','pearson','externalp',plsmdl.pperm(q));
+    nicecorrplot(plsmdl.XS(:,q),plsmdl.YS(:,q),{['Latent component ' num2str(q) ' - ' datasetlabels{1}],...
+        ['Latent component ' num2str(q) ' - ' datasetlabels{2}]},'type','pearson','externalp',plsmdl.pperm(q));
+    FixAxes(gca,20)
     
     p(pindx{:},find(whichcomps==q),2).pack('h',plotwidth);
     
@@ -96,6 +97,7 @@ for q = whichcomps
                 l = lines;
                 b = bar(plsmdl.(coeffplots{i}{1})(:,q),'facecolor',palecol(l(i,:)));
                 hold on
+                b2 = bar(plsmdl.(coeffplots{i}{1})(:,q).*(plsmdl.([coeffplots{i}{1} '_bootp'])(:,q)<0.05),'facecolor',l(1,:));
                 if isfield(plsmdl,[coeffplots{i}{1} '_boot'])
                     e = errorbar(plsmdl.(coeffplots{i}{1})(:,q),1.96*std(plsmdl.([coeffplots{i}{1} '_boot'])(:,q,:),[],3),...
                         'LineStyle','none','LineWidth',2,'Color','k');
@@ -105,27 +107,33 @@ for q = whichcomps
                 xtickangle(90)
                 FixAxes(gca,14)
                 
-                %t = p(pindx{:},find(whichcomps==q),2,i).title(plotlabels{i});
+                %t = p(pindx{:},find(whichcomps==q),2,i).title(datasetlabels{i});
                 %t.FontWeight = 'Bold'; t.FontSize = 20;
             case 'barh'
                 p(pindx{:},find(whichcomps==q),2,i).select()
                 l = lines;
                 b = barh(plsmdl.(coeffplots{i}{1})(:,q),'facecolor',palecol(l(i,:)));
                 hold on
+                b2 = barh(plsmdl.(coeffplots{i}{1})(:,q).*(plsmdl.([coeffplots{i}{1} '_bootp'])(:,q)<0.05),'facecolor',l(1,:));
                 if isfield(plsmdl,[coeffplots{i}{1} '_boot'])
                     e = errorbar(plsmdl.(coeffplots{i}{1})(:,q),1:length(plsmdl.(coeffplots{i}{1})(:,q)),1.96*std(plsmdl.([coeffplots{i}{1} '_boot'])(:,q,:),[],3),...
                         'horizontal','LineStyle','none','LineWidth',2,'Color','k');
                 end
                 set(gca,'YTick',[1:size(plsmdl.(coeffplots{i}{1}),1)],'YTickLabel',labs)
-                ylabel('Loading');
+                xlabel('Loading');
                 FixAxes(gca,14)
                 
                 %t = p(pindx{:},find(whichcomps==q),2,i).title(plotlabels{i});
                 %t.FontWeight = 'Bold'; t.FontSize = 20;
             case 'wordcloud'
                 f = figure;
-                bootp = plsmdl.([coeffplots{i}{1} '_bootp'])(:,q);
-                wc = wordcloud_bipolar(labs,plsmdl.(coeffplots{i}{1})(:,q).*(bootp<0.05));
+                load('lkcmap2')
+                if isfield(plsmdl,([coeffplots{i}{1} '_bootp']))
+                    bootp = plsmdl.([coeffplots{i}{1} '_bootp'])(:,q);
+                else
+                    bootp = zeros(size(plsmdl.(coeffplots{i}{1})(:,q)));
+                end
+                wc = wordcloud_bipolar(labs,plsmdl.(coeffplots{i}{1})(:,q),lkcmap2,'specific',bootp<0.05);
                 %ax = findobj('parent','f','type','axes');
                 p(pindx{:},find(whichcomps==q),2,i).select(wc)
                 close(f)
@@ -210,7 +218,7 @@ for q = whichcomps
                     embody_plotmap(map)
                     set(gca,'YDir','reverse')
                     axis tight
-                    title(emolabs{sortbest(qq)},'FontSize',16);
+                    title(emolabs{sortbest(qq)},'FontSize',14);
                 end
                 Normalize_Clim(axs,1);
                 set(gca,'YDir','reverse')
@@ -234,13 +242,47 @@ for q = whichcomps
                 
                 p(pindx{:},find(whichcomps==q),2,i).select()
                 postureplot(posweights)
+                axis off
+                
+            case 'posture_continuum'
+                if ~CheckInput(argsin,'continuum_nsteps')
+                    nsteps = 6;
+                else
+                    nsteps = EasyParse(argsin,'continuum_nsteps');
+                end
+                %thesesteps = linspace(0,100,nsteps);
+                
+                meandat = nanmean(plsmdl.(coeffplots{i}{1}(1)),1);
+                thesesteps = linspace(-0.7,0.7,nsteps);
+
+                
+                p(pindx{:},find(whichcomps==q),2,i).pack('h',repmat({1/nsteps},1,nsteps))
+                
+                for ii = 1:nsteps
+                    p(pindx{:},find(whichcomps==q),2,i,ii).select()
+                    
+                    %thisscr = plsmdl.([coeffplots{i}{1}(1) 'S'])(:,find(whichcomps==q));
+                    %thisindx = FindClosest(thisscr,prctile(thisscr,thesesteps(ii)),1);
+                    postureplot(meandat+thesesteps(ii)*plsmdl.([coeffplots{i}{1}(1) 'L'])(:,find(whichcomps==q))')
+                    %postureplot(plsmdl.(coeffplots{i}{1}(1))(thisindx,:))
+                    
+                    %title([num2str(thesesteps(ii)) 'th' newline 'percentile'],'FontSize',16)
+                    view(-90,0)
+                    ax(ii) = gca;
+                    axis off
+                end
+                
+                Normalize_Xlim(ax,0); Normalize_Ylim(ax,0); Normalize_Zlim(ax,0);
+                p(pindx{:},find(whichcomps==q),2,i).de.margin = [10 10 5 5];
         end
+        
     end
     
 end
 
 p(pindx{:}).margin = [20 30 5 5];
 p.margintop = 10;
+p.marginleft = 25;
 %p(pindx{:},2).marginleft = 22;
 
 

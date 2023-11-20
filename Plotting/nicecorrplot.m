@@ -109,23 +109,29 @@ else
 end
 
 if CheckInput(varargin,'Plot') && EasyParse(varargin,'Plot','r')
-    p
+    tb = annotation('textbox','String',{[rstring ' = ' num2str(round(corrrho,2))];['p = ' num2str(round(corrp,2,'significant'))]},...
+        'FitBoxToText','on','LineStyle','none','FontSize',14);
+    tbsize = get(tb,'Position');
+    delete(tb)
+    edges = [pos(1) pos(2) pos(1)+pos(3) pos(2)+pos(4)]; %left bottom right top
+    tb = annotation('textbox','Position',[edges(3)-tbsize(3)-pos(3)*0.05 edges(4)-tbsize(4)-0.05*pos(4) tbsize(3) tbsize(4)],...
+        'String',{[rstring ' = ' num2str(round(corrrho,2))]},'FitBoxToText','on','LineStyle','none','FontSize',14);
 elseif CheckInput(varargin,'Plot') && EasyParse(varargin,'Plot','Beta')
     tb = annotation('textbox','String',{['\beta = ' num2str(round(B(2),3))]},'FitBoxToText','on','LineStyle','none','FontSize',14);
     tbsize = get(tb,'Position');
     delete(tb)
     edges = [pos(1) pos(2) pos(1)+pos(3) pos(2)+pos(4)]; %left bottom right top
     tb = annotation('textbox','Position',[edges(3)-tbsize(3)-pos(3)*0.05 edges(4)-tbsize(4)-pos(4)*0.05 tbsize(3) tbsize(4)],...
-        'String',{['\beta = ' num2str(round(B(2),3))]},'FitBoxToText','on','LineStyle','none','FontSize',14);
+        'String',{['\beta = ' num2str(round(B(2),2))]},'FitBoxToText','on','LineStyle','none','FontSize',14);
 elseif CheckInput(varargin,'Plot') && EasyParse(varargin,'Plot','off')
 elseif ~CheckInput(varargin,'Plot')
-    tb = annotation('textbox','String',{[rstring ' = ' num2str(round(corrrho,3))];['p = ' num2str(round(corrp,3,'significant'))]},...
+    tb = annotation('textbox','String',{[rstring ' = ' num2str(round(corrrho,2))];['p = ' num2str(round(corrp,2,'significant'))]},...
         'FitBoxToText','on','LineStyle','none','FontSize',14);
     tbsize = get(tb,'Position');
     delete(tb)
     edges = [pos(1) pos(2) pos(1)+pos(3) pos(2)+pos(4)]; %left bottom right top
     tb = annotation('textbox','Position',[edges(3)-tbsize(3)-pos(3)*0.05 edges(4)-tbsize(4)-0.05*pos(4) tbsize(3) tbsize(4)],...
-        'String',{[rstring ' = ' num2str(round(corrrho,3))];['p = ' num2str(round(corrp,3,'significant'))]},'FitBoxToText','on','LineStyle','none','FontSize',14);
+        'String',{[rstring ' = ' num2str(round(corrrho,2))];['p = ' num2str(round(corrp,2,'significant'))]},'FitBoxToText','on','LineStyle','none','FontSize',14);
 end
 
 if isnan(corrrho) && isnan(corrp)

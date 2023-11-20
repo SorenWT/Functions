@@ -44,7 +44,11 @@ numplots = length(theseplots);
 
 
 if ~exist('xlabels','var') || isempty(xlabels)
-    xlabels = cellcat('Predictor ',cellstr(num2str([1:size(pcamdl.XL,1)]')),'',0);
+    if isfield(pcamdl,'varnames')
+        xlabels = pcamdl.varnames;
+    else
+        xlabels = cellcat('Predictor ',cellstr(num2str([1:size(pcamdl.weights,1)]')),'',0);
+    end
 end
 
 if CheckInput(argsin,'fontsize')
@@ -112,6 +116,7 @@ else
     if isfield(pcamdl,'cverr')
        yyaxis right
        plot(pcamdl.cverr,'LineWidth',3,'Color',l(2,:))
+       legend({'Unrotated eigenvalues','Rotated eigenvalues','Cross-validation error'})
        ylabel('Cross-validation error')
     end
 end
@@ -162,10 +167,12 @@ for q = 1:length(plottypes)
            plotloads = pcamdl.rotated.loads;
            plotloads_boot = pcamdl.rotated.loads_boot;
            plotloads_bootp = pcamdl.rotated.loads_bootp;
+           plotloads_bootz = pcamdl.rotated.loads_bootz;
         else
             plotloads = pcamdl.loads;
             plotloads_boot = pcamdl.loads_boot;
             plotloads_bootp = pcamdl.loads_bootp;
+            plotloads_bootz = pcamdl.loads_bootz;
         end
         switch plottype
             case 'bar'
@@ -194,8 +201,11 @@ for q = 1:length(plottypes)
                 xlabel('Loading');
                 FixAxes(gca,fsize)
             case 'wordcloud'
+                load('lkcmap2')
                 f = figure;
-                wc = wordcloud_bipolar(xlabels,plotloads(:,i));
+                thisindx = abs(plotloads_bootz(:,i))>prctile(abs(plotloads_bootz(:,i)),50);
+                wc = wordcloud_bipolar(xlabels(thisindx),plotloads(thisindx,i),lkcmap2,'specific',abs(plotloads_bootz(thisindx,i))>prctile(abs(plotloads_bootz(:,i)),80));
+                %wc = wordcloud_bipolar(xlabels,plotloads(:,i),lkcmap2,'specific',plotloads_bootp(:,i)<0.05);
                 %ax = findobj('parent','f','type','axes');
                 p(pindx{:},2,q,i1,i2).select(wc)
                 close(f)

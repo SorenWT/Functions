@@ -75,7 +75,9 @@ bnd.tri = sourcemodel.tri(trindx,:);
 
 ft_plot_mesh(bnd,'edgealpha',0,'vertexcolor',repmat(clr,sum(sourcemodel.brainstructure==1),1));
 hold on
+if any(double(vert(plotmask(sourcemodel.brainstructure==1))))
 ft_plot_mesh(bnd, 'vertexcolor', vert(plotdata(sourcemodel.brainstructure==1)), 'facealpha', double(vert(plotmask(sourcemodel.brainstructure==1))), 'maskstyle', 'opacity','edgealpha',0);
+end
 material(mtrl)
 try
     set(gca,'CLim',[min(vert(plotdata(sourcemodel.brainstructure==1)).*vert(plotmask(sourcemodel.brainstructure==1))) max(vert(plotdata(sourcemodel.brainstructure==1)).*vert(plotmask(sourcemodel.brainstructure==1)))]);
@@ -103,7 +105,9 @@ bnd.tri = bnd.tri - cort_size;
 view(90,0)
 ft_plot_mesh(bnd,'edgealpha',0,'vertexcolor',repmat(clr,sum(sourcemodel.brainstructure==2),1));
 hold on
+if any(double(vert(plotmask(sourcemodel.brainstructure==2))))
 ft_plot_mesh(bnd, 'vertexcolor', vert(plotdata(sourcemodel.brainstructure==2)), 'facealpha', double(vert(plotmask(sourcemodel.brainstructure==2))), 'maskstyle', 'opacity','edgealpha',0);
+end
 material(mtrl)
 try
     set(gca,'CLim',[min(vert(plotdata(sourcemodel.brainstructure==2)).*vert(plotmask(sourcemodel.brainstructure==2))) max(vert(plotdata(sourcemodel.brainstructure==2)).*vert(plotmask(sourcemodel.brainstructure==2)))]);
@@ -126,7 +130,9 @@ bnd.tri = sourcemodel.tri(trindx,:);
 
 ft_plot_mesh(bnd,'edgealpha',0,'vertexcolor',repmat(clr,sum(sourcemodel.brainstructure==1),1));
 hold on
+if any(double(vert(plotmask(sourcemodel.brainstructure==1))))
 ft_plot_mesh(bnd, 'vertexcolor', vert(plotdata(sourcemodel.brainstructure==1)), 'facealpha', double(vert(plotmask(sourcemodel.brainstructure==1))), 'maskstyle', 'opacity','edgealpha',0);
+end
 material(mtrl)
 try
     set(gca,'CLim',[min(vert(plotdata(sourcemodel.brainstructure==1)).*vert(plotmask(sourcemodel.brainstructure==1))) max(vert(plotdata(sourcemodel.brainstructure==1)).*vert(plotmask(sourcemodel.brainstructure==1)))]);
@@ -152,7 +158,9 @@ bnd.tri = bnd.tri - cort_size;
 
 ft_plot_mesh(bnd,'edgealpha',0,'vertexcolor',repmat(clr,sum(sourcemodel.brainstructure==2),1));
 hold on
+if any(double(vert(plotmask(sourcemodel.brainstructure==2))))
 ft_plot_mesh(bnd, 'vertexcolor', vert(plotdata(sourcemodel.brainstructure==2)), 'facealpha', double(vert(plotmask(sourcemodel.brainstructure==2))), 'maskstyle', 'opacity','edgealpha',0);
+end
 material(mtrl)
 try
     set(gca,'CLim',[min(vert(plotdata(sourcemodel.brainstructure==2)).*vert(plotmask(sourcemodel.brainstructure==2))) max(vert(plotdata(sourcemodel.brainstructure==2)).*vert(plotmask(sourcemodel.brainstructure==2)))]);

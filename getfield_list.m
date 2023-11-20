@@ -23,6 +23,9 @@ for i = 1:length(listin)
         elseif isnumeric(fieldarr{i-1})
             warning('Some structures don''t have this field - filling with NaNs instead')
             fieldarr = [fieldarr {NaN(size(fieldarr{i-1}))}];
+        elseif ischar(fieldarr{i-1})
+            warning('Some structures don''t have this field - filling with empty strings instead')
+            fieldarr = [fieldarr {''}];
         else
             error('Some structures don''t have this field - can''t fill with NaNs')
         end

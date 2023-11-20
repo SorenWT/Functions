@@ -1,10 +1,19 @@
 function [roidata,voxeldata,sources,sourcemodel] = SourceEst_Def_EEG(EEG,sourcemodel,atlas,parflag)
 
+if nargin < 4
+   parflag = 0; 
+end
+
+
 [~,ftpath] = ft_version;
 %ftpath = '/group/northoff/share/fieldtrip-master';
 
 % Convert the data to Fieldtrip format
-data = eeglab2fieldtrip_swt(EEG,'preprocessing','none');
+if isfield(EEG,'chanlocs')
+    data = eeglab2fieldtrip_swt(EEG,'preprocessing','none');
+else
+    data = EEG;
+end
 
 % Load templates
 load('standard_bem.mat') %variable is "vol"
@@ -41,7 +50,8 @@ leadfield = ft_prepare_leadfield(cfg);
 
 % Select only the EEG channels
 cfg = []; cfg.channel = {'eeg'};
-eegdata = ft_selectdata(cfg,data);
+eegdata = data;
+%eegdata = ft_selectdata(cfg,data);
 clear data
 
 % Epoch into arbitrary 2-second segments

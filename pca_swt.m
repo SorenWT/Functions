@@ -5,7 +5,7 @@ argsin = setdefault(argsin,'nperms',1000);
 argsin = setdefault(argsin,'do_boot',true);
 argsin = setdefault(argsin,'rotate','none');
 argsin = setdefault(argsin,'ncomps',NaN);
-argsin = setdefault(argsin,'compsel','permutation');
+argsin = setdefault(argsin,'compsel','perm_flip');
 argsin = setdefault(argsin,'kfold',5);
 
 do_boot = EasyParse(argsin,'do_boot');
@@ -14,6 +14,11 @@ rotate = EasyParse(argsin,'rotate');
 ncompsprior = EasyParse(argsin,'ncomps');
 compsel = EasyParse(argsin,'compsel');
 k = EasyParse(argsin,'kfold');
+
+if istable(X)
+   pcamdl.varnames = X.Properties.VariableNames;
+   X = X{:,:};
+end
 
 if any(any(isnan(X),2))
     nanindx = any(isnan(X),2);
@@ -126,6 +131,8 @@ else
                 pcamdl.kaiser = length(pcamdl.explained);
             end
             pcamdl.ncomps = pcamdl.kaiser;
+        case 'prior'
+            pcamdl.ncomps = ncompsprior;
     end
     
     if isnan(ncompsprior)
@@ -152,7 +159,7 @@ else
         pcamdl.rotated.weights = rotatefactors(pcamdl.weights(:,1:ncompsrot),'method',rotate);
         tmpcomps = (X-nanmean(X,1))*pcamdl.rotated.weights;
         pcamdl.rotated.comps = NaN(size(Xorig,1),size(tmpcomps,2)); pcamdl.rotated.comps(~nanindx,:) = tmpcomps;
-        pcamdl.rotated.explained = 100*nanvar(pcamdl.rotated.comps,[],1)./trace(cov(X));
+        pcamdl.rotated.explained = 100*nanvar(pcamdl.rotated.comps,[],1)./sum(var(X));
         pcamdl.rotated.loads = corr(Xorig,pcamdl.rotated.comps,'rows','pairwise');
         if do_boot
             for i = 1:nperms

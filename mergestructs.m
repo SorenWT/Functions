@@ -26,10 +26,15 @@ else
         else
             dimn = length(dimn)+1;
         end
+        try
         alldata = cell(1,length(structsin));
         for cc = 1:length(structsin)
             alldata{cc} = getfield_nest(structsin{cc},fields{c});
         end
+        disp([fields{c} ' merged'])
         merged = assignfield_nest(merged,fields{c},cat(dimn,alldata{:}));
+        catch
+           warning(['Failed to merge field "' fields{c} '"'])
+        end
     end
 end

@@ -186,7 +186,7 @@ elseif nargout <= 4
     
 else
     % Compute the regression coefs, including intercept(s)
-    [Xloadings,Yloadings,Xscores,Yscores,Weights,sings] = simpls(X0,Y0,ncomp);
+    [Xloadings,Yloadings,Xscores,Yscores,Weights,sings,explained] = simpls(X0,Y0,ncomp);
     beta = Weights*Yloadings';
     beta = [meanY - meanX*beta; beta];
     
@@ -233,6 +233,7 @@ else
         % Compute X and Y residuals
         stats.Xresiduals = X0 - X0reconstructed;
         stats.Yresiduals = Y0 - Y0reconstructed;
+        stats.explained = explained;
     end
 end
 
@@ -240,7 +241,7 @@ end
 
 %------------------------------------------------------------------------------
 %SIMPLS Basic SIMPLS.  Performs no error checking.
-function [Xloadings,Yloadings,Xscores,Yscores,Weights,sings] = simpls(X0,Y0,ncomp)
+function [Xloadings,Yloadings,Xscores,Yscores,Weights,sings,explained] = simpls(X0,Y0,ncomp)
 
 [n,dx] = size(X0);
 dy = size(Y0,2);
@@ -267,7 +268,11 @@ sings = zeros(1,ncomp);
 for i = 1:ncomp
     % Find unit length ti=X0*ri and ui=Y0*ci whose covariance, ri'*X0'*Y0*ci, is
     % jointly maximized, subject to ti'*tj=0 for j=1:(i-1).
-    [ri,si,ci] = svd(Cov,'econ'); ri = ri(:,1); ci = ci(:,1); si = si(1); sings(i) = si;
+    [ri,si,ci] = svd(Cov,'econ');
+    if i == 1
+       allsi = si; 
+    end
+    ri = ri(:,1); ci = ci(:,1); si = si(1); sings(i) = si;
     ti = X0*ri;
     normti = norm(ti); ti = ti ./ normti; % ti'*ti == 1
     Xloadings(:,i) = X0'*ti;
@@ -322,6 +327,7 @@ if nargout > 2
         Yscores(:,i) = ui;
     end
 end
+explained = sings./sum(diag(allsi));
 end
 
 
@@ -386,11 +392,15 @@ sumsqerr(1,1) = sum(sum(abs(X0test).^2, 2));
 sumsqerr(2,1) = sum(sum(abs(Y0test).^2, 2));
 
 % Compute sum of squared errors for models with 1:ncomp components
+
+% SWT edit: do components one by one, rather than models with 1:ncomp
+% components. Meant for permutation testing, not for model building
+% changed 1:i in the below to just i
 for i = 1:ncomp
-    X0reconstructed = XscoresTest(:,1:i) * Xloadings(:,1:i)';
+    X0reconstructed = XscoresTest(:,i) * Xloadings(:,i)';
     sumsqerr(1,i+1) = sum(sum(abs(X0test - X0reconstructed).^2, 2));
 
-    Y0reconstructed = XscoresTest(:,1:i) * Yloadings(:,1:i)';
+    Y0reconstructed = XscoresTest(:,i) * Yloadings(:,i)';
     sumsqerr(2,i+1) = sum(sum(abs(Y0test - Y0reconstructed).^2, 2));
 end
 end

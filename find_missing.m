@@ -1,5 +1,9 @@
 function missing = find_missing(template,data)
 
+if length(template)>length(data)
+   data = [data NaN(1,length(template)-length(data))]; 
+end
+
 for i = 1:length(template)
     missing(i) = template(i)~=data(i);
     if missing(i)

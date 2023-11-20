@@ -1,7 +1,7 @@
 function res = rsa(data,nperm,type,varargin)
 
 if CheckInput(varargin,'mask')
-   mask = EasyParse(varargin,'mask');
+    mask = EasyParse(varargin,'mask');
 else
     mask = ones(size(corr(data{1})));
 end
@@ -11,7 +11,7 @@ if ~exist('type','var')
 end
 
 if ischar(type)
-   type = repmat({type},1,length(data)); 
+    type = repmat({type},1,length(data));
 end
 
 for i = 1:length(data)
@@ -32,7 +32,7 @@ for i = 1:length(data)
     end
     
     if any(any(isnan(data{i})))
-       warning(['Data matrix ' num2str(i) ' contains NaNs - these observations will be ignored. Ignore these at your own risk!']) 
+        warning(['Data matrix ' num2str(i) ' contains NaNs - these observations will be ignored. Ignore these at your own risk!'])
     end
 end
 
@@ -74,7 +74,37 @@ end
 
 p = 2*p; %two-sided test
 
-res.pperm = p; res.statobs = orig_stat; res.type = type; 
+res.pperm = p; res.statobs = orig_stat; res.type = type;
 res.permstat = perm_stat; res.corrmats = corrmat; res.corrvals = corrvals;
+
+% jackknifing to get pseudo-leverage
+if CheckInput(varargin,'jackknife') && EasyParse(varargin,'jackknife','on')
+    for ii = 1:2
+        for i = 1:size(data{ii},1)
+            switch type{ii}
+                case {'spearman','pearson','kendall'}
+                    newcorrmat{ii} = corr(data{ii}(except(1:size(data{ii},1),i),:),'Type',type{ii},'rows','pairwise');
+                    newcorrmat{ii} = newcorrmat{ii}.*mask;
+                    newcorrvals{ii} = rtoz(belowDiag(newcorrmat{ii}));
+                case 'eucdist'
+                    newcorrmat{ii} = eucdist(data{ii}(except(1:size(data{ii},1),i),:));
+                    newcorrmat{ii} = newcorrmat{ii}.*mask;
+                    newcorrvals{ii} = belowDiag(newcorrmat{ii});
+                    %newcorrvals{ii} = log(newcorrvals{ii});
+                otherwise
+                    newcorrmat{ii} = squareform(pdist(data{ii}(except(1:size(data{ii},1),i),:)',type{ii}));
+                    newcorrmat{ii} = newcorrmat{ii}.*mask;
+                    newcorrvals{ii} = vert(belowDiag(newcorrmat{ii}));
+            end
+            newcorrvals{except(1:2,ii)} = corrvals{except(1:2,ii)};
+            
+            pseudolev{ii}(i) = corr(newcorrvals{1},newcorrvals{2},'rows','pairwise');
+        end
+        pseudolev{ii} = orig_stat-pseudolev{ii};
+    end
+    
+    res.pseudolev = pseudolev; % positive values of pseudolev indicate positive contribution to RSA
+end
+
 
 

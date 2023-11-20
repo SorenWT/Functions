@@ -66,6 +66,9 @@ else
         case 'prctileci'
             astd(1,:) = prctile(amatrix,2.5,1);
             astd(2,:) = prctile(amatrix,97.5,1);
+        case 'prctileci_99'
+            astd(1,:) = prctile(amatrix,0.5,1);
+            astd(2,:) = prctile(amatrix,99.5,1);
     end
 end
 
@@ -81,7 +84,7 @@ if exist('alpha','var')==0 || isempty(alpha)
         acolor='k';
     end
 else
-    if strcmpi(method,'prctileci')
+    if strcmpi(method,'prctileci') || strcmpi(method,'prctileci_99')
         fill([F fliplr(F)],[astd(2,:) fliplr(astd(1,:))],acolor,'FaceAlpha',alpha,'linestyle','none','HandleVisibility','off');
     elseif ~strcmpi(method,'logstd')
         fill([F fliplr(F)],[amean+astd fliplr(amean-astd)],acolor, 'FaceAlpha', alpha,'linestyle','none','HandleVisibility','off');

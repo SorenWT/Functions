@@ -84,7 +84,7 @@ ft_defaults
 
 %% EEG pipeline
 if cfgcheck(cfg,'datatype','eeg')
-    eeglab rebuild
+    %eeglab rebuild
     
     eegdir = extractBefore(which('eeglab'),'eeglab.m');
     
@@ -94,7 +94,8 @@ if cfgcheck(cfg,'datatype','eeg')
     % Read in channel locations
     if isstr(cfg.chanlocs)
         if cfgcheck(cfg,'chanlocs','lookup')
-            EEG = pop_chanedit(EEG,'lookup',fullfile(char(eegdir),'plugins','dipfit2.3','standard_BESA','standard-10-5-cap385.elp'),'eval','chans = pop_chancenter( chans, [],[]);');
+            %EEG=pop_chanedit(EEG, {'lookup','/Users/Soren/Documents/MATLAB/eeglab/plugins/dipfit/standard_BEM/elec/standard_1005.elc'});
+            EEG = pop_chanedit(EEG,'lookup',fullfile(char(eegdir),'plugins','dipfit','standard_BEM','elec','standard_1005.elc'),'eval','chans = pop_chancenter( chans, [],[]);');
         elseif ~cfgcheck(cfg,'chanlocs','no')
             EEG = pop_chanedit(EEG,'lookup',cfg.chanlocs,'eval','chans = pop_chancenter( chans, [],[]);');
         end
@@ -116,13 +117,14 @@ if cfgcheck(cfg,'datatype','eeg')
     chanlocs = EEG.chanlocs; %ft2eeglab doesn't handle chanlocs well, so save these
     
     if ~ischar(cfg.bandpass) && ~strcmpi(cfg.bandpass,'no')
-        event = EEG.event;
-        data = eeglab2fieldtrip(EEG,'preprocessing','none');
-        tmpcfg = [] ; tmpcfg.bpfilter = 'yes'; tmpcfg.bpfreq = cfg.bandpass; tmpcfg.bpfilttype = 'fir';
-        data = ft_preprocessing(tmpcfg,data);
-        EEG = ft2eeglab(data);
-        EEG.chanlocs = chanlocs;
-        EEG.event = event;
+        EEG = pop_eegfiltnew(EEG, cfg.bandpass(1),cfg.bandpass(2),[],0,[],0);
+        %event = EEG.event;
+        %data = eeglab2fieldtrip(EEG,'preprocessing','none');
+        %tmpcfg = [] ; tmpcfg.bpfilter = 'yes'; tmpcfg.bpfreq = cfg.bandpass; tmpcfg.bpfilttype = 'fir';
+        %data = ft_preprocessing(tmpcfg,data);
+        %EEG = ft2eeglab(data);
+        %EEG.chanlocs = chanlocs;
+        %EEG.event = event;
     end
     
     EEG  = eeg_checkset(EEG);
@@ -134,14 +136,17 @@ if cfgcheck(cfg,'datatype','eeg')
             EEG = pop_cleanline(EEG, 'bandwidth',2,'chanlist',1:EEG.nbchan,'computepower',1,'linefreqs',cfg.line.freq ,'normSpectrum',1,'p',0.05,'pad',2,'plotfigures',0,'scanforlines',1,'sigtype','Channels','tau',100,'verb',1,'winsize',4,'winstep',1);
             delete(gcf)
         case 'notch'
-            chanlocs = EEG.chanlocs; %ft2eeglab doesn't handle chanlocs well, so save these
-            event = EEG.event;
-            data = eeglab2fieldtrip(EEG,'preprocessing','none');
-            tmpcfg = [] ; tmpcfg.bsfilter = 'yes'; tmpcfg.bsfreq = cfg.line.freq; tmpcfg.bpfilttype = 'fir';
-            data = ft_preprocessing(tmpcfg,data);
-            EEG = ft2eeglab(data);
-            EEG.chanlocs = chanlocs;
-            EEG.event = event;
+            for q = 1:size(cfg.line.freq,1)
+                EEG = pop_eegfiltnew(EEG, cfg.line.freq(q,1),cfg.line.freq(q,2),[],1,[],0);
+            end
+            %chanlocs = EEG.chanlocs; %ft2eeglab doesn't handle chanlocs well, so save these
+            %event = EEG.event;
+            %data = eeglab2fieldtrip(EEG,'preprocessing','none');
+            %tmpcfg = [] ; tmpcfg.bsfilter = 'yes'; tmpcfg.bsfreq = cfg.line.freq; tmpcfg.bpfilttype = 'fir';
+            %data = ft_preprocessing(tmpcfg,data);
+            %EEG = ft2eeglab(data);
+            %EEG.chanlocs = chanlocs;
+            %EEG.event = event;
     end
     EEG  = eeg_checkset(EEG);
     
@@ -150,7 +155,9 @@ if cfgcheck(cfg,'datatype','eeg')
     if cfgcheck(cfg,'asr','yes')
         orig_chanlocs = EEG.chanlocs;
         
-        EEG = clean_rawdata(EEG, 5, [-1], 0.85, 4, 20,-1,'availableRAM_GB',4);
+        EEG = pop_clean_rawdata(EEG, 'FlatlineCriterion',5,'ChannelCriterion',0.9,'LineNoiseCriterion',4,'Highpass','off','BurstCriterion','off','WindowCriterion','off','BurstRejection','off','Distance','Euclidian');
+        %EEG = pop_clean_rawdata(EEG, 'FlatlineCriterion',5,'ChannelCriterion',0.8,'LineNoiseCriterion',4,'Highpass','off','BurstCriterion',20,'WindowCriterion',0.25,'BurstRejection','on','Distance','Euclidian','WindowCriterionTolerances',[-Inf 7] );
+        %EEG = clean_rawdata(EEG, 5, [-1], 0.85, 4, 20,-1,'availableRAM_GB',4);
         
         EEG = pop_interp(EEG, orig_chanlocs, 'spherical');
         
@@ -172,14 +179,14 @@ if cfgcheck(cfg,'datatype','eeg')
     if cfgcheck(cfg,'ica','yes')
         EEG = pop_runica(EEG, 'interupt','off');
         EEG  = eeg_checkset(EEG);
-        
     end
     
     % Reject components with MARA
     if cfgcheck(cfg,'mara','yes')
-        artcomps = MARA(EEG);
+        [artcomps,info] = MARA(EEG);
         EEG  = pop_subcomp(EEG,artcomps,0);
         EEG  = eeg_checkset(EEG);
+        EEG.etc.marainfo = info;
     end
     
     data = EEG;

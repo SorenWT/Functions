@@ -1,4 +1,4 @@
-function [p] = ft_cluster_sourceplot(datain,sourcemodel,atlas,roimask,varargin)
+function [p,clim,ax,cbar] = ft_cluster_sourceplot(datain,sourcemodel,atlas,roimask,varargin)
 
 for c = 1:length(sourcemodel.pos)
     if isfield(atlas,'parcellation')
@@ -62,7 +62,7 @@ if EasyParse(argsin,'method','wholebrain')
     %a.Visible = 'off';
     
 elseif EasyParse(argsin,'method','brains4')
-    p = brains4(datain,sourcemodel,atlas,'mask',roimask,argsin{:});
+    [p,clim,ax,cbar] = brains4(datain,sourcemodel,atlas,'mask',roimask,argsin{:});
 end
 
 
