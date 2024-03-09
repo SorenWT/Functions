@@ -17,6 +17,11 @@ for i = 1:length(datin.people)
     personconfs(i) = mean(datin.people(i).pose_keypoints_2d([3:3:length(datin.people(i).pose_keypoints_2d)]));
 end
 
+if length(datin.people) ==0
+   warning('No people found in image')
+   pos = NaN; pnts = NaN; whichview = NaN; return
+end
+
 
 if length(datin.people) > 1 && (max(personconfs) < 0.5 || sum(personconfs>0.3) > 1)
     %warning(['More than one person found in ' filein ': check to make sure the right person was selected'])

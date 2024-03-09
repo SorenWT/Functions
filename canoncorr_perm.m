@@ -110,31 +110,31 @@ ccmdl.YS = NaN(length(allnan),size(YS,2)); ccmdl.YS(goodindx,:) = YS;
 %plsmdl.mse = mse; 
 ccmdl.stats = stats;
 ccmdl.r = r; ccmdl.pperm = stats.pperm;
-ccmdl.fdr = fdr(ccmdl.pperm);
+%ccmdl.fdr = fdr(ccmdl.pperm);
 
 ccmdl.Xloads = corr(X,XS); ccmdl.Yloads = corr(Y,YS);
-
-if nboot > 0
-    for i = 1:nboot
-        bootindX = ceil(rand(size(X,1),1)*size(X,1));
-        bootX = X(bootindX,:);
-        bootindY = ceil(rand(size(Y,1),1)*size(Y,1));
-        bootY = Y(bootindY,:);
-        [~,~,XSboot,YSboot] = plsregress_swt(bootX,bootY,ncomp);
-        [~,XSboot] = procrustes(XS(bootindX,:),XSboot);
-        [~,YSboot] = procrustes(YS(bootindY,:),YSboot);
-        Xloads_boot(:,:,i) = corr(X(bootindX,:),XSboot);
-        Yloads_boot(:,:,i) = corr(Y(bootindY,:),YSboot);
-    end
-    
-    ccmdl.Xloads_boot = Xloads_boot; ccmdl.Yloads_boot = Yloads_boot;
-    
-    ccmdl.Xloads_bootz = ccmdl.Xloads./std(Xloads_boot,[],3);
-    ccmdl.Xloads_bootp = ztop(ccmdl.Xloads_bootz);
-    
-    ccmdl.Yloads_bootz = ccmdl.Yloads./std(Yloads_boot,[],3);
-    ccmdl.Yloads_bootp = ztop(ccmdl.Yloads_bootz);
-end
+% 
+% if nboot > 0
+%     for i = 1:nboot
+%         bootindX = ceil(rand(size(X,1),1)*size(X,1));
+%         bootX = X(bootindX,:);
+%         bootindY = ceil(rand(size(Y,1),1)*size(Y,1));
+%         bootY = Y(bootindY,:);
+%         [~,~,XSboot,YSboot] = plsregress_swt(bootX,bootY,ncomp);
+%         [~,XSboot] = procrustes(XS(bootindX,:),XSboot);
+%         [~,YSboot] = procrustes(YS(bootindY,:),YSboot);
+%         Xloads_boot(:,:,i) = corr(X(bootindX,:),XSboot);
+%         Yloads_boot(:,:,i) = corr(Y(bootindY,:),YSboot);
+%     end
+%     
+%     ccmdl.Xloads_boot = Xloads_boot; ccmdl.Yloads_boot = Yloads_boot;
+%     
+%     ccmdl.Xloads_bootz = ccmdl.Xloads./std(Xloads_boot,[],3);
+%     ccmdl.Xloads_bootp = ztop(ccmdl.Xloads_bootz);
+%     
+%     ccmdl.Yloads_bootz = ccmdl.Yloads./std(Yloads_boot,[],3);
+%     ccmdl.Yloads_bootp = ztop(ccmdl.Yloads_bootz);
+% end
 end
 
 function r = plspredict(Xtrain,Ytrain,Xtest,Ytest,ncomp)

@@ -21,8 +21,13 @@ end
 
 %try
 iarange = [f(psum.iaw(1)) f(psum.iaw(2))];
+
+if isnan(iarange(2))
+   iarange(2) = 15; 
+end
+
 if strcmpi(irasa,'no')
-    bpout = Bandpower_EEG_wrapper(EEG,[iarange(2) hi_cutoff],norm_bandpass);
+    bpout = Bandpower_data_wrapper(EEG,[iarange(2) hi_cutoff],norm_bandpass);
 else
     EEG = parload(fullfile(EEG.filepath,[EEG.filename '_IRASA_specs.mat']),'EEG');
     bpout = IRASAPower_EEG_wrapper(EEG,'osci',[iarange(2) hi_cutoff],norm_bandpass);

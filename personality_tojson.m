@@ -39,9 +39,17 @@ else
         pers = fix_pers_text(pers);
     end
     
-    for i = 1:length(pers.items)
-        jsonsurveys.rows(i).value = ['Row ' num2str(i)];
-        jsonsurveys.rows(i).text = pers.prettyitems{i};
+    % automatically add an attention check question in each form
+    tmppers = pers; thisrand = randi(length(pers.prettyitems));
+    attnitem = {['Please select the "' pers.respcoding{1} '" option for this question to demonstrate your attention']};
+    tmppers.prettyitems = [tmppers.prettyitems(1:thisrand-1) attnitem tmppers.prettyitems(thisrand:end)];
+    for i = 1:length(tmppers.prettyitems)
+        if i~=thisrand
+        jsonsurveys.rows(i).value = ['Row ' num2str(i-(i>thisrand))];
+        else
+           jsonsurveys.rows(i).value = 'Attncheck';
+        end
+        jsonsurveys.rows(i).text = tmppers.prettyitems{i};
     end
     
     

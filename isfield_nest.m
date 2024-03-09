@@ -1,5 +1,11 @@
 function [torf] = isfield_nest(structin,field)
 
+if iscell(structin)
+    for i = 1:length(structin)
+        torf(i) = isfield_nest(structin{i},field); 
+    end
+else
+
 newfield = strsplit(field,'.');
 
 fieldtrue = [];
@@ -25,5 +31,6 @@ for c = 1:length(newfield)
 end
 
 torf = all(fieldtrue);
+end
 
 %eval(['fieldout = structin' streval ';']);

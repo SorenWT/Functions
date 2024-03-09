@@ -10,22 +10,27 @@ for i = 1:length(listin)
     if isfield_nest(listin{i},field)
         tmp = getfield_nest(listin{i},field);
         %if any(size(tmp)~=1)
-        fieldarr = [fieldarr {tmp}];
+        fieldarr{i} = tmp;
         %else
         %    fieldarr = [fieldarr tmp];
         %end
-    else
-        if istable(fieldarr{i-1})
+    end
+end
+
+for i = 1:length(listin)
+    if ~isfield_nest(listin{i},field)
+        template = fieldarr{find(cellfun(@(d)~isempty(d),fieldarr),1)};
+        if istable(template)
             warning('Some structures don''t have this field - filling with NaNs instead')
-            tmp = fieldarr{i-1};
-            tmp{:,:} = NaN(size(tmp));
-            fieldarr = [fieldarr {tmp}];
-        elseif isnumeric(fieldarr{i-1})
+            tmp = template;
+            tmp{:,:} = NaN(size(template));
+            fieldarr{i} = tmp;
+        elseif isnumeric(template)
             warning('Some structures don''t have this field - filling with NaNs instead')
-            fieldarr = [fieldarr {NaN(size(fieldarr{i-1}))}];
-        elseif ischar(fieldarr{i-1})
+            fieldarr{i} = NaN(size(template));
+        elseif ischar(template)
             warning('Some structures don''t have this field - filling with empty strings instead')
-            fieldarr = [fieldarr {''}];
+            fieldarr{i} = '';
         else
             error('Some structures don''t have this field - can''t fill with NaNs')
         end

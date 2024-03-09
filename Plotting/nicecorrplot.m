@@ -23,7 +23,8 @@ argsin = varargin;
 argsin = setdefault(argsin,'scatterclr',palecol(l(1,:),0.33));
 scatterclr = EasyParse(argsin,'scatterclr');
 
-argsin = setdefault(argsin,'lineclr','r');
+% dark red line to show up better vs. dots
+argsin = setdefault(argsin,'lineclr',[0.5 0 0]);
 lineclr = EasyParse(argsin,'lineclr');
 
 if size(a,1) == 1

@@ -37,6 +37,9 @@ else
     coeffplots = {{'Xloads','bar'},{'Yloads','bar'}};
 end
 
+load('lkcmap2')
+argsin = setdefault(argsin,'colormap',lkcmap2)
+
 if ~exist('xlabels','var') || isempty(xlabels)
     xlabels = cellcat('Predictor ',cellstr(num2str([1:size(plsmdl.XL,1)]')),'',0);
 end
@@ -114,7 +117,7 @@ for q = whichcomps
                 l = lines;
                 b = barh(plsmdl.(coeffplots{i}{1})(:,q),'facecolor',palecol(l(i,:)));
                 hold on
-                b2 = barh(plsmdl.(coeffplots{i}{1})(:,q).*(plsmdl.([coeffplots{i}{1} '_bootp'])(:,q)<0.05),'facecolor',l(1,:));
+                b2 = barh(plsmdl.(coeffplots{i}{1})(:,q).*(plsmdl.([coeffplots{i}{1} '_bootp'])(:,q)<0.05),'facecolor',l(i,:));
                 if isfield(plsmdl,[coeffplots{i}{1} '_boot'])
                     e = errorbar(plsmdl.(coeffplots{i}{1})(:,q),1:length(plsmdl.(coeffplots{i}{1})(:,q)),1.96*std(plsmdl.([coeffplots{i}{1} '_boot'])(:,q,:),[],3),...
                         'horizontal','LineStyle','none','LineWidth',2,'Color','k');
@@ -127,13 +130,12 @@ for q = whichcomps
                 %t.FontWeight = 'Bold'; t.FontSize = 20;
             case 'wordcloud'
                 f = figure;
-                load('lkcmap2')
                 if isfield(plsmdl,([coeffplots{i}{1} '_bootp']))
                     bootp = plsmdl.([coeffplots{i}{1} '_bootp'])(:,q);
                 else
                     bootp = zeros(size(plsmdl.(coeffplots{i}{1})(:,q)));
                 end
-                wc = wordcloud_bipolar(labs,plsmdl.(coeffplots{i}{1})(:,q),lkcmap2,'specific',bootp<0.05);
+                wc = wordcloud_bipolar(labs,plsmdl.(coeffplots{i}{1})(:,q),EasyParse(argsin,'colormap'),'specific',bootp<0.05);
                 %ax = findobj('parent','f','type','axes');
                 p(pindx{:},find(whichcomps==q),2,i).select(wc)
                 close(f)
@@ -253,7 +255,24 @@ for q = whichcomps
                 %thesesteps = linspace(0,100,nsteps);
                 
                 meandat = nanmean(plsmdl.(coeffplots{i}{1}(1)),1);
-                thesesteps = linspace(-0.7,0.7,nsteps);
+                
+                % construct the steps by taking the projections of the
+                % percentiles onto the components
+                
+                thesesteps = linspace(100,0,nsteps);
+                
+                for ii = 1:nsteps
+                    thisscr = plsmdl.([coeffplots{i}{1}(1) 'S'])(:,find(whichcomps==q));
+                    thisindx = FindClosest(thisscr,prctile(thisscr,thesesteps(ii)),1);
+                    
+                    tmp1 = (plsmdl.(coeffplots{i}{1}(1))(thisindx,:)-nanmean(plsmdl.(coeffplots{i}{1}(1)),1));
+                    tmp2 = plsmdl.([coeffplots{i}{1}(1) 'L'])(:,find(whichcomps==q));
+                    thesesteps(ii) = (tmp1./norm(tmp1))*(tmp2./norm(tmp2));
+                end
+
+                thesesteps = linspace(0,100,nsteps);
+                
+                %thesesteps = linspace(-0.7,0.7,nsteps);
 
                 
                 p(pindx{:},find(whichcomps==q),2,i).pack('h',repmat({1/nsteps},1,nsteps))
@@ -261,10 +280,12 @@ for q = whichcomps
                 for ii = 1:nsteps
                     p(pindx{:},find(whichcomps==q),2,i,ii).select()
                     
-                    %thisscr = plsmdl.([coeffplots{i}{1}(1) 'S'])(:,find(whichcomps==q));
-                    %thisindx = FindClosest(thisscr,prctile(thisscr,thesesteps(ii)),1);
-                    postureplot(meandat+thesesteps(ii)*plsmdl.([coeffplots{i}{1}(1) 'L'])(:,find(whichcomps==q))')
-                    %postureplot(plsmdl.(coeffplots{i}{1}(1))(thisindx,:))
+                    %thisscr = plsmdl.XS(:,find(whichcomps==q));
+                    thisscr = plsmdl.([coeffplots{i}{1}(1) 'S'])(:,find(whichcomps==q));
+                    thisindx = FindClosest(thisscr,prctile(thisscr,thesesteps(ii)),1);
+                    postureplot(plsmdl.(coeffplots{i}{1}(1))(thisindx,:))
+                    
+                    %postureplot(meandat+thesesteps(ii)*plsmdl.([coeffplots{i}{1}(1) 'L'])(:,find(whichcomps==q))')
                     
                     %title([num2str(thesesteps(ii)) 'th' newline 'percentile'],'FontSize',16)
                     view(-90,0)

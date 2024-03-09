@@ -57,7 +57,8 @@ switch permmethod
                         
             XStest = nancenter(Xtest,1)*XWhold;
             
-            YStest = nancenter(Ytest,2)*YLhold;
+            % should this be centering across dimension 2?
+            YStest = nancenter(Ytest,1)*YLhold;
             for qq = 2:size(XStest,2)
                 for qqq = 1:qq-1
                     YStest(:,qq) = projout(YStest(:,qq),XStest(:,qqq));

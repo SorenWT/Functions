@@ -1,7 +1,17 @@
 function [p,zcomb] = pcombine_weightz(pvals,nvals)
+% assumes two-tailed tests. Negative p values are treated as p values in
+% the opposite direction to the direction of interest
 
-z = norminv(1-pvals);
+newp = pvals/2;
+newp(newp>0) = 1-newp(newp>0);
+newp(newp<0) = -newp(newp<0);
+
+z = norminv(newp);
 
 zcomb = sum(sqrt(nvals).*z)/sqrt(sum(nvals));
 
-p = 1-normcdf(zcomb);
+if zcomb > 0
+p = (1-normcdf(zcomb))*2;
+else
+   p = normcdf(zcomb)*2; 
+end

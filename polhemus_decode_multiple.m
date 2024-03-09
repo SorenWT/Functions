@@ -1,4 +1,9 @@
-function [angstbl,poldata] = polhemus_decode(polfile)
+function [angstbl] = polhemus_decode_multiple(polfiles)
+
+for i = 1:length(polfiles) 
+    [~,pnts{i}] = polhemus_decode(polfiles{i});
+end
+
 
 % function to get relevant angles from polhemus data
 

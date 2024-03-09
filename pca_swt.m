@@ -99,6 +99,7 @@ else
                 ncompsrestrict = min(size(X))-1;
             end
             
+            for q = 1:(nperms/k)
             cv = cvpartition(repmat([1:size(X,1)]',size(X,2),1),'KFold',k);
             for i = 1:k
                 trainmask = reshape(training(cv,i),size(X,1),size(X,2));
@@ -113,16 +114,19 @@ else
                     %resid{i,ii} = nancenter(X(test(cv,i),:),1)-X_pred;
                 end
             end
+                err{q} = cellfun(@(d)sum(sum(d.^2)),resid);
+                err{q} = mean(err{q},1);
+            end
             
-            
-            err = cellfun(@(d)sum(sum(d.^2)),resid);
-            err = mean(err,1);
+            err = cat(1,err{:}); err = nanmean(err,1);
             
             [~,pcamdl.ncomps] = findpeaks(-err);
             
             if length(pcamdl.ncomps)>1
                 warning('Multiple peaks found - check by manual inspection. Lowest number of components selected')
                 pcamdl.ncomps = pcamdl.ncomps(1);
+            elseif length(pcamdl.ncomps)<1
+                pcamdl.ncomps = 1;
             end
             pcamdl.cverr = err; pcamdl.resid = resid;
         case 'kaiser'

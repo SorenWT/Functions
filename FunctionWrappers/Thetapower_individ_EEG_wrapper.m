@@ -21,9 +21,19 @@ end
 
 %try
         iarange = [f(psum.iaw(1)) f(psum.iaw(2))];
+        
+        if isnan(iarange(1))
+           iarange(1) = 8; 
+        end
+        
+        if iarange(1) < lo_cutoff
+                    iarange(1) = lo_cutoff+1;
+
+          % error('heres the fuckin problem') 
+        end
 
     if strcmpi(irasa,'no')
-        bpout = Bandpower_EEG_wrapper(EEG,[lo_cutoff iarange(1)],norm_bandpass);
+        bpout = Bandpower_data_wrapper(EEG,[lo_cutoff iarange(1)],norm_bandpass);
     else
         EEG = parload(fullfile(EEG.filepath,[EEG.filename '_IRASA_specs.mat']),'EEG');
         bpout = IRASAPower_EEG_wrapper(EEG,'osci',[lo_cutoff iarange(1)],norm_bandpass);

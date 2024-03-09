@@ -1,4 +1,4 @@
-function tf = regexp_contains(str,pattern)
+function [tf,tf2] = regexp_contains(str,pattern)
 
 if ~iscell(str)
     str = {str};
@@ -8,11 +8,13 @@ if ~iscell(pattern)
 end
 
 tf = zeros(size(str));
+tf2 = zeros(size(pattern));
 for i = 1:length(str)
     for ii = 1:length(pattern)
         if ~isempty(regexp(str{i},pattern{ii}))
             tf(i) = 1;
-            break;
+            tf2(ii) = 1;
+            %break;
         end
     end
 end

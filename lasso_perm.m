@@ -2,21 +2,27 @@ function [lassomdl] = lasso_perm(X,Y,nperms,varargin)
 
 argsin = varargin;
 argsin = setdefault(argsin,'CV',5);
-argsin = setdefault(argsin,'NumLambda',10);
-argsin = setdefault(argsin,'RelTol',1e-3);
-argsin = setdefault(argsin,'Alpha',1);
+argsin = setdefault(argsin,'NumLambda',100);
+argsin = setdefault(argsin,'RelTol',1e-4);
+argsin = setdefault(argsin,'Alpha',0.001);
+argsin = setdefault(argsin,'pca','off');
 
 xnan = any(isnan(X),2); ynan = isnan(Y);
 allnan = (xnan+ynan)>0; goodindx = find(~allnan);
 X(allnan,:) = []; Y(allnan) = [];
 
+if EasyParse(argsin,'pca','on')
+    pc_reg = pca_swt(X,'compsel','kaiser','nperms',10); 
+    oldX = X; 
+    X = pc_reg.comps(:,1:pc_reg.ncomps);
+end
 
 [lassoweights,stats] = lasso(X,Y,'CV',EasyParse(argsin,'CV'),...
     'NumLambda',EasyParse(argsin,'NumLambda'),'RelTol',EasyParse(argsin,'RelTol'),'Alpha',EasyParse(argsin,'Alpha'));
 
 [~,stats.IndexMinMSE] = min(stats.MSE(any(lassoweights,1)));
 lassoweights = lassoweights(:,stats.IndexMinMSE);
-pred = X*lassoweights;
+pred = nancenter(X,1)*lassoweights;
 r_obs = corr(pred,Y,'rows','pairwise');
 
 %Xshuf = X;
@@ -29,7 +35,7 @@ for q = 1:nperms
         'NumLambda',EasyParse(argsin,'NumLambda'),'RelTol',EasyParse(argsin,'RelTol'),'Alpha',EasyParse(argsin,'Alpha'));
     [~,stats.IndexMinMSE] = min(stats.MSE(any(lassoweightsshuf,1)));
     lassoweightsshuf = lassoweightsshuf(:,stats.IndexMinMSE);
-    pred_shuf = X*lassoweightsshuf;
+    pred_shuf = nancenter(X,1)*lassoweightsshuf;
     r_shuf(q) = corr(pred_shuf,Y(randindx),'rows','pairwise');
 end
 coeffs = lassoweights;
@@ -40,3 +46,8 @@ lassomdl.pred = NaN(length(allnan),1); lassomdl.pred(goodindx) = pred;
 
 lassomdl.r = r_obs;
 lassomdl.rperm = r_shuf; lassomdl.pperm = stats.pperm;
+
+if EasyParse(argsin,'pca','on')
+    lassomdl.pccoeffs = lassomdl.coeffs;
+    lassomdl.coeffs = pc_reg.weights(:,1:pc_reg.ncomps)*lassomdl.pccoeffs;
+end
