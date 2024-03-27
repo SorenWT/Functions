@@ -10,8 +10,7 @@ str = char(raw');
 
 str = erase(str,'myid'); 
 
-try
-% fix this later
+%try
 if any(str==newline) && multiline
     allstr = tokenize(str,newline);
     allstr(cellfun(@isempty,allstr,'uniformoutput',true)) = [];
@@ -25,8 +24,8 @@ if any(str==newline) && multiline
 else
     obj = jsondecode(str);
 end
-catch
-   obj = jsonread(filename,~multiline); % if it doesn't work, try it with the other value of multiline
-end
+%catch
+%   obj = jsonread(filename,~multiline); % if it doesn't work, try it with the other value of multiline
+%end
 
 fclose(fid);

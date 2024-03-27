@@ -20,8 +20,8 @@ else
         info = scaleinfo.(sclnames{i});
         %fprintf(sclnames{i})
         [i1,i2] = match_str(info.items,varnames);
-        rawscale = tbl(:,i2);
         rawresps = [];
+        rawscale = tbl(:,i2);
         for q = 1:width(rawscale)
             tmp = find(strcmpi(info.respcoding,rawscale{1,q}));
             if isempty(tmp)
@@ -32,7 +32,9 @@ else
                 rawresps(q) = length(info.respcoding)+1-rawresps(q);
             end
         end
-        rawscale = array2table(rawresps,'VariableNames',rawscale.Properties.VariableNames);
+        rawscale = array2table(NaN(1,length(info.items)),'VariableNames',info.items);
+        rawscale{:,i1} = rawresps;
+        %rawscale = array2table(rawresps,'VariableNames',rawscale.Properties.VariableNames);
         %rawscale{1,:} = mat2cell(rawresps,1,ones(length(rawresps),1));
         scales.raw.(sclnames{i}) = rawscale;
         factnames = fieldnames(info.factors);
@@ -40,8 +42,8 @@ else
             for ii = 1:length(factnames)
                 % use mean and not sum so that people who missed a response are
                 % comparable to the full-scale people
-                scales.(sclnames{i}).(factnames{ii}) = nanmean(rawresps(info.factors.(factnames{ii})))*length(info.factors.(factnames{ii}));
-                scales.allscales.([sclnames{i} '_' factnames{ii}]) = nanmean(rawresps(info.factors.(factnames{ii})))*length(info.factors.(factnames{ii}));
+                scales.(sclnames{i}).(factnames{ii}) = nanmean(rawscale{1,info.factors.(factnames{ii})})*length(info.factors.(factnames{ii}));
+                scales.allscales.([sclnames{i} '_' factnames{ii}]) = nanmean(rawscale{1,info.factors.(factnames{ii})})*length(info.factors.(factnames{ii}));
             end
         else
             for ii = 1:length(factnames)
@@ -49,10 +51,10 @@ else
                 % comparable to the full-scale people
                 warning(['Mismatched number of items on scale ' sclnames{i} ': expected ' ...
                     num2str(length(info.items)) ' items but only found ' num2str(size(rawscale,2))])
-                %scales.(sclnames{i}).(factnames{ii}) = nanmean(rawresps(info.factors.(factnames{ii})))*length(info.factors.(factnames{ii}));
-                %scales.allscales.([sclnames{i} '_' factnames{ii}]) = nanmean(rawresps(info.factors.(factnames{ii})))*length(info.factors.(factnames{ii}));
-                scales.(sclnames{i}).(factnames{ii}) = NaN;
-                scales.allscales.([sclnames{i} '_' factnames{ii}]) = NaN;
+                scales.(sclnames{i}).(factnames{ii}) = nanmean(rawresps(info.factors.(factnames{ii})))*length(info.factors.(factnames{ii}));
+                scales.allscales.([sclnames{i} '_' factnames{ii}]) = nanmean(rawresps(info.factors.(factnames{ii})))*length(info.factors.(factnames{ii}));
+                %scales.(sclnames{i}).(factnames{ii}) = NaN;
+                %scales.allscales.([sclnames{i} '_' factnames{ii}]) = NaN;
             end
         end
         scales.(sclnames{i}) = struct2table(scales.(sclnames{i}));
