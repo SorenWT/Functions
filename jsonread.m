@@ -1,7 +1,11 @@
-function [obj] = jsonread(filename,multiline)
+function [obj] = jsonread(filename,multiline,catchrecurse)
 
 if nargin < 2
    multiline = 1; 
+end
+
+if nargin < 3
+    catchrecurse = 0; 
 end
 
 fid = fopen(filename);
@@ -10,7 +14,8 @@ str = char(raw');
 
 str = erase(str,'myid'); 
 
-%try
+if catchrecurse < 3
+try
 if any(str==newline) && multiline
     allstr = tokenize(str,newline);
     allstr(cellfun(@isempty,allstr,'uniformoutput',true)) = [];
@@ -24,8 +29,11 @@ if any(str==newline) && multiline
 else
     obj = jsondecode(str);
 end
-%catch
-%   obj = jsonread(filename,~multiline); % if it doesn't work, try it with the other value of multiline
-%end
+catch
+   obj = jsonread(filename,~multiline,catchrecurse+1); % if it doesn't work, try it with the other value of multiline
+end
+else
+   error('Recursion detected. Check for badly-formatted JSON file.') 
+end
 
 fclose(fid);

@@ -56,6 +56,8 @@ if nargin < 4
     r0 = 0;
 end
 
+M(any(isnan(M),2),:) = [];
+
 [n, k] = size(M);
 
 SStotal = var(M(:)) *(n*k - 1);

@@ -4,6 +4,7 @@ function [jsonsurveys,pers,surveytxt] = personality_tojson(pers,fileout)
 
 if iscell(pers)
     for i = 1:length(pers)
+        disp(i)
         [jsonsurveys{i},pers{i}] = personality_tojson(pers{i});
     end
     
@@ -11,6 +12,11 @@ if iscell(pers)
     surveyjson.completedHtml = '<h> Thank you for completing the personality questionnaires! The experiment will continue in a few moments. </h>';
     surveyjson.title = 'Personality module';
     surveyjson.description = 'The following form asks you a number of questions about your personality. Please answer them as honestly as you can.';
+    surveyjson.showProgressBar = 'auto';
+    surveyjson.progressBarType = 'pages';
+    surveyjson.progressBarShowPageNumbers = true;
+    surveyjson.progressBarShowPageTitles = false;
+
     
     for i = 1:length(jsonsurveys)
         surveyjson.pages(i).name = [jsonsurveys{i}.name '_page'];
@@ -45,7 +51,7 @@ else
     tmppers.prettyitems = [tmppers.prettyitems(1:thisrand-1) attnitem tmppers.prettyitems(thisrand:end)];
     for i = 1:length(tmppers.prettyitems)
         if i~=thisrand
-        jsonsurveys.rows(i).value = ['Row ' num2str(i-(i>thisrand))];
+            jsonsurveys.rows(i).value = ['Row ' num2str(i-(i>thisrand))];
         else
            jsonsurveys.rows(i).value = 'Attncheck';
         end

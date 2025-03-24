@@ -10,7 +10,7 @@ y = vert(y);
 end
 
 for i = 1:size(y,2)
-    tmp = fitlm(x,y(:,i),varargin{:});
+    tmp = fitlm(x,y(:,i),varargin{:},'intercept',false);
     r(:,i) = tmp.Residuals.Raw;
     pred(:,i) = tmp.predict;
     %[~,~,r(:,i)] = regress(y(:,i),[ones(size(x,1),1) x]);

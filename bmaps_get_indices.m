@@ -1,4 +1,4 @@
-function [indices,meanindices,subs] = bmaps_get_indices(subs)
+function [indices,meanindices,meanindices_phys,subs] = bmaps_get_indices(subs)
 
 nmaps = length(subs{1}.embody.bodymap);
 
@@ -7,6 +7,7 @@ if ~exist('mask','var') || isempty(mask)
     mask = imread('~/Desktop/armonylab/embody-test/embody/matlab/mask.png');
     mask = [zeros(522,2) mask zeros(522,2)];
     mask = [zeros(1,175); mask; zeros(1,175)];
+    mask = imresize(mask,0.25);
     inmask = find(mask > 128);
 end
 
@@ -16,6 +17,7 @@ for i = 1:length(subs)
     subs{i}.embody.respmetrics.drawtime = NaN(1,nmaps);
     subs{i}.embody.respmetrics.thinktime = NaN(1,nmaps);
     subs{i}.embody.respmetrics.numclicks = NaN(1,nmaps);
+    try
     if isfield(subs{i}.raw,'embody') && ~all(isnan(subs{i}.embody.origorder))
         maptrls = jspsych_result_filter(subs{i}.raw.embody,'trial_type','embody');
         %emoorder = getfield_list(maptrls,'stimulus');
@@ -37,6 +39,9 @@ for i = 1:length(subs)
         numclicks = cellfun(@length,numclicks,'UniformOutput',true);
         subs{i}.embody.respmetrics.numclicks(subs{i}.embody.origorder) = numclicks(1:length(subs{i}.embody.origorder));
     end
+    catch
+       warning('No click or time data - skipping these metrics'); 
+    end
 end
 
 % make bodily map indices
@@ -47,9 +52,23 @@ for i = 1:length(subs)
     for q = 1:length(subs{i}.embody.bodymap)
         % Percent area activated: fraction of total colored area that is
         % activation
-        subs{i}.embody.indices.prcactarea(q) = (sum(sum(subs{i}.embody.bodymap{q}(inmask)>0,1),2)./(sum(sum(subs{i}.embody.bodymap{q}(inmask)<0,1),2)+nansum(nansum(subs{i}.embody.bodymap{q}(inmask)>0,1),2))).*nanmask(double(all(all(~isnan(subs{i}.embody.bodymap{q}(inmask)),1),2)));
+        
+        actpoints = double(subs{i}.embody.pointmaps{q}).*(subs{i}.embody.pointmaps{q}>0);
+        actmap = embody_smooth({actpoints},[5 1]); 
+        subs{i}.embody.act_vectmaps(:,q) = actmap(inmask);
+        deactpoints = double(subs{i}.embody.pointmaps{q}).*(subs{i}.embody.pointmaps{q}<0);
+        deactmap = embody_smooth({deactpoints},[5 1]); 
+        subs{i}.embody.deact_vectmaps(:,q) = deactmap(inmask);
+
+        subs{i}.embody.indices.prcactarea(q) = sum(subs{i}.embody.act_vectmaps(:,q)>0)./sum(subs{i}.embody.deact_vectmaps(:,q)<0);
+        %subs{i}.embody.indices.prcactarea(q) = (sum(sum(subs{i}.embody.bodymap{q}(inmask)>0,1),2)./(sum(sum(subs{i}.embody.bodymap{q}(inmask)<0,1),2)+nansum(nansum(subs{i}.embody.bodymap{q}(inmask)>0,1),2))).*nanmask(double(all(all(~isnan(subs{i}.embody.bodymap{q}(inmask)),1),2)));
         subs{i}.embody.indices.prccolored(q) = (sum(sum(subs{i}.embody.bodymap{q}(inmask)~=0 & ~isnan(subs{i}.embody.bodymap{q}(inmask))))./numel(inmask)).*nanmask(double(all(all(~isnan(subs{i}.embody.bodymap{q}(inmask)),1),2)));
+        
+        subs{i}.embody.indices.prccolored_act(q) = sum(subs{i}.embody.act_vectmaps(:,q)>0)./length(inmask).*nanmask(double(all(all(~isnan(subs{i}.embody.bodymap{q}(inmask)),1),2)));
+        subs{i}.embody.indices.prccolored_deact(q) = sum(subs{i}.embody.deact_vectmaps(:,q)<0)./length(inmask).*nanmask(double(all(all(~isnan(subs{i}.embody.bodymap{q}(inmask)),1),2)));
+
         subs{i}.embody.indices.hasdeactivation(q) = double(any(any(subs{i}.embody.bodymap{q}(inmask)<0))).*nanmask(double(all(all(~isnan(subs{i}.embody.bodymap{q}(inmask)),1),2)));
+        
         
         % same metrics as above but within bigatlas
         %for qq = 1:3
@@ -92,6 +111,18 @@ end
 
 indices.nclustsclean = min(cat(3,indices.numclusters,indices.numclicks),[],3);
 indices.clustsizeclean = indices.prccolored./indices.nclustsclean;
+for i = 1:length(subs)
+    subs{i}.embody.indices.nclustsclean = indices.nclustsclean(i,:);
+    subs{i}.embody.indices.clustsizeclean = indices.clustsizeclean(i,:);
+end
 
-meanindices = structfun(@(d)mean(d,2),indices,'UniformOutput',false);
-meanindices = struct2table(meanindices);
+
+if length(subs{1}.embody.bodymap)==14
+    meanindices = structfun(@(d)mean(d(:,1:10),2),indices,'UniformOutput',false);
+    meanindices = struct2table(meanindices);
+    
+    meanindices_phys = structfun(@(d)mean(d(:,11:14),2),indices,'UniformOutput',false);
+    meanindices_phys = struct2table(meanindices_phys);
+else
+    meanindices = NaN; meanindices_phys = NaN;
+end

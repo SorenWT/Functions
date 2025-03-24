@@ -4,7 +4,7 @@ function p = pls_plot(plsmdl,whichcomps,datasetlabels,xlabels,ylabels,varargin)
 % Inputs:
 %     plsmdl: a model from the plsregress_perm function
 %     ncomps: number of components to plot
-%     plotlabels: labels for the X and Y datasets
+%     datasetlabels: labels for the X and Y datasets
 %     xlabels: labels for the x variables
 %     ylabels: labels for the y variables
 % Optional inputs:

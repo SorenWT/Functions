@@ -63,12 +63,17 @@ for i = 1:length(scaleinfo)
                 num2str(length(scaleinfo{i}.items)) ' items but only found ' num2str(size(rawscale,2))])
         end
         
+        if isempty(rawscale)
+                    rawscale = array2table(NaN(1,length(scaleinfo{i}.items)),'VariableNames',scaleinfo{i}.items);
+        else
+        
         tmpnans = array2table(NaN(1,length(scaleinfo{i}.items)),'VariableNames',scaleinfo{i}.items);
         tmpnans{:,tmprows} = rawscale{:,:};
         rawscale = tmpnans;
         
         if any(scaleinfo{i}.reverse==-1)
             rawscale{1,find(scaleinfo{i}.reverse==-1)} = length(scaleinfo{i}.respcoding)+1-rawscale{1,find(scaleinfo{i}.reverse==-1)};
+        end
         end
     else
         rawscale = array2table(NaN(1,length(scaleinfo{i}.items)),'VariableNames',scaleinfo{i}.items);
@@ -85,7 +90,11 @@ for i = 1:length(scaleinfo)
         % use mean and not sum so that people who missed a response are
         % comparable to the full-scale people
         
+        try
         indx = match_str(rawscale.Properties.VariableNames,info.items(info.factors.(factnames{ii})));
+        catch
+           disp('oogabooga') 
+        end
         scales.(sclnames{i}).(factnames{ii}) = nanmean(rawscale{1,indx})*length(info.factors.(factnames{ii}));
         scales.allscales.([sclnames{i} '_' factnames{ii}]) = nanmean(rawscale{1,indx})*length(info.factors.(factnames{ii}));
     end

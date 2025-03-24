@@ -3,6 +3,10 @@ function f = plotregline(a,b,varargin)
 argsin = varargin;
 argsin = setdefault(argsin,'plotCI','off');
 argsin = setdefault(argsin,'color',[1 0 0]);
+argsin = setdefault(argsin,'xrange',[min(a) max(a)]);
+
+xrange = EasyParse(argsin,'xrange');
+argsin = removeargs(argsin,{'xrange'});
 
 mdl = fitlm(a,b);
 B = mdl.Coefficients.Estimate;
@@ -22,15 +26,15 @@ if CheckInput(argsin,'plotCI') && EasyParse(argsin,'plotCI','on')
     B_inci(2,:) = linspace(B_ci(2,1),B_ci(2,2),100);
     
     for i = 1:100
-       reglines(:,i) = B_inci(1,i)+B_inci(2,i)*linspace(min(a),max(a),1000);
+       reglines(:,i) = B_inci(1,i)+B_inci(2,i)*linspace(xrange(1),xrange(2),1000);
     end
     
     curve_upper = max(reglines,[],2); curve_lower = min(reglines,[],2); 
     
     clr = EasyParse(argsin,'color');
-    patch([linspace(min(a),max(a),1000) fliplr(linspace(min(a),max(a),1000))],...
-        [curve_upper' fliplr(curve_lower')],palecol(clr,0.5),'EdgeColor','none');
+    patch([linspace(xrange(1),xrange(2),1000) fliplr(linspace(xrange(1),xrange(2),1000))],...
+        [curve_upper' fliplr(curve_lower')],clr,'EdgeColor','none','FaceAlpha',0.1);
 end
 
 argsin = removeargs(argsin,{'plotCI'});
-f = plot(linspace(min(a),max(a),1000),B(1)+B(2)*linspace(min(a),max(a),1000),argsin{:});
+f = plot(linspace(xrange(1),xrange(2),1000),B(1)+B(2)*linspace(xrange(1),xrange(2),1000),argsin{:});

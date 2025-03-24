@@ -42,6 +42,10 @@ template = [26.5,20,20,20,20;
     -12,-12,-19,-11.5,-4;
     33.5,33.5,25,28.5,25];
 
+
+
+
+
 if ~any(any(isnan(poldata)))
    %[~,poldata,transform] = procrustes(template',poldata','Scaling',false);
     [~,~,transform] = procrustes(template',poldata','Scaling',false);

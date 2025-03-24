@@ -1,26 +1,17 @@
 function [tblout]=lm_coeffs2table(lm,varnames)
 
+if nargin < 2
+   varnames = lm.Coefficients.Properties.RowNames(2:end);
+end
+
 tblout = lm.Coefficients;
 
 tblout{:,:} = niceround(tblout{:,:});
 
-tblout.Properties.RowNames = [{'Intercept'} varnames];
+tblout.rnames = [{'Intercept'} horz(varnames)]';
 
-end
-
-function rounddat = niceround(dat)
-
-if any(size(dat)>1)
-    rounddat = arrayfun(@niceround,dat);
-else
-    
-    if abs(dat)>10
-        rounddat = round(dat,1,'decimal');
-    elseif abs(dat)>1
-        rounddat = round(dat,2,'decimal');
-    else
-        rounddat = round(dat,2,'significant');
-    end
-end
+tblout = tblout(:,[end 1:end-1]);
+tblout.Properties.RowNames = {};
+%tblout.Properties.RowNames = [{'Intercept'} horz(varnames)];
 
 end
