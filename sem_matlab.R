@@ -1,4 +1,4 @@
-sem_matlab <- function(filein,fileout,syntax){
+sem_matlab <- function(filein,fileout,syntax,clustervar){
     
   library('lavaan')
   library('RJSONIO')
@@ -7,8 +7,12 @@ sem_matlab <- function(filein,fileout,syntax){
 
   mydata <- read.csv(filein)
   
-  #thisfit <- sem(syntax,data=mydata)
-  thisfit <- sem(syntax,data=mydata,se="bootstrap")
+  if(clustervar=='none'){ 
+    thisfit <- sem(syntax,data=mydata)
+  }else{
+    thisfit <- sem(syntax,data=mydata,cluster=clustervar)
+  }
+  #thisfit <- sem(syntax,data=mydata,se="bootstrap")
   thissummary <- summary(thisfit)
   #paramscov <- vcov(thisfit)
   

@@ -1,17 +1,18 @@
-function [jsonsurveys,pers,surveytxt] = personality_tojson(pers,fileout)
-% function to export personality questionnaire structures into a surveyJS
-% form
+function [jsonsurveys,pers,surveytxt] = surveyjs_write_personality(pers,fileout)
+% function to export personality questionnaire structures into a surveyJS form
+
+% updated version, supports "Prefer not to answer" for every question
 
 if iscell(pers)
     for i = 1:length(pers)
         disp(i)
-        [jsonsurveys{i},pers{i}] = personality_tojson(pers{i});
+        [jsonsurveys{i},pers{i}] = surveyjs_write_personality(pers{i});
     end
     
     surveyjson = struct;
-    surveyjson.completedHtml = '<h> Thank you for completing the personality questionnaires! The experiment will continue in a few moments. </h>';
-    surveyjson.title = 'Personality module';
-    surveyjson.description = 'The following form asks you a number of questions about your personality. Please answer them as honestly as you can.';
+    surveyjson.completedHtml = '<h> Thank you for completing the questionnaires! The experiment will continue in a few moments. </h>';
+    surveyjson.title = 'Questionnaire module';
+    surveyjson.description = 'The following form asks you a number of questions about yourself. Please answer them as honestly as you can.';
     surveyjson.showProgressBar = 'auto';
     surveyjson.progressBarType = 'pages';
     surveyjson.progressBarShowPageNumbers = true;
@@ -30,16 +31,21 @@ if iscell(pers)
 else
     jsonsurveys = struct('type','matrix','name',pers.name,'isRequired',1,'eachRowRequired',1);
     
-    if isfield(pers,'titletext')
+    if isfield(pers,'title') 
+        jsonsurveys.title = pers.title;
+    elseif isfield(pers,'titletext')
         jsonsurveys.title = pers.titletext;
     else
         jsonsurveys.title = ['Read each statement and click the appropriate circle to its right. ' ...
             'Do not spend too much time on any statement. Answer as honestly as you can.'];
     end
+    jsonsurveys.columns(1).value = ['Column 1'];
+    jsonsurveys.columns(1).text = 'Prefer not to answer';
     for i = 1:length(pers.respcoding)
-        jsonsurveys.columns(i).value = ['Column ' num2str(i)];
-        jsonsurveys.columns(i).text = pers.respcoding{i};
+        jsonsurveys.columns(i+1).value = ['Column ' num2str(i+1)];
+        jsonsurveys.columns(i+1).text = pers.respcoding{i};
     end
+
     
     if ~isfield(pers,'prettyitems')
         pers = fix_pers_text(pers);

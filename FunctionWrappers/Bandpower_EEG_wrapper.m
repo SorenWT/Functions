@@ -4,8 +4,16 @@ if nargin < 3
    norm_bandpass = 'no'; 
 end
 
+if any(isnan(EEG.data))
+   warning('Data contains NaNs - discontinuities may introduce errors in frequency analysis')
+end
+
 for c = 1:EEG.nbchan
-   [pxx,f] = pwelch(EEG.data(c,:),[],[],2^nextpow2((3/2)*EEG.srate),EEG.srate);
+   
+    % handle NaNs if they were included to mark artefacts
+   thisdat = EEG.data(c,:); thisdat = thisdat(~isnan(thisdat));
+  
+   [pxx,f] = pwelch(thisdat,[],[],2^nextpow2((3/2)*EEG.srate),EEG.srate);
    findx = intersect(find(f > frange(1)),find(f < frange(2)));
    
    %bp(c) = trapz(f(findx),pxx(findx))/numel(findx);

@@ -64,11 +64,29 @@ def autoreject_threshold(ft_file,out_file,raw_file=0):
     else:
         string_types = basestring,
 
-    if isinstance(raw_file,string_types):
-        info = mne.io.read_info(raw_file)
-        epochs = mne.read_epochs_fieldtrip(ft_file,info)
-    else:
-        epochs = mne.read_epochs_fieldtrip(ft_file,info=None)
+    #if isinstance(raw_file,string_types):
+    #    info = mne.io.read_info(ft_file)
+    #    epochs = mne.read_epochs_fieldtrip(ft_file,info)
+    #else:
+    #    epochs = mne.read_epochs_fieldtrip(ft_file,info=None)
+    epochs = mne.read_epochs_eeglab(ft_file)
+
+    reject = autoreject.get_rejection_threshold(epochs)
+    
+    with open(out_file,'w') as f:
+        json.dump(reject,f)
+        
+        
+def autoreject_threshold_singlechan(ft_file,out_file):
+    import mne
+    import autoreject
+    import json
+
+
+    
+    info = mne.create_info(ch_names,)
+    epochs = mne.read_epochs_fieldtrip(ft_file,info)
+
     
     reject = autoreject.get_rejection_threshold(epochs)
     
@@ -76,9 +94,3 @@ def autoreject_threshold(ft_file,out_file,raw_file=0):
         json.dump(reject,f)
         
         
-    
-def movement_correct(raw_file,out_file):
-    import mne
-    
-    
-    return

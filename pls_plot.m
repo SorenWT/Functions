@@ -82,9 +82,20 @@ end
 
 for q = whichcomps
     p(pindx{:},find(whichcomps==q),1).select()
+    if ~isfield(plsmdl,'ctab')
     nicecorrplot(plsmdl.XS(:,q),plsmdl.YS(:,q),{['Latent component ' num2str(q) ' - ' datasetlabels{1}],...
         ['Latent component ' num2str(q) ' - ' datasetlabels{2}]},'type','pearson','externalp',plsmdl.pperm(q));
-    FixAxes(gca,20)
+        FixAxes(gca,14)
+    else
+       h = heatmap({['Actual ' datasetlabels{1}],['Actual ' datasetlabels{2}]},{['Predicted ' datasetlabels{1}],['Predicted ' datasetlabels{2}]},...
+           plsmdl.ctab);%,['Actual ' datasetlabels{2}],['Predicted ' datasetlabels{2}]);
+       set(gca,'FontSize',14)
+       colormap parula
+       h.ColorbarVisible = 'off';
+       h = struct(h); 
+       h.XAxis.TickLabelRotation=0;
+       h.YAxis.TickLabelRotation=45;
+    end
     
     p(pindx{:},find(whichcomps==q),2).pack('h',plotwidth);
     
@@ -303,8 +314,15 @@ end
 
 p(pindx{:}).margin = [20 30 5 5];
 p.margintop = 10;
+
+if ~isfield(plsmdl,'ctab')
 p.marginleft = 25;
+else
+    p.marginleft = 35;
+end
 %p(pindx{:},2).marginleft = 22;
+
+
 
 
 

@@ -17,20 +17,31 @@ if isa(mdl,'LinearMixedModel')
     
     mdl = fitlm(oldmdl.Variables,newformula,'DummyVarCoding',opts.DummyVarCoding);
     %mdl.Coefficients = oldmdl.Coefficients;
-    mdl = oldmdl; 
-    mdl.Coefficients = oldmdl.Coefficients;
+    %mdl = oldmdl; 
+%    mdl.Coefficients = oldmdl.Coefficients;
 end
 
 
 hold on
 hout = plotAdded(mdl,coef);
 
-hout(1).Color = palecol(hout(1).Color,0.3);
-hout(1).Marker = 'o'; hout(1).MarkerFaceColor = hout(1).Color;
-hout(2).LineWidth = 3;
-hout(3).LineWidth = 1.5;
-FixAxes(gca,16)
-legend({'Adjusted data','Fit','95% conf. bounds'})
+
+x = hout(1).XData; y = hout(1).YData; 
+xlab = get(gca,'XLabel'); xlab = xlab.String;
+ylab = get(gca,'YLabel'); ylab = ylab.String;
+
+
+clf
+ci = coefCI(mdl); ci = ci(coef,:);
+nicecorrplot_v2(x,y,{xlab,ylab},'Plot','off','regci',ci)
+
+
+% hout(1).Color = palecol(hout(1).Color,0.3);
+% hout(1).Marker = 'o'; hout(1).MarkerFaceColor = hout(1).Color;
+% hout(2).LineWidth = 3;
+% hout(3).LineWidth = 1.5;
+% FixAxes(gca,16)
+legend({'Adjusted data','95% conf. bounds','Fit'})
 
 if ischar(coef)
     [corrrho,corrp] = partialcorr(mdl.Variables.(coef),mdl.Variables.(mdl.ResponseName),...

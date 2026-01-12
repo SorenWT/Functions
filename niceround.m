@@ -7,7 +7,7 @@ else
     if abs(dat)>10
         rounddat = round(dat,1,'decimal');
     elseif abs(dat)>1
-        rounddat = round(dat,2,'decimal');
+        rounddat = round(dat,1,'decimal');
     else
         rounddat = round(dat,2,'significant');
     end

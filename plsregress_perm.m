@@ -4,6 +4,7 @@ argsin = varargin;
 
 argsin = setdefault(argsin,'nboot',nperm);
 argsin = setdefault(argsin,'stratify',ones(size(X,1),1));
+argsin = setdefault(argsin,'discrim',false); 
 
 plsmdl = struct;
 
@@ -33,11 +34,27 @@ permmethod = EasyParse(argsin,'permmethod');
 strat = EasyParse(argsin,'stratify');
 strat(allnan) = [];
 
+discrim = EasyParse(argsin,'discrim');
+
+if discrim && (islogical(Y) | all(unique(Y(~isnan(Y)))==[0;1]))
+   Y = Y*2-1;
+end
 
 [XL,YL,XS,YS,beta,pctvar,mse,stats] = plsregress_swt(X,Y,ncomp);
 r = corr(XS,YS); r = r(find(eye(size(r)))); r = r';
 stats.r = r; stats.mse = mse;
 plsmdl.explained = stats.explained;
+
+predY = [ones(size(X,1),1) X]*beta;
+
+if discrim
+    [ctab,chi2,p]=crosstab(predY>0,Y);
+    plsmdl.ctab = ctab; 
+    plsmdl.cmetrics.acc = sum(sum(ctab.*eye(size(ctab))))/sum(sum(ctab));
+    plsmdl.cmetrics.sens = ctab(2,2)/sum(ctab(:,2));
+    plsmdl.cmetrics.spec = ctab(1,1)/sum(ctab(:,1));
+    plsmdl.cmetrics.balacc = mean([plsmdl.cmetrics.sens,plsmdl.cmetrics.spec]);
+end
 
 
 switch permmethod
@@ -52,7 +69,7 @@ switch permmethod
             %[XLhold(:,:,q),YLhold(:,:,q)] = plsregress_swt(Xtrain,Ytrain,ncomp);
             
             % fixed version
-            [~,YLhold,XShold,~,~,~,~,stats] = plsregress_swt(Xtrain,Ytrain,ncomp);
+            [~,YLhold,XShold,~,betahold,~,~,stats] = plsregress_swt(Xtrain,Ytrain,ncomp);
             XWhold = stats.W;
                         
             XStest = nancenter(Xtest,1)*XWhold;
@@ -64,6 +81,17 @@ switch permmethod
                     YStest(:,qq) = projout(YStest(:,qq),XStest(:,qqq));
                 end
             end
+            
+            if discrim
+                YpredTest = [ones(size(Xtest,1),1) Xtest]*betahold; 
+                [ctab] = crosstab(YpredTest>0,Ytest);
+                holdsens(q) = ctab(2,2)/sum(ctab(:,2));
+                holdspec(q) = ctab(1,1)/sum(ctab(:,1));
+                holdbalacc(q) = mean([holdsens(q),holdspec(q)]);
+                
+                holdacc(q) = sum(sum(ctab.*eye(size(ctab))))/sum(sum(ctab));
+            end
+            
             
             %[~,~,trans_x] = procrustes(XL,XLhold(:,:,q),'Scaling',false);
             %[~,~,trans_y] = procrustes(YL,YLhold(:,:,q),'Scaling',false);
@@ -97,6 +125,7 @@ switch permmethod
             %tmp = corr(nancenter(Xtest,1)*XLhold,nancenter(Ytest,1)*YLhold);
             tmp = corr(XStest,YStest);
             perf(:,q) = tmp(find(eye(size(tmp))));
+            
             %cvres(:,q) = crossval(@(xtr,ytr,xts,yts)plspredict(xtr,ytr,xts,yts,ncomp),X,Y,'Holdout',0.25);
             
             %         for i = 1:nperm
@@ -111,6 +140,15 @@ switch permmethod
         stats.meanholdperf = mean(perf,2)';
         
         plsmdl.holdperf = mean(perf,2)';
+        if discrim
+            %stats.allholdacc = holdacc;
+            %stats.meanholdacc = mean(holdacc);
+
+            plsmdl.holdmetrics.acc = mean(holdacc);
+            plsmdl.holdmetrics.sens = mean(holdsens);
+            plsmdl.holdmetrics.spec = mean(holdspec);
+            plsmdl.holdmetrics.balacc = mean(holdbalacc);
+        end
         %plsmdl.holdr = allholdperf;
         
         %     meancvres = mean(cvres,2);
@@ -140,23 +178,39 @@ switch permmethod
             permX = X(randperm(size(X,1)),:);
             permY = Y(randperm(size(Y,1)),:);
             
-            [~,~,XSperm,YSperm,~,~,mseperm(:,:,i),permstat] = plsregress_swt(permX,permY,ncomp);
+            [~,~,XSperm,YSperm,betaperm,~,mseperm(:,:,i),permstat] = plsregress_swt(permX,permY,ncomp);
             sings_perm(i,:) = permstat.sings;
             tmp = corr(XSperm,YSperm); rperm(i,:) = tmp(find(eye(size(tmp))));
+            
+            if discrim
+                Ypredperm = [ones(size(permX,1),1) permX]*betaperm; 
+                [tmptbl] = crosstab(Ypredperm>0,permY);
+                permacc(i) = sum(sum(tmptbl.*eye(size(tmptbl))))/sum(sum(tmptbl));
+            end
         end
         stats.sings_perm = sings_perm; stats.rperm = rperm;
         stats.pperm = 1-nanmean(stats.sings>sings_perm); % one-tailed test
+        
+        if discrim
+             stats.acc_perm = permacc; 
+             stats.pperm_acc = 1-nanmean(plsmdl.cmetrics.acc>permacc);
+        end
 end
 
 plsmdl.XL = XL; plsmdl.YL = YL;
 plsmdl.XS = NaN(length(allnan),size(XS,2)); plsmdl.XS(goodindx,:) = XS;
 plsmdl.YS = NaN(length(allnan),size(YS,2)); plsmdl.YS(goodindx,:) = YS;
+plsmdl.predY = NaN(length(allnan),size(Y,2)); plsmdl.predY(goodindx,:) = predY;
 plsmdl.beta = beta; plsmdl.pctvar = pctvar;
 plsmdl.mse = mse; plsmdl.stats = stats;
 plsmdl.r = r; plsmdl.pperm = stats.pperm;
 %plsmdl.fdr = fdr(plsmdl.pperm);
 
 plsmdl.pperm = horz(plsmdl.pperm);
+plsmdl.pperm = plsmdl.pperm+1/nperm;
+if isfield(stats,'sings_perm')
+plsmdl.sings_perm = sings_perm; plsmdl.rperm = rperm;
+end
 plsmdl.Xloads = corr(X,XS); plsmdl.Yloads = corr(Y,YS);
 
 if nboot > 0

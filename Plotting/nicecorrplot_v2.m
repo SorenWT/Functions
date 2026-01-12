@@ -1,4 +1,4 @@
-function [corrrho,corrp,h,f,tb] = nicecorrplot(a,b,labels,varargin)
+function [corrrho,corrp,h,f,tb] = nicecorrplot_v2(a,b,labels,varargin)
 % nicecorrplot plots a scatter plot and a best-fit line for two variables
 %
 % nicecorrplot(a,b) plots the correlation between the variables a and b
@@ -60,7 +60,7 @@ if isempty(a) || isempty(b)
 end
 
 
-B = regress(b,horzcat(ones(length(a),1),a));
+[B,Bint] = regress(b,horzcat(ones(length(a),1),a));
 B(2) = B(2)./sclfact;
 a = a.*sclfact;
 
@@ -86,6 +86,13 @@ if CheckInput(varargin,'externalp')
     corrp = EasyParse(varargin,'externalp');
 end
 
+if CheckInput(varargin,'regci')
+   regci = EasyParse(varargin,'regci');
+else
+    regci = 'auto';
+end
+
+
 argsin = setdefault(argsin,'scattersize',384./round(log(length(a))));
 scattersize = EasyParse(argsin,'scattersize');
 
@@ -95,13 +102,15 @@ h = scatter(a,b,scattersize,scatterclr,'filled');
 xl = xlabel(labels{1},'FontSize',16);
 yl = ylabel(labels{2},'FontSize',16);
 hold on;
-f = plot(linspace(min(a),max(a),1000),B(1)+B(2)*linspace(min(a),max(a),1000),'color',lineclr);
+
+f = plotregline(a,b,'plotCI',regci);
+%f = plot(linspace(min(a),max(a),1000),B(1)+B(2)*linspace(min(a),max(a),1000),'color',lineclr);
 ax = gca;
 pos = ax.Position;
 
 %ylim([-0.1 0.1])
 
-set(f,'LineWidth',1.5)
+set(f,'LineWidth',2)
 
 try
 set(gca, ...
@@ -156,4 +165,4 @@ if isnan(corrrho) && isnan(corrp) && exist('tb','var')
     delete(tb)
 end
 
-FixAxes(gca,14)
+FixAxes(gca,16)

@@ -89,7 +89,7 @@ if ~plotrotated
     plot(1:pcamdl.ncomps,pcamdl.explained(1:pcamdl.ncomps),'LineWidth',5,'color',l(1,:));
     hold on
     plot(1:length(pcamdl.explained),pcamdl.explained(1:end),'LineWidth',2,'color',l(1,:),'linestyle','--','HandleVisibility','off')
-    stdshade(1:length(pcamdl.explained),pcamdl.expl_perm','k',0.3,2,'prctileci');
+    stdshade(1:length(pcamdl.explained),pcamdl.expl_perm','k',0.3,2,'sem');
     xl = get(gca,'XLim');
     line(xl,[100/length(xlabels) 100/length(xlabels)],'LineWidth',2,'color','r')
     set(gca,'XLim',xl);
@@ -100,7 +100,7 @@ else
     hold on
     plot(1:length(pcamdl.explained),pcamdl.explained(1:end),'LineWidth',1,'color',palecol(l(1,:)),'linestyle','--','HandleVisibility','off')
     if isfield(pcamdl,'expl_perm')
-    stdshade(1:length(pcamdl.explained),pcamdl.expl_perm','k',0.3,2,'prctileci');
+    stdshade(1:length(pcamdl.explained),pcamdl.expl_perm','k',0.3,2,'sem');
     end
     plot(1:length(pcamdl.rotated.explained),pcamdl.rotated.explained,'LineWidth',5,'color',l(1,:));
     

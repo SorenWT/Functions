@@ -42,6 +42,23 @@ for i = 1:length(subs)
     catch
        warning('No click or time data - skipping these metrics'); 
     end
+    try 
+        if isfield(subs{i}.embody,'rawsel')
+            subs{i}.embody.respmetrics.totaltime = getfield_list(subs{i}.embody.rawsel,'rt');
+            
+            tmp = getfield_list(subs{i}.embody.rawsel,'arrTimeD');
+            tmp = cellfun(@range,tmp,'UniformOutput',false);
+            tmp(cellfun(@isempty,tmp)) = {NaN}; tmp = cat(2,tmp{:});
+            
+            subs{i}.embody.respmetrics.drawtime = tmp;
+            subs{i}.embody.respmetrics.thinktime = subs{i}.embody.respmetrics.totaltime - subs{i}.embody.respmetrics.drawtime;
+            
+            numclicks = getfield_list(subs{i}.embody.rawsel,'arrMD');
+            numclicks = cellfun(@length,numclicks).*nanmask(cellfun(@(d)~any(isnan(d)),numclicks));
+            subs{i}.embody.respmetrics.numclicks = numclicks;
+        end
+    catch
+    end
 end
 
 % make bodily map indices
@@ -60,7 +77,7 @@ for i = 1:length(subs)
         deactmap = embody_smooth({deactpoints},[5 1]); 
         subs{i}.embody.deact_vectmaps(:,q) = deactmap(inmask);
 
-        subs{i}.embody.indices.prcactarea(q) = sum(subs{i}.embody.act_vectmaps(:,q)>0)./sum(subs{i}.embody.deact_vectmaps(:,q)<0);
+        subs{i}.embody.indices.prcactarea(q) = sum(subs{i}.embody.act_vectmaps(:,q)>0)./(sum(subs{i}.embody.deact_vectmaps(:,q)<0)+sum(subs{i}.embody.act_vectmaps(:,q)>0));
         %subs{i}.embody.indices.prcactarea(q) = (sum(sum(subs{i}.embody.bodymap{q}(inmask)>0,1),2)./(sum(sum(subs{i}.embody.bodymap{q}(inmask)<0,1),2)+nansum(nansum(subs{i}.embody.bodymap{q}(inmask)>0,1),2))).*nanmask(double(all(all(~isnan(subs{i}.embody.bodymap{q}(inmask)),1),2)));
         subs{i}.embody.indices.prccolored(q) = (sum(sum(subs{i}.embody.bodymap{q}(inmask)~=0 & ~isnan(subs{i}.embody.bodymap{q}(inmask))))./numel(inmask)).*nanmask(double(all(all(~isnan(subs{i}.embody.bodymap{q}(inmask)),1),2)));
         
