@@ -12,6 +12,8 @@ function p = pls_plot(plsmdl,whichcomps,datasetlabels,xlabels,ylabels,varargin)
 %     panelindx: plot into a particular part of a panel
 %     coeffplots: the types of coefficient plots to be used. Default is
 %     {{'Xloads','bar'},{'Yloads','bar'}}. Can add more types if desired
+%     sign: whether to flip sign of any of the components/loadings before
+%     plotting (default = [1 1])
 
 
 
@@ -35,6 +37,12 @@ if CheckInput(argsin,'coeffplots')
     coeffplots = EasyParse(argsin,'coeffplots');
 else
     coeffplots = {{'Xloads','bar'},{'Yloads','bar'}};
+end
+
+if CheckInput(argsin,'sign')
+    signflip = EasyParse(argsin,'sign');
+else
+    signflip = [1 1];
 end
 
 load('lkcmap2')
@@ -79,6 +87,13 @@ else
     end
 end
 
+plsmdl.XS = plsmdl.XS.*signflip(1);
+plsmdl.XL = plsmdl.XL.*signflip(1);
+plsmdl.Xloads = plsmdl.Xloads.*signflip(1);
+
+plsmdl.YS = plsmdl.YS.*signflip(2);
+plsmdl.YL = plsmdl.YL.*signflip(2);
+plsmdl.Yloads = plsmdl.Yloads.*signflip(2);
 
 for q = whichcomps
     p(pindx{:},find(whichcomps==q),1).select()
@@ -118,7 +133,7 @@ for q = whichcomps
                 end
                 set(gca,'XTick',[1:size(plsmdl.(coeffplots{i}{1}),1)],'XTickLabel',labs)
                 ylabel('Loading');
-                xtickangle(90)
+                xtickangle(45)
                 FixAxes(gca,14)
                 
                 %t = p(pindx{:},find(whichcomps==q),2,i).title(datasetlabels{i});

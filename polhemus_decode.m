@@ -1,4 +1,4 @@
-function [angstbl,poldata] = polhemus_decode(polfile)
+function [angstbl,poldata,errorcode] = polhemus_decode(polfile)
 
 % function to get relevant angles from polhemus data
 
@@ -7,8 +7,29 @@ poldata = reshape(poldata,7,[]);
 poldata([1 5:end],:) = [];
 poldata(3,:) = -poldata(3,:); % flip z axis
 
+% remove all zero points
+poldata(:,any(poldata==0,1)) = [];
+
+if isempty(poldata)
+    warning('No points remaining after removing zeros')
+        angstbl = table; angstbl.headang_c7 = NaN; angstbl.headang_acro = NaN; angstbl.shoulder_close = NaN; angstbl.shoulder_raise = NaN; angstbl.head_tilt = NaN;
+    errorcode = 1;
+    return 
+end
+
 % detect clusters
 clustidx = dbscan(poldata',1.5,1);
+if length(unique(clustidx)) > 5
+   clustidx = kmeans(poldata',5);  
+end
+
+if unique(clustidx) < 5
+    warning('Less than 5 clusters found - returning NaN')
+    angstbl = table; angstbl.headang_c7 = NaN; angstbl.headang_acro = NaN; angstbl.shoulder_close = NaN; angstbl.shoulder_raise = NaN; angstbl.head_tilt = NaN;
+    errorcode = 2;
+    return 
+end
+
 rawpol = poldata; poldata = [];
 
 for i = 1:length(unique(clustidx))
@@ -37,6 +58,7 @@ end
 
 
 % Procrustes alignment to template
+% nose is in positive x direction
 
 template = [26.5,20,20,20,20;
     -12,-12,-19,-11.5,-4;
@@ -51,11 +73,23 @@ if ~any(any(isnan(poldata)))
     [~,~,transform] = procrustes(template',poldata','Scaling',false);
     newrot = round(transform.T);
     if sum(sum(abs(newrot))) ~= 3
-       disp('Something fucked up with the transform!') 
-       angstbl = table; angstbl.headang_c7 = NaN; angstbl.headang_acro = NaN; angstbl.shoulder_close = NaN; angstbl.shoulder_raise = NaN; angstbl.head_tilt = NaN;
-       return
+       %disp('Something fucked up with the transform!') 
+       %angstbl = table; angstbl.headang_c7 = NaN; angstbl.headang_acro = NaN; angstbl.shoulder_close = NaN; angstbl.shoulder_raise = NaN; angstbl.head_tilt = NaN;
+       %return
+       
+       % assume order is correct
+       shouldaxis = poldata(:,5)-poldata(:,3);
+       shouldaxis = round(shouldaxis/max(abs(shouldaxis)));
+       tempaxis = template(:,5)-template(:,3);
+
+       rot = rotateVecToVec(shouldaxis,tempaxis);
+       poldata = poldata'*newrot; 
+       errorcode = 3;
+       
+    else
+        poldata = poldata'*newrot+transform.c;
+        errorcode = 0;
     end
-    poldata = poldata'*newrot+transform.c;
 end
 
 poldata = poldata';

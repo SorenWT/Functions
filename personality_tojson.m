@@ -30,7 +30,9 @@ if iscell(pers)
 else
     jsonsurveys = struct('type','matrix','name',pers.name,'isRequired',1,'eachRowRequired',1);
     
-    if isfield(pers,'titletext')
+    if isfield(pers,'title')
+        jsonsurveys.title = pers.title;
+    elseif isfield(pers,'titletext')
         jsonsurveys.title = pers.titletext;
     else
         jsonsurveys.title = ['Read each statement and click the appropriate circle to its right. ' ...
