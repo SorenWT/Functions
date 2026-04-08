@@ -14,6 +14,8 @@ function p = pls_plot(plsmdl,whichcomps,datasetlabels,xlabels,ylabels,varargin)
 %     {{'Xloads','bar'},{'Yloads','bar'}}. Can add more types if desired
 %     sign: whether to flip sign of any of the components/loadings before
 %     plotting (default = [1 1])
+%     group: colour dots in plot by group membership
+%     gnames: names for group membership (if plotting by group)
 
 
 
@@ -43,6 +45,13 @@ if CheckInput(argsin,'sign')
     signflip = EasyParse(argsin,'sign');
 else
     signflip = [1 1];
+end
+
+if CheckInput(argsin,'group')
+    group = EasyParse(argsin,'group');
+    gnames = EasyParse(argsin,'gnames');
+else
+   group = NaN; 
 end
 
 load('lkcmap2')
@@ -78,7 +87,8 @@ ncomps = length(whichcomps);
 if isempty(pindx)
     p.pack('v',repmat({1/ncomps},1,ncomps))
     for i = 1:ncomps
-        p(i).pack('h',{1/5 4/5})
+        %p(i).pack('h',{1/5 4/5})
+        p(i).pack('h',{1/3 2/3})
     end
 else
     p(pindx{:}).pack('v',repmat({1/ncomps},1,ncomps))
@@ -98,8 +108,30 @@ plsmdl.Yloads = plsmdl.Yloads.*signflip(2);
 for q = whichcomps
     p(pindx{:},find(whichcomps==q),1).select()
     if ~isfield(plsmdl,'ctab')
-    nicecorrplot(plsmdl.XS(:,q),plsmdl.YS(:,q),{['Latent component ' num2str(q) ' - ' datasetlabels{1}],...
-        ['Latent component ' num2str(q) ' - ' datasetlabels{2}]},'type','pearson','externalp',plsmdl.pperm(q));
+        if isnan(group)
+            nicecorrplot(plsmdl.XS(:,q),plsmdl.YS(:,q),{['Latent component ' num2str(q) ' - ' datasetlabels{1}],...
+                ['Latent component ' num2str(q) ' - ' datasetlabels{2}]},'type','pearson','externalp',plsmdl.pperm(q));
+        else
+            % scatterplot version
+%             nicecorrplot(plsmdl.XS(:,q),plsmdl.YS(:,q),{['Latent component ' num2str(q) ' - ' datasetlabels{1}],...
+%                 ['Latent component ' num2str(q) ' - ' datasetlabels{2}]},'type','pearson','externalp',plsmdl.pperm(q));
+%             hold on
+%             l = lines;
+%             %siz = 384./round(log(length(plsmdl.XS(~isnan(plsmdl.XS(:,q)),q))));
+%             cols = palecol(darkcol(l(1,:),0.2),linspace(0,0.7,length(unique(group))));
+%             gscatter(plsmdl.XS(:,q),plsmdl.YS(:,q),group,cols,'.',30,'filled')
+%             manlegend(gnames,cols)
+
+            % violin version
+            l = lines;
+            cols = flipud(palecol(darkcol(l(1,:),0.2),linspace(0,0.7,length(unique(group)))));
+
+            v = violinplot(plsmdl.XS(:,q),num2factor(group,gnames),'ViolinColor',cols,'GroupOrder',gnames);
+            xtickangle(45)
+            FixAxes(gca,20)
+           %ylabel(['Latent component ' num2str(q) ' - ' datasetlabels{1}])
+           ylabel(datasetlabels{1})
+        end
         FixAxes(gca,14)
     else
        h = heatmap({['Actual ' datasetlabels{1}],['Actual ' datasetlabels{2}]},{['Predicted ' datasetlabels{1}],['Predicted ' datasetlabels{2}]},...
@@ -126,7 +158,7 @@ for q = whichcomps
                 l = lines;
                 b = bar(plsmdl.(coeffplots{i}{1})(:,q),'facecolor',palecol(l(i,:)));
                 hold on
-                b2 = bar(plsmdl.(coeffplots{i}{1})(:,q).*(plsmdl.([coeffplots{i}{1} '_bootp'])(:,q)<0.05),'facecolor',l(1,:));
+                b2 = bar(plsmdl.(coeffplots{i}{1})(:,q).*(plsmdl.([coeffplots{i}{1} '_bootp'])(:,q)<0.05),'facecolor',l(i,:));
                 if isfield(plsmdl,[coeffplots{i}{1} '_boot'])
                     e = errorbar(plsmdl.(coeffplots{i}{1})(:,q),1.96*std(plsmdl.([coeffplots{i}{1} '_boot'])(:,q,:),[],3),...
                         'LineStyle','none','LineWidth',2,'Color','k');

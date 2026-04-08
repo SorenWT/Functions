@@ -1,5 +1,9 @@
 function [r,p,ci,n] = corrswt(x,y,varargin)
 
+if nargin < 2
+   y = x; 
+end
+
 argsin = varargin;
 
 argsin = setdefault(argsin,'rows','pairwise');

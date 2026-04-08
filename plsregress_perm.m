@@ -190,6 +190,7 @@ switch permmethod
         end
         stats.sings_perm = sings_perm; stats.rperm = rperm;
         stats.pperm = 1-nanmean(stats.sings>sings_perm); % one-tailed test
+        %stats.pperm = 1-nanmean(stats.r>stats.rperm);
         
         if discrim
              stats.acc_perm = permacc; 

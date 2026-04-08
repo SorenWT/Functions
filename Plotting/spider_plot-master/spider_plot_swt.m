@@ -1049,23 +1049,23 @@ if ~strcmp(axes_labels, 'none')
     % Iterate through number of data points
     for ii = 1:length(axes_labels)
         % Angle of point in radians
-        [horz_align, vert_align, x_pos, y_pos] = quadrant_position(axes_labels_offset, theta(ii));
+        [horz_align, vert_align, x_pos, y_pos,thisang] = quadrant_position(axes_labels_offset, theta(ii));
         
         % Display text label
         t = text(x_axes(ii)+x_pos, y_axes(ii)+y_pos, axes_labels{ii},...
             'Units', 'Data',...
-            'HorizontalAlignment', 'right',...
+            'HorizontalAlignment', horz_align,...
             'VerticalAlignment', 'middle',...
             'EdgeColor', axes_labels_edge,...
             'BackgroundColor', 'w',...
             'FontName', label_font,...
             'FontSize', label_font_size,...
-            'Rotation',180+rad2deg(theta(ii)));
+            'Rotation',thisang);
         uistack(t,'bottom')
     end
 end
 
-    function [horz_align, vert_align, x_pos, y_pos] = quadrant_position(axes_labels_offset, theta_point)
+    function [horz_align, vert_align, x_pos, y_pos,thisang] = quadrant_position(axes_labels_offset, theta_point)
         % Find out which quadrant the point is in
         if theta_point == 0
             quadrant = 0;
@@ -1094,41 +1094,49 @@ end
                 vert_align = 'middle';
                 x_pos = axes_labels_offset;
                 y_pos = 0;
+                thisang = rad2deg(theta_point);
             case 1
                 horz_align = 'left';
-                vert_align = 'bottom';
+                vert_align = 'middle';
                 x_pos = axes_labels_offset;
                 y_pos = axes_labels_offset;
+                thisang = rad2deg(theta_point);
             case 1.5
-                horz_align = 'center';
-                vert_align = 'bottom';
+                horz_align = 'left';
+                vert_align = 'middle';
                 x_pos = 0;
                 y_pos = axes_labels_offset;
+                thisang = rad2deg(theta_point);
             case 2
                 horz_align = 'right';
-                vert_align = 'bottom';
+                vert_align = 'middle';
                 x_pos = -axes_labels_offset;
                 y_pos = axes_labels_offset;
+                thisang = 180+rad2deg(theta_point);
             case 2.5
                 horz_align = 'right';
                 vert_align = 'middle';
                 x_pos = -axes_labels_offset;
                 y_pos = 0;
+                thisang = 180+rad2deg(theta_point);
             case 3
                 horz_align = 'right';
-                vert_align = 'top';
+                vert_align = 'middle';
                 x_pos = -axes_labels_offset;
                 y_pos = -axes_labels_offset;
+                thisang = 180+rad2deg(theta_point);
             case 3.5
-                horz_align = 'center';
-                vert_align = 'top';
+                horz_align = 'right';
+                vert_align = 'middle';
                 x_pos = 0;
                 y_pos = -axes_labels_offset;
+                thisang = 180+rad2deg(theta_point);
             case 4
                 horz_align = 'left';
-                vert_align = 'top';
+                vert_align = 'middle';
                 x_pos = axes_labels_offset;
                 y_pos = -axes_labels_offset;
+                thisang = rad2deg(theta_point);
         end
     end
 end
